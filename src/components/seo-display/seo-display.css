@@ -1,0 +1,260 @@
+/* SEO Display Card Styles */
+.seo-display-card {
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid #f0f0f0;
+}
+
+.seo-display-card .ant-card-head {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px 12px 0 0;
+  padding: 20px 24px;
+}
+
+.seo-display-card .ant-card-head-title {
+  color: white;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* SEO Display Collapse Styles */
+.seo-display-collapse .ant-collapse-item {
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+}
+
+.seo-display-collapse .ant-collapse-item:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.seo-display-collapse .ant-collapse-header {
+  background: #fafafa;
+  padding: 16px 24px;
+  font-weight: 600;
+  font-size: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.seo-display-collapse .ant-collapse-content {
+  border-top: none;
+}
+
+.seo-display-collapse .ant-collapse-content-box {
+  padding: 24px;
+}
+
+/* Color-coded Panel Headers */
+.seo-display-panel[data-key="overview"] .ant-collapse-header {
+  border-left: 4px solid #52c41a;
+}
+
+.seo-display-panel[data-key="meta"] .ant-collapse-header {
+  border-left: 4px solid #13c2c2;
+}
+
+.seo-display-panel[data-key="social"] .ant-collapse-header {
+  border-left: 4px solid #722ed1;
+}
+
+.seo-display-panel[data-key="technical"] .ant-collapse-header {
+  border-left: 4px solid #fa8c16;
+}
+
+.seo-display-panel[data-key="status"] .ant-collapse-header {
+  border-left: 4px solid #eb2f96;
+}
+
+/* Panel Header Icons */
+.seo-display-panel .ant-collapse-header .anticon {
+  margin-right: 12px;
+  font-size: 18px;
+}
+
+/* Statistics Styling */
+.seo-display-panel .ant-statistic-title {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.seo-display-panel .ant-statistic-content {
+  text-align: center;
+}
+
+.seo-display-panel .ant-statistic-content-value {
+  font-weight: 700;
+}
+
+/* Progress Bar Styling */
+.seo-display-panel .ant-progress {
+  margin-top: 8px;
+}
+
+.seo-display-panel .ant-progress-bg {
+  border-radius: 4px;
+}
+
+/* Descriptions Styling */
+.seo-display-panel .ant-descriptions-item-label {
+  font-weight: 600;
+  color: #333;
+  background: #fafafa;
+  padding: 12px 16px;
+  border-right: 1px solid #f0f0f0;
+}
+
+.seo-display-panel .ant-descriptions-item-content {
+  padding: 12px 16px;
+  color: #666;
+}
+
+/* Tag Styling */
+.seo-display-panel .ant-tag {
+  font-size: 13px;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-weight: 500;
+}
+
+/* Divider Styling */
+.seo-display-panel .ant-divider {
+  margin: 24px 0;
+  border-color: #f0f0f0;
+}
+
+/* Schema Markup Code Block */
+.seo-display-panel pre {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 16px;
+  margin: 16px 0;
+  overflow-x: auto;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .seo-display-panel .ant-col {
+    margin-bottom: 16px;
+  }
+  
+  .seo-display-panel .ant-statistic {
+    text-align: center;
+  }
+  
+  .seo-display-collapse .ant-collapse-header {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+  
+  .seo-display-collapse .ant-collapse-content-box {
+    padding: 16px;
+  }
+}
+
+/* Hover Effects */
+.seo-display-panel .ant-statistic:hover {
+  transform: translateY(-2px);
+  transition: transform 0.2s ease;
+}
+
+.seo-display-panel .ant-tag:hover {
+  transform: scale(1.05);
+  transition: transform 0.2s ease;
+}
+
+/* Animation for Panel Expansion */
+.seo-display-collapse .ant-collapse-content-active {
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Custom Scrollbar for Schema Markup */
+.seo-display-panel pre::-webkit-scrollbar {
+  height: 6px;
+}
+
+.seo-display-panel pre::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.seo-display-panel pre::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.seo-display-panel pre::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Info Icon Styling */
+.seo-display-panel .anticon-info-circle {
+  color: #1890ff;
+  margin-left: 8px;
+  cursor: help;
+  transition: color 0.2s ease;
+}
+
+.seo-display-panel .anticon-info-circle:hover {
+  color: #40a9ff;
+}
+
+/* Row and Column Spacing */
+.seo-display-panel .ant-row {
+  margin-bottom: 16px;
+}
+
+.seo-display-panel .ant-col:last-child .ant-row {
+  margin-bottom: 0;
+}
+
+/* Enhanced Typography */
+.seo-display-panel .ant-typography h5 {
+  color: #333;
+  font-weight: 600;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+}
+
+.seo-display-panel .ant-typography h5 .anticon {
+  margin-right: 8px;
+  color: #1890ff;
+}
+
+/* Status Panel Special Styling */
+.seo-display-panel[data-key="status"] .ant-col {
+  text-align: center;
+}
+
+.seo-display-panel[data-key="status"] .ant-tag {
+  display: block;
+  margin: 0 auto;
+  font-size: 14px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 600;
+  min-width: 120px;
+}

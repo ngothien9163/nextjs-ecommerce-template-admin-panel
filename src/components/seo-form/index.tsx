@@ -1,9 +1,11 @@
 import React from 'react';
-import { Form, Input, Switch, InputNumber, Select, Upload, Row, Col, Card, Typography, Divider, Space, Button } from 'antd';
-import { UploadOutlined, PlusOutlined, MinusCircleOutlined } from '@ant-design/icons';
+import { Form, Input, Switch, InputNumber, Select, Upload, Row, Col, Card, Typography, Divider, Space, Button, Collapse, Tooltip } from 'antd';
+import { UploadOutlined, PlusOutlined, MinusCircleOutlined, InfoCircleOutlined, GlobalOutlined, ShareAltOutlined, TwitterOutlined, CodeOutlined, BarChartOutlined, TrophyOutlined, SettingOutlined } from '@ant-design/icons';
+import './seo-form.css';
 
 const { TextArea } = Input;
-const { Title } = Typography;
+const { Title, Text } = Typography;
+const { Panel } = Collapse;
 
 interface SEOFormProps {
   form: any;
@@ -56,263 +58,490 @@ export const SEOForm: React.FC<SEOFormProps> = ({ form, isEdit = false }) => {
     { label: '日本語 (日本)', value: 'ja_JP' },
   ];
 
+  const renderInfoIcon = (tooltip: string) => (
+    <Tooltip title={tooltip} placement="top">
+      <InfoCircleOutlined style={{ color: '#1890ff', marginLeft: '8px' }} />
+    </Tooltip>
+  );
+
   return (
-    <>
-      {/* Thông tin SEO cơ bản */}
-      <Card title="Thông tin SEO cơ bản" style={{ marginBottom: '24px' }}>
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item
-              label="Meta Title"
-              name={['seo_data', 'page_title']}
-              rules={[{ required: true, message: 'Vui lòng nhập Meta Title!' }]}
-            >
-              <Input placeholder="Tiêu đề trang cho SEO (50-60 ký tự)" maxLength={60} showCount />
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item
-              label="Meta Description"
-              name={['seo_data', 'meta_description']}
-              rules={[{ required: true, message: 'Vui lòng nhập Meta Description!' }]}
-            >
-              <TextArea 
-                rows={3} 
-                placeholder="Mô tả meta cho SEO (120-160 ký tự)" 
-                maxLength={160} 
-                showCount 
-              />
-            </Form.Item>
-          </Col>
-        </Row>
-
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item
-              label="Meta Keywords"
-              name={['seo_data', 'meta_keywords']}
-            >
-              <Select
-                mode="tags"
-                placeholder="Nhập từ khóa SEO"
-                style={{ width: '100%' }}
-                maxTagCount={10}
-              />
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item
-              label="Canonical URL"
-              name={['seo_data', 'canonical_url']}
-            >
-              <Input placeholder="https://example.com/product" />
-            </Form.Item>
-          </Col>
-        </Row>
-
-        <Row gutter={16}>
-          <Col span={8}>
-            <Form.Item
-              label="Ngôn ngữ"
-              name={['seo_data', 'language']}
-              initialValue="vi"
-            >
-              <Select options={languageOptions} />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              label="Character Encoding"
-              name={['seo_data', 'charset']}
-              initialValue="UTF-8"
-            >
-              <Input />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              label="Viewport"
-              name={['seo_data', 'viewport']}
-              initialValue="width=device-width, initial-scale=1"
-            >
-              <Input />
-            </Form.Item>
-          </Col>
-        </Row>
-
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item
-              label="Robots Directive"
-              name={['seo_data', 'robots_directive']}
-              initialValue="index,follow"
-            >
-              <Select options={robotsOptions} />
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item
-              label="Hreflang Tags"
-              name={['seo_data', 'hreflang']}
-            >
-              <Input placeholder='[{"lang": "vi", "url": "https://example.com/vi"}]' />
-            </Form.Item>
-          </Col>
-        </Row>
-      </Card>
-
-      {/* Open Graph */}
-      <Card title="Open Graph (Social Media)" style={{ marginBottom: '24px' }}>
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item
-              label="OG Title"
-              name={['seo_data', 'og_title']}
-            >
-              <Input placeholder="Tiêu đề Open Graph" maxLength={60} showCount />
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item
-              label="OG Description"
-              name={['seo_data', 'og_description']}
-            >
-              <TextArea rows={3} placeholder="Mô tả Open Graph" maxLength={200} showCount />
-            </Form.Item>
-          </Col>
-        </Row>
-
-        <Row gutter={16}>
-          <Col span={8}>
-            <Form.Item
-              label="OG Type"
-              name={['seo_data', 'og_type']}
-              initialValue="website"
-            >
-              <Select options={ogTypeOptions} onChange={setOgType} />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              label="OG Site Name"
-              name={['seo_data', 'og_site_name']}
-            >
-              <Input placeholder="Tên website" />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              label="OG Locale"
-              name={['seo_data', 'og_locale']}
-              initialValue="vi_VN"
-            >
-              <Select options={localeOptions} />
-            </Form.Item>
-          </Col>
-        </Row>
-
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item
-              label="OG Image"
-              name={['seo_data', 'og_image']}
-            >
-              <Input placeholder="URL hình ảnh Open Graph" />
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item
-              label="OG Audio"
-              name={['seo_data', 'og_audio']}
-            >
-              <Input placeholder="URL audio file (nếu có)" />
-            </Form.Item>
-          </Col>
-        </Row>
-
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item
-              label="OG Video"
-              name={['seo_data', 'og_video']}
-            >
-              <Input placeholder="URL video file (nếu có)" />
-            </Form.Item>
-          </Col>
-        </Row>
-      </Card>
-
-      {/* Twitter Card */}
-      <Card title="Twitter Card" style={{ marginBottom: '24px' }}>
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item
-              label="Twitter Title"
-              name={['seo_data', 'twitter_title']}
-            >
-              <Input placeholder="Tiêu đề Twitter" maxLength={60} showCount />
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item
-              label="Twitter Description"
-              name={['seo_data', 'twitter_description']}
-            >
-              <TextArea rows={3} placeholder="Mô tả Twitter" maxLength={200} showCount />
-            </Form.Item>
-          </Col>
-        </Row>
-
-        <Row gutter={16}>
-          <Col span={8}>
-            <Form.Item
-              label="Twitter Card Type"
-              name={['seo_data', 'twitter_card']}
-              initialValue="summary_large_image"
-            >
-              <Select options={twitterCardOptions} onChange={setTwitterCard} />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              label="Twitter Creator"
-              name={['seo_data', 'twitter_creator']}
-            >
-              <Input placeholder="@username" />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              label="Twitter Site"
-              name={['seo_data', 'twitter_site']}
-            >
-              <Input placeholder="@sitename" />
-            </Form.Item>
-          </Col>
-        </Row>
-
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item
-              label="Twitter Image"
-              name={['seo_data', 'twitter_image']}
-            >
-              <Input placeholder="URL hình ảnh Twitter" />
-            </Form.Item>
-          </Col>
-        </Row>
-      </Card>
-
-      {/* Schema.org Structured Data */}
-      <Card title="Schema.org Structured Data" style={{ marginBottom: '24px' }}>
-        <Form.Item
-          label="Schema Markup (JSON-LD)"
-          name={['seo_data', 'schema_markup']}
-          extra="Nhập dữ liệu có cấu trúc Schema.org dạng JSON-LD"
+    <Card 
+      title={
+        <Space>
+          <GlobalOutlined style={{ color: '#1890ff' }} />
+          <span>Thông tin SEO</span>
+          <Tooltip title="Tối ưu hóa công cụ tìm kiếm (SEO) giúp trang web của bạn dễ dàng được tìm thấy trên Google và các công cụ tìm kiếm khác">
+            <InfoCircleOutlined style={{ color: '#1890ff' }} />
+          </Tooltip>
+        </Space>
+      } 
+      style={{ marginBottom: '24px' }}
+      className="seo-form-card"
+    >
+      <Collapse 
+        defaultActiveKey={['basic', 'social', 'advanced']} 
+        ghost
+        expandIconPosition="end"
+        className="seo-collapse"
+      >
+        {/* Thông tin SEO cơ bản */}
+        <Panel 
+          header={
+            <Space>
+              <GlobalOutlined style={{ color: '#52c41a' }} />
+              <span>Thông tin SEO cơ bản</span>
+            </Space>
+          } 
+          key="basic"
+          className="seo-panel"
         >
-          <TextArea 
-            rows={8} 
-            placeholder={`{
+          <Row gutter={[24, 16]}>
+            <Col span={12}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>Meta Title</span>
+                    {renderInfoIcon('Tiêu đề trang hiển thị trên kết quả tìm kiếm. Nên có 50-60 ký tự và chứa từ khóa chính')}
+                  </Space>
+                }
+                name={['seo_data', 'page_title']}
+                rules={[{ required: true, message: 'Vui lòng nhập Meta Title!' }]}
+              >
+                <Input 
+                  placeholder="Tiêu đề trang cho SEO (50-60 ký tự)" 
+                  maxLength={60} 
+                  showCount 
+                  size="large"
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>Meta Description</span>
+                    {renderInfoIcon('Mô tả ngắn gọn nội dung trang, hiển thị dưới tiêu đề trên kết quả tìm kiếm. Nên có 120-160 ký tự')}
+                  </Space>
+                }
+                name={['seo_data', 'meta_description']}
+                rules={[{ required: true, message: 'Vui lòng nhập Meta Description!' }]}
+              >
+                <TextArea 
+                  rows={3} 
+                  placeholder="Mô tả meta cho SEO (120-160 ký tự)" 
+                  maxLength={160} 
+                  showCount 
+                  size="large"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={[24, 16]}>
+            <Col span={12}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>Meta Keywords</span>
+                    {renderInfoIcon('Từ khóa chính của trang. Mặc dù Google không sử dụng trực tiếp, nhưng vẫn hữu ích cho các công cụ tìm kiếm khác')}
+                  </Space>
+                }
+                name={['seo_data', 'meta_keywords']}
+              >
+                <Select
+                  mode="tags"
+                  placeholder="Nhập từ khóa SEO"
+                  style={{ width: '100%' }}
+                  maxTagCount={10}
+                  size="large"
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>Canonical URL</span>
+                    {renderInfoIcon('URL chính thức của trang, giúp tránh duplicate content khi có nhiều URL trỏ đến cùng nội dung')}
+                  </Space>
+                }
+                name={['seo_data', 'canonical_url']}
+              >
+                <Input 
+                  placeholder="https://example.com/product" 
+                  size="large"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={[24, 16]}>
+            <Col span={8}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>Ngôn ngữ</span>
+                    {renderInfoIcon('Ngôn ngữ chính của trang, giúp Google hiểu và index đúng ngôn ngữ')}
+                  </Space>
+                }
+                name={['seo_data', 'language']}
+                initialValue="vi"
+              >
+                <Select options={languageOptions} size="large" />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>Character Encoding</span>
+                    {renderInfoIcon('Bộ mã ký tự của trang, thường là UTF-8 để hỗ trợ đa ngôn ngữ')}
+                  </Space>
+                }
+                name={['seo_data', 'charset']}
+                initialValue="UTF-8"
+              >
+                <Input size="large" />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>Viewport</span>
+                    {renderInfoIcon('Cài đặt viewport cho responsive design, giúp trang hiển thị tốt trên mobile')}
+                  </Space>
+                }
+                name={['seo_data', 'viewport']}
+                initialValue="width=device-width, initial-scale=1"
+              >
+                <Input size="large" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={[24, 16]}>
+            <Col span={12}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>Robots Directive</span>
+                    {renderInfoIcon('Chỉ thị cho các bot tìm kiếm về cách index và follow links trên trang')}
+                  </Space>
+                }
+                name={['seo_data', 'robots_directive']}
+                initialValue="index,follow"
+              >
+                <Select options={robotsOptions} size="large" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>Hreflang Tags</span>
+                    {renderInfoIcon('Thẻ hreflang cho đa ngôn ngữ, giúp Google hiểu mối quan hệ giữa các phiên bản ngôn ngữ khác nhau')}
+                  </Space>
+                }
+                name={['seo_data', 'hreflang']}
+              >
+                <Input 
+                  placeholder='[{"lang": "vi", "url": "https://example.com/vi"}]' 
+                  size="large"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+        </Panel>
+
+        {/* Open Graph & Social Media */}
+        <Panel 
+          header={
+            <Space>
+              <ShareAltOutlined style={{ color: '#722ed1' }} />
+              <span>Open Graph & Social Media</span>
+            </Space>
+          } 
+          key="social"
+          className="seo-panel"
+        >
+          <Row gutter={[24, 16]}>
+            <Col span={12}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>OG Title</span>
+                    {renderInfoIcon('Tiêu đề hiển thị khi chia sẻ trên Facebook, LinkedIn và các mạng xã hội khác')}
+                  </Space>
+                }
+                name={['seo_data', 'og_title']}
+              >
+                <Input 
+                  placeholder="Tiêu đề Open Graph" 
+                  maxLength={60} 
+                  showCount 
+                  size="large"
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>OG Description</span>
+                    {renderInfoIcon('Mô tả hiển thị khi chia sẻ trên mạng xã hội, nên có 200 ký tự để tối ưu hiển thị')}
+                  </Space>
+                }
+                name={['seo_data', 'og_description']}
+              >
+                <TextArea 
+                  rows={3} 
+                  placeholder="Mô tả Open Graph" 
+                  maxLength={200} 
+                  showCount 
+                  size="large"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={[24, 16]}>
+            <Col span={8}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>OG Type</span>
+                    {renderInfoIcon('Loại nội dung Open Graph, giúp mạng xã hội hiểu và hiển thị đúng định dạng')}
+                  </Space>
+                }
+                name={['seo_data', 'og_type']}
+                initialValue="website"
+              >
+                <Select options={ogTypeOptions} onChange={setOgType} size="large" />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>OG Site Name</span>
+                    {renderInfoIcon('Tên website, hiển thị bên dưới tiêu đề khi chia sẻ trên mạng xã hội')}
+                  </Space>
+                }
+                name={['seo_data', 'og_site_name']}
+              >
+                <Input placeholder="Tên website" size="large" />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>OG Locale</span>
+                    {renderInfoIcon('Ngôn ngữ và vùng miền của nội dung Open Graph')}
+                  </Space>
+                }
+                name={['seo_data', 'og_locale']}
+                initialValue="vi_VN"
+              >
+                <Select options={localeOptions} size="large" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={[24, 16]}>
+            <Col span={12}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>OG Image</span>
+                    {renderInfoIcon('Hình ảnh hiển thị khi chia sẻ trên mạng xã hội. Nên có kích thước 1200x630px')}
+                  </Space>
+                }
+                name={['seo_data', 'og_image']}
+              >
+                <Input 
+                  placeholder="URL hình ảnh Open Graph" 
+                  size="large"
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>OG Audio</span>
+                    {renderInfoIcon('File audio liên quan đến nội dung (nếu có)')}
+                  </Space>
+                }
+                name={['seo_data', 'og_audio']}
+              >
+                <Input 
+                  placeholder="URL audio file (nếu có)" 
+                  size="large"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={[24, 16]}>
+            <Col span={12}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>OG Video</span>
+                    {renderInfoIcon('File video liên quan đến nội dung (nếu có)')}
+                  </Space>
+                }
+                name={['seo_data', 'og_video']}
+              >
+                <Input 
+                  placeholder="URL video file (nếu có)" 
+                  size="large"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+        </Panel>
+
+        {/* Twitter Card */}
+        <Panel 
+          header={
+            <Space>
+              <TwitterOutlined style={{ color: '#1da1f2' }} />
+              <span>Twitter Card</span>
+            </Space>
+          } 
+          key="twitter"
+          className="seo-panel"
+        >
+          <Row gutter={[24, 16]}>
+            <Col span={12}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>Twitter Title</span>
+                    {renderInfoIcon('Tiêu đề hiển thị khi chia sẻ trên Twitter. Nên khác với OG Title để tối ưu cho từng nền tảng')}
+                  </Space>
+                }
+                name={['seo_data', 'twitter_title']}
+              >
+                <Input 
+                  placeholder="Tiêu đề Twitter" 
+                  maxLength={60} 
+                  showCount 
+                  size="large"
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>Twitter Description</span>
+                    {renderInfoIcon('Mô tả hiển thị khi chia sẻ trên Twitter, tối ưu cho giới hạn ký tự của Twitter')}
+                  </Space>
+                }
+                name={['seo_data', 'twitter_description']}
+              >
+                <TextArea 
+                  rows={3} 
+                  placeholder="Mô tả Twitter" 
+                  maxLength={200} 
+                  showCount 
+                  size="large"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={[24, 16]}>
+            <Col span={8}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>Twitter Card Type</span>
+                    {renderInfoIcon('Loại Twitter Card, ảnh hưởng đến cách nội dung hiển thị trên Twitter')}
+                  </Space>
+                }
+                name={['seo_data', 'twitter_card']}
+                initialValue="summary_large_image"
+              >
+                <Select options={twitterCardOptions} onChange={setTwitterCard} size="large" />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>Twitter Creator</span>
+                    {renderInfoIcon('Username Twitter của tác giả nội dung (@username)')}
+                  </Space>
+                }
+                name={['seo_data', 'twitter_creator']}
+              >
+                <Input placeholder="@username" size="large" />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>Twitter Site</span>
+                    {renderInfoIcon('Username Twitter của website (@sitename)')}
+                  </Space>
+                }
+                name={['seo_data', 'twitter_site']}
+              >
+                <Input placeholder="@sitename" size="large" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={[24, 16]}>
+            <Col span={12}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>Twitter Image</span>
+                    {renderInfoIcon('Hình ảnh hiển thị khi chia sẻ trên Twitter. Nên có kích thước 1200x600px')}
+                  </Space>
+                }
+                name={['seo_data', 'twitter_image']}
+              >
+                <Input 
+                  placeholder="URL hình ảnh Twitter" 
+                  size="large"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+        </Panel>
+
+        {/* Schema.org & Technical SEO */}
+        <Panel 
+          header={
+            <Space>
+              <CodeOutlined style={{ color: '#fa8c16' }} />
+              <span>Schema.org & Technical SEO</span>
+            </Space>
+          } 
+          key="schema"
+          className="seo-panel"
+        >
+          <Form.Item
+            label={
+              <Space>
+                <span>Schema Markup (JSON-LD)</span>
+                {renderInfoIcon('Dữ liệu có cấu trúc Schema.org giúp Google hiểu rõ nội dung trang và hiển thị rich snippets')}
+              </Space>
+            }
+            name={['seo_data', 'schema_markup']}
+            extra="Nhập dữ liệu có cấu trúc Schema.org dạng JSON-LD để tối ưu hiển thị trên kết quả tìm kiếm"
+          >
+            <TextArea 
+              rows={8} 
+              placeholder={`{
   "@context": "https://schema.org",
   "@type": "Product",
   "name": "Tên sản phẩm",
@@ -324,406 +553,438 @@ export const SEOForm: React.FC<SEOFormProps> = ({ form, isEdit = false }) => {
     "priceCurrency": "VND"
   }
 }`}
-          />
-        </Form.Item>
-      </Card>
+              size="large"
+              className="schema-textarea"
+            />
+          </Form.Item>
+        </Panel>
 
-      {/* Performance & Metrics */}
-      <Card title="Performance & Metrics" style={{ marginBottom: '24px' }}>
-        <Row gutter={16}>
-          <Col span={8}>
-            <Form.Item
-              label="SEO Score"
-              name={['seo_data', 'seo_score']}
-            >
-              <InputNumber 
-                min={0} 
-                max={100} 
-                placeholder="0-100"
-                style={{ width: '100%' }}
-              />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              label="Keyword Difficulty"
-              name={['seo_data', 'keyword_difficulty']}
-            >
-              <InputNumber 
-                min={0} 
-                max={100} 
-                placeholder="0-100"
-                style={{ width: '100%' }}
-              />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              label="Search Volume"
-              name={['seo_data', 'search_volume']}
-            >
-              <InputNumber 
-                min={0} 
-                placeholder="Lượt tìm kiếm/tháng"
-                style={{ width: '100%' }}
-              />
-            </Form.Item>
-          </Col>
-        </Row>
+        {/* Performance & Metrics */}
+        <Panel 
+          header={
+            <Space>
+              <BarChartOutlined style={{ color: '#13c2c2' }} />
+              <span>Performance & Metrics</span>
+            </Space>
+          } 
+          key="performance"
+          className="seo-panel"
+        >
+          <Row gutter={[24, 16]}>
+            <Col span={8}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>SEO Score</span>
+                    {renderInfoIcon('Điểm SEO tổng thể từ 0-100, đánh giá chất lượng SEO của trang')}
+                  </Space>
+                }
+                name={['seo_data', 'seo_score']}
+              >
+                <InputNumber 
+                  min={0} 
+                  max={100} 
+                  placeholder="0-100"
+                  style={{ width: '100%' }}
+                  size="large"
+                />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>Keyword Difficulty</span>
+                    {renderInfoIcon('Độ khó của từ khóa từ 0-100. Số càng cao thì càng khó xếp hạng')}
+                  </Space>
+                }
+                name={['seo_data', 'keyword_difficulty']}
+              >
+                <InputNumber 
+                  min={0} 
+                  max={100} 
+                  placeholder="0-100"
+                  style={{ width: '100%' }}
+                  size="large"
+                />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>Search Volume</span>
+                    {renderInfoIcon('Lượt tìm kiếm trung bình hàng tháng cho từ khóa chính')}
+                  </Space>
+                }
+                name={['seo_data', 'search_volume']}
+              >
+                <InputNumber 
+                  min={0} 
+                  placeholder="Lượt tìm kiếm/tháng"
+                  style={{ width: '100%' }}
+                  size="large"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
 
-        <Row gutter={16}>
-          <Col span={8}>
-            <Form.Item
-              label="Page Load Time (s)"
-              name={['seo_data', 'page_load_time']}
-            >
-              <InputNumber 
-                min={0} 
-                step={0.1}
-                placeholder="Thời gian tải (giây)"
-                style={{ width: '100%' }}
-              />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              label="Mobile Friendly Score"
-              name={['seo_data', 'mobile_friendly_score']}
-            >
-              <InputNumber 
-                min={0} 
-                max={100} 
-                placeholder="0-100"
-                style={{ width: '100%' }}
-              />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              label="Accessibility Score"
-              name={['seo_data', 'accessibility_score']}
-            >
-              <InputNumber 
-                min={0} 
-                max={100} 
-                placeholder="0-100"
-                style={{ width: '100%' }}
-              />
-            </Form.Item>
-          </Col>
-        </Row>
+          <Row gutter={[24, 16]}>
+            <Col span={8}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>Page Load Time (s)</span>
+                    {renderInfoIcon('Thời gian tải trang. Nên dưới 3 giây để tối ưu trải nghiệm người dùng và SEO')}
+                  </Space>
+                }
+                name={['seo_data', 'page_load_time']}
+              >
+                <InputNumber 
+                  min={0} 
+                  step={0.1}
+                  placeholder="Thời gian tải (giây)"
+                  style={{ width: '100%' }}
+                  size="large"
+                />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>Mobile Friendly Score</span>
+                    {renderInfoIcon('Điểm thân thiện mobile từ 0-100. Google ưu tiên mobile-first indexing')}
+                  </Space>
+                }
+                name={['seo_data', 'mobile_friendly_score']}
+              >
+                <InputNumber 
+                  min={0} 
+                  max={100} 
+                  placeholder="0-100"
+                  style={{ width: '100%' }}
+                  size="large"
+                />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>Accessibility Score</span>
+                    {renderInfoIcon('Điểm accessibility từ 0-100, đánh giá khả năng tiếp cận của người khuyết tật')}
+                  </Space>
+                }
+                name={['seo_data', 'accessibility_score']}
+              >
+                <InputNumber 
+                  min={0} 
+                  max={100} 
+                  placeholder="0-100"
+                  style={{ width: '100%' }}
+                  size="large"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
 
-        <Row gutter={16}>
-          <Col span={8}>
-            <Form.Item
-              label="Core Web Vitals Score"
-              name={['seo_data', 'core_web_vitals_score']}
-            >
-              <InputNumber 
-                min={0} 
-                max={100} 
-                placeholder="0-100"
-                style={{ width: '100%' }}
-              />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              label="Content Length (từ)"
-              name={['seo_data', 'content_length']}
-            >
-              <InputNumber 
-                min={0} 
-                placeholder="Số từ"
-                style={{ width: '100%' }}
-              />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              label="Image Optimization Score"
-              name={['seo_data', 'image_optimization_score']}
-            >
-              <InputNumber 
-                min={0} 
-                max={100} 
-                placeholder="0-100"
-                style={{ width: '100%' }}
-              />
-            </Form.Item>
-          </Col>
-        </Row>
-      </Card>
+          <Row gutter={[24, 16]}>
+            <Col span={8}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>Core Web Vitals Score</span>
+                    {renderInfoIcon('Điểm Core Web Vitals từ 0-100, đánh giá trải nghiệm người dùng')}
+                  </Space>
+                }
+                name={['seo_data', 'core_web_vitals_score']}
+              >
+                <InputNumber 
+                  min={0} 
+                  max={100} 
+                  placeholder="0-100"
+                  style={{ width: '100%' }}
+                  size="large"
+                />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>Content Length (từ)</span>
+                    {renderInfoIcon('Số từ trong nội dung. Nội dung dài thường có cơ hội xếp hạng tốt hơn')}
+                  </Space>
+                }
+                name={['seo_data', 'content_length']}
+              >
+                <InputNumber 
+                  min={0} 
+                  placeholder="Số từ"
+                  style={{ width: '100%' }}
+                  size="large"
+                />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>Image Optimization Score</span>
+                    {renderInfoIcon('Điểm tối ưu hình ảnh từ 0-100, bao gồm kích thước, format và alt text')}
+                  </Space>
+                }
+                name={['seo_data', 'image_optimization_score']}
+              >
+                <InputNumber 
+                  min={0} 
+                  max={100} 
+                  placeholder="0-100"
+                  style={{ width: '100%' }}
+                  size="large"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+        </Panel>
 
-      {/* Social & Content Metrics */}
-      <Card title="Social & Content Metrics" style={{ marginBottom: '24px' }}>
-        <Row gutter={16}>
-          <Col span={8}>
-            <Form.Item
-              label="Social Shares"
-              name={['seo_data', 'social_shares']}
-            >
-              <InputNumber 
-                min={0} 
-                placeholder="Số lượt chia sẻ"
-                style={{ width: '100%' }}
-              />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              label="Social Engagement (%)"
-              name={['seo_data', 'social_engagement']}
-            >
-              <InputNumber 
-                min={0} 
-                max={100}
-                step={0.01}
-                placeholder="Tỷ lệ tương tác"
-                style={{ width: '100%' }}
-              />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              label="Social CTR (%)"
-              name={['seo_data', 'social_click_through_rate']}
-            >
-              <InputNumber 
-                min={0} 
-                max={100}
-                step={0.01}
-                placeholder="Tỷ lệ click"
-                style={{ width: '100%' }}
-              />
-            </Form.Item>
-          </Col>
-        </Row>
-
-        <Row gutter={16}>
-          <Col span={8}>
-            <Form.Item
-              label="Content Readability Score"
-              name={['seo_data', 'content_readability_score']}
-            >
-              <InputNumber 
-                min={0} 
-                max={100} 
-                placeholder="0-100"
-                style={{ width: '100%' }}
-              />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              label="Content Freshness Score"
-              name={['seo_data', 'content_freshness_score']}
-            >
-              <InputNumber 
-                min={0} 
-                max={100} 
-                placeholder="0-100"
-                style={{ width: '100%' }}
-              />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              label="Internal Links Count"
-              name={['seo_data', 'internal_links_count']}
-            >
-              <InputNumber 
-                min={0} 
-                placeholder="Số internal links"
-                style={{ width: '100%' }}
-              />
-            </Form.Item>
-          </Col>
-        </Row>
-
-        <Row gutter={16}>
-          <Col span={8}>
-            <Form.Item
-              label="External Links Count"
-              name={['seo_data', 'external_links_count']}
-            >
-              <InputNumber 
-                min={0} 
-                placeholder="Số external links"
-                style={{ width: '100%' }}
-              />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              label="Broken Links Count"
-              name={['seo_data', 'broken_links_count']}
-            >
-              <InputNumber 
-                min={0} 
-                placeholder="Số broken links"
-                style={{ width: '100%' }}
-              />
-            </Form.Item>
-          </Col>
-        </Row>
-      </Card>
-
-      {/* Advanced SEO Metrics */}
-      <Card title="Advanced SEO Metrics (2025+)" style={{ marginBottom: '24px' }}>
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item
-              label="Core Web Vitals (JSON)"
-              name={['seo_data', 'core_web_vitals']}
-              extra="LCP, FID, CLS, INP, TTFB metrics"
-            >
-              <TextArea 
-                rows={4} 
-                placeholder={`{
+        {/* Advanced SEO Metrics */}
+        <Panel 
+          header={
+            <Space>
+              <TrophyOutlined style={{ color: '#f5222d' }} />
+              <span>Advanced SEO Metrics (2025+)</span>
+            </Space>
+          } 
+          key="advanced"
+          className="seo-panel"
+        >
+          <Row gutter={[24, 16]}>
+            <Col span={12}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>Core Web Vitals (JSON)</span>
+                    {renderInfoIcon('Chỉ số Core Web Vitals chi tiết: LCP, FID, CLS, INP, TTFB. Giúp đánh giá performance')}
+                  </Space>
+                }
+                name={['seo_data', 'core_web_vitals']}
+                extra="LCP, FID, CLS, INP, TTFB metrics"
+              >
+                <TextArea 
+                  rows={4} 
+                  placeholder={`{
   "lcp": 2.5,
   "fid": 100,
   "cls": 0.1,
   "inp": 200,
   "ttfb": 800
 }`}
-              />
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item
-              label="AI & ML Metrics (JSON)"
-              name={['seo_data', 'ai_ml_metrics']}
-              extra="AI relevance score, ML ranking factors"
-            >
-              <TextArea 
-                rows={4} 
-                placeholder={`{
+                  size="large"
+                  className="json-textarea"
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>AI & ML Metrics (JSON)</span>
+                    {renderInfoIcon('Chỉ số AI & ML SEO: AI relevance score, ML ranking factors. Xu hướng SEO tương lai')}
+                  </Space>
+                }
+                name={['seo_data', 'ai_ml_metrics']}
+                extra="AI relevance score, ML ranking factors"
+              >
+                <TextArea 
+                  rows={4} 
+                  placeholder={`{
   "ai_relevance_score": 85,
   "ml_ranking_factors": ["content_quality", "user_engagement"]
 }`}
-              />
-            </Form.Item>
-          </Col>
-        </Row>
+                  size="large"
+                  className="json-textarea"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
 
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item
-              label="E-E-A-T Metrics (JSON)"
-              name={['seo_data', 'eeat_metrics']}
-              extra="Experience, Expertise, Authoritativeness, Trust"
-            >
-              <TextArea 
-                rows={4} 
-                placeholder={`{
+          <Row gutter={[24, 16]}>
+            <Col span={12}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>E-E-A-T Metrics (JSON)</span>
+                    {renderInfoIcon('Experience, Expertise, Authoritativeness, Trust. Tiêu chí đánh giá chất lượng nội dung của Google')}
+                  </Space>
+                }
+                name={['seo_data', 'eeat_metrics']}
+                extra="Experience, Expertise, Authoritativeness, Trust"
+              >
+                <TextArea 
+                  rows={4} 
+                  placeholder={`{
   "experience": 90,
   "expertise": 85,
   "authoritativeness": 80,
   "trust": 95
 }`}
-              />
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item
-              label="Voice & Visual Search (JSON)"
-              name={['seo_data', 'voice_visual_metrics']}
-              extra="Voice search optimization, visual search data"
-            >
-              <TextArea 
-                rows={4} 
-                placeholder={`{
+                  size="large"
+                  className="json-textarea"
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>Voice & Visual Search (JSON)</span>
+                    {renderInfoIcon('Tối ưu cho tìm kiếm bằng giọng nói và hình ảnh. Xu hướng tìm kiếm tương lai')}
+                  </Space>
+                }
+                name={['seo_data', 'voice_visual_metrics']}
+                extra="Voice search optimization, visual search data"
+              >
+                <TextArea 
+                  rows={4} 
+                  placeholder={`{
   "voice_optimization": 75,
   "visual_search": 80,
   "semantic_keywords": ["từ khóa ngữ nghĩa"]
 }`}
-              />
-            </Form.Item>
-          </Col>
-        </Row>
+                  size="large"
+                  className="json-textarea"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
 
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item
-              label="Privacy & Compliance (JSON)"
-              name={['seo_data', 'privacy_compliance']}
-              extra="GDPR, CCPA, privacy signals"
-            >
-              <TextArea 
-                rows={4} 
-                placeholder={`{
+          <Row gutter={[24, 16]}>
+            <Col span={12}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>Privacy & Compliance (JSON)</span>
+                    {renderInfoIcon('Tuân thủ quy định bảo mật: GDPR, CCPA. Ảnh hưởng đến trust score và SEO')}
+                  </Space>
+                }
+                name={['seo_data', 'privacy_compliance']}
+                extra="GDPR, CCPA, privacy signals"
+              >
+                <TextArea 
+                  rows={4} 
+                  placeholder={`{
   "gdpr_compliant": true,
   "ccpa_compliant": false,
   "privacy_signals": ["https", "privacy_policy"]
 }`}
-              />
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item
-              label="Future Metrics (JSON)"
-              name={['seo_data', 'future_metrics']}
-              extra="Quantum SEO, Neural networks, BCI, Spatial computing"
-            >
-              <TextArea 
-                rows={4} 
-                placeholder={`{
+                  size="large"
+                  className="json-textarea"
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>Future Metrics (JSON)</span>
+                    {renderInfoIcon('Chỉ số SEO tương lai: Quantum SEO, Neural networks, BCI, Spatial computing')}
+                  </Space>
+                }
+                name={['seo_data', 'future_metrics']}
+                extra="Quantum SEO, Neural networks, BCI, Spatial computing"
+              >
+                <TextArea 
+                  rows={4} 
+                  placeholder={`{
   "quantum_seo": 60,
   "neural_networks": 70,
   "bci_optimization": 50,
   "spatial_computing": 65
 }`}
-              />
-            </Form.Item>
-          </Col>
-        </Row>
-      </Card>
+                  size="large"
+                  className="json-textarea"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+        </Panel>
 
-      {/* SEO Status */}
-      <Card title="Trạng thái SEO" style={{ marginBottom: '24px' }}>
-        <Row gutter={16}>
-          <Col span={6}>
-            <Form.Item
-              label="Được index"
-              name={['seo_data', 'is_indexed']}
-              valuePropName="checked"
-              initialValue={true}
-            >
-              <Switch />
-            </Form.Item>
-          </Col>
-          <Col span={6}>
-            <Form.Item
-              label="SSL Secure"
-              name={['seo_data', 'is_ssl_secure']}
-              valuePropName="checked"
-              initialValue={true}
-            >
-              <Switch />
-            </Form.Item>
-          </Col>
-          <Col span={6}>
-            <Form.Item
-              label="Featured SEO"
-              name={['seo_data', 'is_featured']}
-              valuePropName="checked"
-            >
-              <Switch />
-            </Form.Item>
-          </Col>
-          <Col span={6}>
-            <Form.Item
-              label="Active"
-              name={['seo_data', 'is_active']}
-              valuePropName="checked"
-              initialValue={true}
-            >
-              <Switch />
-            </Form.Item>
-          </Col>
-        </Row>
-      </Card>
-    </>
+        {/* SEO Status */}
+        <Panel 
+          header={
+            <Space>
+              <SettingOutlined style={{ color: '#eb2f96' }} />
+              <span>Trạng thái SEO</span>
+            </Space>
+          } 
+          key="status"
+          className="seo-panel"
+        >
+          <Row gutter={[24, 16]}>
+            <Col span={6}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>Được index</span>
+                    {renderInfoIcon('Cho phép Google và các công cụ tìm kiếm khác index trang này')}
+                  </Space>
+                }
+                name={['seo_data', 'is_indexed']}
+                valuePropName="checked"
+                initialValue={true}
+              >
+                <Switch size="default" />
+              </Form.Item>
+            </Col>
+            <Col span={6}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>SSL Secure</span>
+                    {renderInfoIcon('Trang có sử dụng HTTPS. Google ưu tiên các trang bảo mật')}
+                  </Space>
+                }
+                name={['seo_data', 'is_ssl_secure']}
+                valuePropName="checked"
+                initialValue={true}
+              >
+                <Switch size="default" />
+              </Form.Item>
+            </Col>
+            <Col span={6}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>Featured SEO</span>
+                    {renderInfoIcon('Đánh dấu trang được ưu tiên SEO, có thể ảnh hưởng đến thứ tự xử lý')}
+                  </Space>
+                }
+                name={['seo_data', 'is_featured']}
+                valuePropName="checked"
+              >
+                <Switch size="default" />
+              </Form.Item>
+            </Col>
+            <Col span={6}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>Active</span>
+                    {renderInfoIcon('Trạng thái hoạt động của trang SEO')}
+                  </Space>
+                }
+                name={['seo_data', 'is_active']}
+                valuePropName="checked"
+                initialValue={true}
+              >
+                <Switch size="default" />
+              </Form.Item>
+            </Col>
+          </Row>
+        </Panel>
+      </Collapse>
+    </Card>
   );
 };
