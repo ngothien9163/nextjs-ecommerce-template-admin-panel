@@ -2,6 +2,7 @@ import { Show } from "@refinedev/antd";
 import { useShow } from "@refinedev/core";
 import { Typography, Descriptions, Tag, Space, Image, Card, Progress, Divider } from "antd";
 import { useSelect } from "@refinedev/antd";
+import { SEODisplay } from "../../components/seo-display";
 
 const { Title, Text } = Typography;
 
@@ -117,115 +118,7 @@ export const ProductShow = () => {
 
       {/* Thông tin SEO */}
       {record?.seo_data && (
-        <Card title="Thông tin SEO" style={{ marginBottom: '24px' }}>
-          <Descriptions column={2}>
-            <Descriptions.Item label="Điểm SEO tổng thể">
-              <div>
-                <Text strong style={{ 
-                  color: record.seo_data.seo_score >= 80 ? '#52c41a' : 
-                         record.seo_data.seo_score >= 60 ? '#faad14' : '#ff4d4f' 
-                }}>
-                  {record.seo_data.seo_score || 0}/100
-                </Text>
-                <Progress 
-                  percent={record.seo_data.seo_score || 0} 
-                  size="small" 
-                  strokeColor={record.seo_data.seo_score >= 80 ? '#52c41a' : 
-                              record.seo_data.seo_score >= 60 ? '#faad14' : '#ff4d4f'}
-                  style={{ marginTop: '8px' }}
-                />
-              </div>
-            </Descriptions.Item>
-            <Descriptions.Item label="Độ khó từ khóa">
-              {record.seo_data.keyword_difficulty ? (
-                <Text>{record.seo_data.keyword_difficulty}/100</Text>
-              ) : (
-                'Chưa cập nhật'
-              )}
-            </Descriptions.Item>
-            <Descriptions.Item label="Lượt tìm kiếm">
-              {record.seo_data.search_volume ? (
-                <Text>{record.seo_data.search_volume.toLocaleString()} lượt/tháng</Text>
-              ) : (
-                'Chưa cập nhật'
-              )}
-            </Descriptions.Item>
-            <Descriptions.Item label="Thời gian tải trang">
-              {record.seo_data.page_load_time ? (
-                <Text>{record.seo_data.page_load_time}s</Text>
-              ) : (
-                'Chưa cập nhật'
-              )}
-            </Descriptions.Item>
-            <Descriptions.Item label="Điểm thân thiện mobile">
-              {record.seo_data.mobile_friendly_score ? (
-                <Text>{record.seo_data.mobile_friendly_score}/100</Text>
-              ) : (
-                'Chưa cập nhật'
-              )}
-            </Descriptions.Item>
-            <Descriptions.Item label="Điểm accessibility">
-              {record.seo_data.accessibility_score ? (
-                <Text>{record.seo_data.accessibility_score}/100</Text>
-              ) : (
-                'Chưa cập nhật'
-              )}
-            </Descriptions.Item>
-          </Descriptions>
-
-          <Divider />
-
-          {/* Meta tags */}
-          <div>
-            <Title level={5}>Meta Tags</Title>
-            <Descriptions column={1}>
-              <Descriptions.Item label="Meta Title">
-                {record.seo_data.page_title || 'Chưa cập nhật'}
-              </Descriptions.Item>
-              <Descriptions.Item label="Meta Description">
-                {record.seo_data.meta_description || 'Chưa cập nhật'}
-              </Descriptions.Item>
-              <Descriptions.Item label="Meta Keywords">
-                {record.seo_data.meta_keywords && record.seo_data.meta_keywords.length > 0 ? (
-                  <Space wrap>
-                    {record.seo_data.meta_keywords.map((keyword: string, index: number) => (
-                      <Tag key={index} color="blue">{keyword}</Tag>
-                    ))}
-                  </Space>
-                ) : (
-                  'Chưa cập nhật'
-                )}
-              </Descriptions.Item>
-            </Descriptions>
-          </div>
-
-          {/* Open Graph */}
-          {(record.seo_data.og_title || record.seo_data.og_description) && (
-            <>
-              <Divider />
-              <div>
-                <Title level={5}>Open Graph</Title>
-                <Descriptions column={1}>
-                  {record.seo_data.og_title && (
-                    <Descriptions.Item label="OG Title">
-                      {record.seo_data.og_title}
-                    </Descriptions.Item>
-                  )}
-                  {record.seo_data.og_description && (
-                    <Descriptions.Item label="OG Description">
-                      {record.seo_data.og_description}
-                    </Descriptions.Item>
-                  )}
-                  {record.seo_data.og_image && (
-                    <Descriptions.Item label="OG Image">
-                      <Image width={100} src={record.seo_data.og_image} alt="OG Image" />
-                    </Descriptions.Item>
-                  )}
-                </Descriptions>
-              </div>
-            </>
-          )}
-        </Card>
+        <SEODisplay seoData={record.seo_data} showAdvanced={true} />
       )}
 
       {/* Thông tin đánh giá */}

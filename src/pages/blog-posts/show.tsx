@@ -3,6 +3,7 @@ import { Show } from '@refinedev/antd';
 import { useOne , useShow } from '@refinedev/core';
 import { Descriptions, Card, Tag, Switch, Row, Col, Typography, Space } from 'antd';
 import { BlogPost, BlogCategory, Profile } from '../../lib/supabase';
+import { SEODisplay } from '../../components/seo-display';
 
 const { Title, Text } = Typography;
 
@@ -136,6 +137,11 @@ export const BlogPostShow: React.FC = () => {
           </Descriptions.Item>
         </Descriptions>
       </Card>
+
+      {/* Thông tin SEO */}
+      {blogPost.seo_data && (
+        <SEODisplay seoData={blogPost.seo_data} showAdvanced={true} />
+      )}
 
       <Card title="Thông tin hệ thống">
         <Descriptions column={2} bordered>

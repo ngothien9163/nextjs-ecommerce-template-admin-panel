@@ -3,6 +3,7 @@ import { Create, useForm } from '@refinedev/antd';
 import { Form, Input, Switch, InputNumber, Select, Upload, Button, Row, Col, Divider, Card, Typography } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import { Product } from '../../lib/supabase';
+import { SEOForm } from '../../components/seo-form';
 
 const { TextArea } = Input;
 const { Title } = Typography;
@@ -231,87 +232,7 @@ export const ProductCreate: React.FC = () => {
         </Card>
 
         {/* Thông tin SEO */}
-        <Card title="Thông tin SEO" style={{ marginBottom: '24px' }}>
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                label="Meta Title"
-                name={['seo_data', 'page_title']}
-              >
-                <Input placeholder="Tiêu đề trang cho SEO" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                label="Meta Description"
-                name={['seo_data', 'meta_description']}
-              >
-                <TextArea rows={3} placeholder="Mô tả meta cho SEO" />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                label="Meta Keywords"
-                name={['seo_data', 'meta_keywords']}
-              >
-                <Select
-                  mode="tags"
-                  placeholder="Nhập từ khóa SEO"
-                  style={{ width: '100%' }}
-                />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                label="Canonical URL"
-                name={['seo_data', 'canonical_url']}
-              >
-                <Input placeholder="https://example.com/product" />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                label="Open Graph Title"
-                name={['seo_data', 'og_title']}
-              >
-                <Input placeholder="Tiêu đề Open Graph" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                label="Open Graph Description"
-                name={['seo_data', 'og_description']}
-              >
-                <TextArea rows={3} placeholder="Mô tả Open Graph" />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                label="Twitter Title"
-                name={['seo_data', 'twitter_title']}
-              >
-                <Input placeholder="Tiêu đề Twitter" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                label="Twitter Description"
-                name={['seo_data', 'twitter_description']}
-              >
-                <TextArea rows={3} placeholder="Mô tả Twitter" />
-              </Form.Item>
-            </Col>
-          </Row>
-        </Card>
+        <SEOForm form={formProps} />
 
         {/* Mô tả sản phẩm */}
         <Card title="Mô tả sản phẩm" style={{ marginBottom: '24px' }}>

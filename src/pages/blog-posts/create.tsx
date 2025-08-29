@@ -3,6 +3,7 @@ import { Create, useForm, useSelect } from '@refinedev/antd';
 import MDEditor from '@uiw/react-md-editor';
 import { Form, Input, Select, Switch, InputNumber, Card, Row, Col, Divider, Typography, DatePicker } from 'antd';
 import { BlogPost, BlogCategory, Profile } from '../../lib/supabase';
+import { SEOForm } from '../../components/seo-form';
 
 const { TextArea } = Input;
 const { Title } = Typography;
@@ -152,7 +153,7 @@ export const BlogPostCreate: React.FC = () => {
           </Row>
         </Card>
 
-        <Card title="Lịch xuất bản">
+        <Card title="Lịch xuất bản" style={{ marginBottom: 16 }}>
           <Form.Item
             label="Thời gian xuất bản"
             name="published_at"
@@ -160,6 +161,9 @@ export const BlogPostCreate: React.FC = () => {
             <DatePicker showTime style={{ width: '100%' }} placeholder="Chọn thời gian xuất bản" />
           </Form.Item>
         </Card>
+
+        {/* Thông tin SEO */}
+        <SEOForm form={formProps} />
       </Form>
     </Create>
   );
