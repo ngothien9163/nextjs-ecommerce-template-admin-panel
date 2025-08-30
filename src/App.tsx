@@ -15,6 +15,9 @@ import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
 import { ColorModeContextProvider } from "./contexts/color-mode";
 import { dataProvider as customDataProvider } from "./lib/dataProvider";
 
+// Import CSS chung
+import "./styles/form-optimization.css";
+
 // Import our custom pages
 import { CategoryList } from "./pages/categories";
 import { CategoryCreate } from "./pages/categories/create";
@@ -25,6 +28,7 @@ import { ProductList } from "./pages/products/list";
 import { ProductCreate } from "./pages/products/create";
 import { ProductEdit } from "./pages/products/edit";
 import { ProductShow } from "./pages/products/show";
+import { TestProductEdit } from "./pages/products/test-edit";
 
 import { ProfileList } from "./pages/profiles";
 import { ProfileCreate } from "./pages/profiles/create";
@@ -35,6 +39,16 @@ import { BlogPostList } from "./pages/blog-posts";
 import { BlogPostCreate } from "./pages/blog-posts/create";
 import { BlogPostEdit } from "./pages/blog-posts/edit";
 import { BlogPostShow } from "./pages/blog-posts/show";
+
+import { BlogCategoryList } from "./pages/blog-categories";
+import { BlogCategoryCreate } from "./pages/blog-categories/create";
+import { BlogCategoryEdit } from "./pages/blog-categories/edit";
+import { BlogCategoryShow } from "./pages/blog-categories/show";
+
+import { TagList } from "./pages/tags";
+import { TagCreate } from "./pages/tags/create";
+import { TagEdit } from "./pages/tags/edit";
+import { TagShow } from "./pages/tags/show";
 
 import { OrderList } from "./pages/orders";
 import { OrderCreate } from "./pages/orders/create";
@@ -103,6 +117,28 @@ function App() {
                 },
               },
               {
+                name: "blog-categories",
+                list: "/blog-categories",
+                create: "/blog-categories/create",
+                edit: "/blog-categories/edit/:id",
+                show: "/blog-categories/show/:id",
+                meta: {
+                  canDelete: true,
+                  label: "Danh mục blog",
+                },
+              },
+              {
+                name: "tags",
+                list: "/tags",
+                create: "/tags/create",
+                edit: "/tags/edit/:id",
+                show: "/tags/show/:id",
+                meta: {
+                  canDelete: true,
+                  label: "Tags",
+                },
+              },
+              {
                 name: "orders",
                 list: "/orders",
                 create: "/orders/create",
@@ -152,6 +188,7 @@ function App() {
                   <Route path="create" element={<ProductCreate />} />
                   <Route path="edit/:id" element={<ProductEdit />} />
                   <Route path="show/:id" element={<ProductShow />} />
+                  <Route path="test-edit/:id" element={<TestProductEdit />} />
                 </Route>
                 <Route path="/profiles">
                   <Route index element={<ProfileList />} />
@@ -164,6 +201,18 @@ function App() {
                   <Route path="create" element={<BlogPostCreate />} />
                   <Route path="edit/:id" element={<BlogPostEdit />} />
                   <Route path="show/:id" element={<BlogPostShow />} />
+                </Route>
+                <Route path="/blog-categories">
+                  <Route index element={<BlogCategoryList />} />
+                  <Route path="create" element={<BlogCategoryCreate />} />
+                  <Route path="edit/:id" element={<BlogCategoryEdit />} />
+                  <Route path="show/:id" element={<BlogCategoryShow />} />
+                </Route>
+                <Route path="/tags">
+                  <Route index element={<TagList />} />
+                  <Route path="create" element={<TagCreate />} />
+                  <Route path="edit/:id" element={<TagEdit />} />
+                  <Route path="show/:id" element={<TagShow />} />
                 </Route>
                 <Route path="/orders">
                   <Route index element={<OrderList />} />

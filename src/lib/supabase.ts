@@ -50,11 +50,10 @@ export interface Category {
   slug: string;
   description?: string;
   parent_id?: string;
-  image_url?: string;
+  featured_image_id?: string;
+  product_count: number;
   is_active: boolean;
   sort_order: number;
-  meta_title?: string;
-  meta_description?: string;
   created_at: string;
   updated_at: string;
 }
@@ -237,6 +236,8 @@ export interface Product {
   updated_at: string;
   // SEO data from seo_pages table
   seo_data?: SEOPage;
+  // Joined category data
+  categories?: Category;
 }
 
 export interface ProductVariant {

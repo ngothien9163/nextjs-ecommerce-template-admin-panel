@@ -1,5 +1,5 @@
 import { Show } from "@refinedev/antd";
-import { useShow } from "@refinedev/core";
+import { useShow } from '@refinedev/core';
 import { Typography, Descriptions, Tag, Space, Image, Card, Progress, Divider } from "antd";
 import { useSelect } from "@refinedev/antd";
 import { SEODisplay } from "../../components/seo-display";
@@ -11,16 +11,8 @@ export const ProductShow = () => {
   const { data, isLoading } = queryResult;
   const record = data?.data;
 
-  const { selectProps: categorySelectProps } = useSelect({
-    resource: "categories",
-    optionLabel: "name",
-    optionValue: "id",
-  });
-
-  // Tìm tên danh mục từ options
-  const categoryName = categorySelectProps.options?.find(
-    (cat: any) => cat.value === record?.category_id
-  )?.label || "N/A";
+  // Get category name from the joined data
+  const categoryName = record?.categories?.name || "N/A";
 
   return (
     <Show isLoading={isLoading}>

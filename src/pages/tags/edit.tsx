@@ -1,13 +1,13 @@
 import React from 'react';
-import { Create, useForm } from '@refinedev/antd';
-import { Form, Input, Switch, Card, Row, Col, Space, Tooltip } from 'antd';
-import { InfoCircleOutlined, FileTextOutlined } from '@ant-design/icons';
-import { BlogCategory } from '../../lib/supabase';
+import { Edit, useForm } from '@refinedev/antd';
+import { Form, Input, Select, Switch, Card, Row, Col, Space, Tooltip } from 'antd';
+import { InfoCircleOutlined, TagsOutlined } from '@ant-design/icons';
+import { Tag } from '../../lib/supabase';
 
 const { TextArea } = Input;
 
-export const BlogCategoryCreate: React.FC = () => {
-  const { formProps, saveButtonProps } = useForm<BlogCategory>();
+export const TagEdit: React.FC = () => {
+  const { formProps, saveButtonProps } = useForm<Tag>();
 
   const renderInfoIcon = (tooltip: string) => (
     <Tooltip title={tooltip} placement="top">
@@ -16,13 +16,13 @@ export const BlogCategoryCreate: React.FC = () => {
   );
 
   return (
-    <Create saveButtonProps={saveButtonProps}>
+    <Edit saveButtonProps={saveButtonProps}>
       <Form {...formProps} layout="vertical">
         <Card 
           title={
             <Space>
-              <FileTextOutlined style={{ color: '#13c2c2' }} />
-              <span>Thông tin danh mục blog</span>
+              <TagsOutlined style={{ color: '#722ed1' }} />
+              <span>Chỉnh sửa tag</span>
             </Space>
           }
           style={{ marginBottom: '24px' }}
@@ -32,14 +32,14 @@ export const BlogCategoryCreate: React.FC = () => {
               <Form.Item
                 label={
                   <Space>
-                    <span>Tên danh mục</span>
-                    {renderInfoIcon('Tên hiển thị của danh mục blog, sẽ hiển thị trên website')}
+                    <span>Tên tag</span>
+                    {renderInfoIcon('Tên hiển thị của tag, ví dụ: "laptop", "gaming", "apple"')}
                   </Space>
                 }
                 name="name"
-                rules={[{ required: true, message: 'Vui lòng nhập tên danh mục!' }]}
+                rules={[{ required: true, message: 'Vui lòng nhập tên tag!' }]}
               >
-                <Input placeholder="Nhập tên danh mục blog" size="large" />
+                <Input placeholder="Nhập tên tag" size="large" />
               </Form.Item>
             </Col>
             <Col span={12}>
@@ -47,13 +47,13 @@ export const BlogCategoryCreate: React.FC = () => {
                 label={
                   <Space>
                     <span>Slug</span>
-                    {renderInfoIcon('URL thân thiện SEO, tự động tạo từ tên danh mục')}
+                    {renderInfoIcon('URL thân thiện SEO, tự động tạo từ tên tag')}
                   </Space>
                 }
                 name="slug"
                 rules={[{ required: true, message: 'Vui lòng nhập slug!' }]}
               >
-                <Input placeholder="ten-danh-muc-blog" size="large" />
+                <Input placeholder="ten-tag" size="large" />
               </Form.Item>
             </Col>
           </Row>
@@ -63,28 +63,31 @@ export const BlogCategoryCreate: React.FC = () => {
               <Form.Item
                 label={
                   <Space>
-                    <span>Màu hiển thị</span>
-                    {renderInfoIcon('Màu sắc để phân biệt danh mục blog, dùng mã hex')}
+                    <span>Loại tag</span>
+                    {renderInfoIcon('Phân loại tag để quản lý và hiển thị phù hợp')}
                   </Space>
                 }
-                name="color"
-                initialValue="#3B82F6"
+                name="tag_type"
               >
-                <Input placeholder="#3B82F6" size="large" />
+                <Select size="large">
+                  <Select.Option value="general">Chung</Select.Option>
+                  <Select.Option value="product">Sản phẩm</Select.Option>
+                  <Select.Option value="blog">Blog</Select.Option>
+                  <Select.Option value="mixed">Hỗn hợp</Select.Option>
+                </Select>
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item
                 label={
                   <Space>
-                    <span>Thứ tự hiển thị</span>
-                    {renderInfoIcon('Số càng nhỏ càng hiển thị trước, dùng để sắp xếp danh mục')}
+                    <span>Màu hiển thị</span>
+                    {renderInfoIcon('Màu sắc để phân biệt tag, dùng mã hex')}
                   </Space>
                 }
-                name="sort_order"
-                initialValue={0}
+                name="color"
               >
-                <Input placeholder="0" size="large" type="number" />
+                <Input placeholder="#3B82F6" size="large" />
               </Form.Item>
             </Col>
           </Row>
@@ -93,12 +96,12 @@ export const BlogCategoryCreate: React.FC = () => {
             label={
               <Space>
                 <span>Mô tả</span>
-                {renderInfoIcon('Mô tả chi tiết về danh mục blog, giúp người đọc hiểu rõ hơn')}
+                {renderInfoIcon('Mô tả chi tiết về tag, giúp người dùng hiểu rõ hơn')}
               </Space>
             }
             name="description"
           >
-            <TextArea rows={4} placeholder="Mô tả danh mục blog" size="large" />
+            <TextArea rows={4} placeholder="Mô tả tag" size="large" />
           </Form.Item>
 
           <Row gutter={16}>
@@ -106,13 +109,13 @@ export const BlogCategoryCreate: React.FC = () => {
               <Form.Item
                 label={
                   <Space>
-                    <span>ID ảnh đại diện</span>
-                    {renderInfoIcon('ID của ảnh từ bảng media, ảnh này sẽ hiển thị cho danh mục blog')}
+                    <span>Số lần sử dụng</span>
+                    {renderInfoIcon('Số lần tag được gắn vào sản phẩm hoặc bài viết')}
                   </Space>
                 }
-                name="featured_image_id"
+                name="usage_count"
               >
-                <Input placeholder="Nhập ID ảnh từ media table" size="large" />
+                <Input placeholder="0" size="large" type="number" />
               </Form.Item>
             </Col>
             <Col span={12}>
@@ -120,12 +123,11 @@ export const BlogCategoryCreate: React.FC = () => {
                 label={
                   <Space>
                     <span>Hoạt động</span>
-                    {renderInfoIcon('Bật/tắt hiển thị danh mục blog trên website')}
+                    {renderInfoIcon('Bật/tắt hiển thị tag trên website')}
                   </Space>
                 }
                 name="is_active"
                 valuePropName="checked"
-                initialValue={true}
               >
                 <Switch />
               </Form.Item>
@@ -133,8 +135,7 @@ export const BlogCategoryCreate: React.FC = () => {
           </Row>
         </Card>
       </Form>
-    </Create>
+    </Edit>
   );
 };
 
-export default BlogCategoryCreate;

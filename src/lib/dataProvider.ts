@@ -8,7 +8,36 @@ export const dataProvider: DataProvider = {
     console.log('📊 Sorters:', sorters);
     console.log('📄 Pagination:', pagination);
     
-    let query = supabase.from(resource).select('*');
+    let query;
+    
+    // Special handling for products and blog posts to include category information
+    if (resource === 'products') {
+      query = supabase
+        .from(resource)
+        .select(`
+          *,
+          categories (
+            id,
+            name,
+            slug,
+            is_active
+          )
+        `);
+    } else if (resource === 'blog_posts') {
+      query = supabase
+        .from(resource)
+        .select(`
+          *,
+          blog_categories (
+            id,
+            name,
+            slug,
+            is_active
+          )
+        `);
+    } else {
+      query = supabase.from(resource).select('*');
+    }
 
     // Apply filters
     if (filters) {
@@ -59,15 +88,58 @@ export const dataProvider: DataProvider = {
   },
 
   getOne: async ({ resource, id }) => {
-    const { data, error } = await supabase
-      .from(resource)
-      .select('*')
-      .eq('id', id)
-      .single();
+    console.log('🔍 getOne called for resource:', resource, 'with ID:', id);
+    
+    let query;
+    
+    // Special handling for products to include category information
+    if (resource === 'products') {
+      query = supabase
+        .from(resource)
+        .select(`
+          *,
+          categories (
+            id,
+            name,
+            slug,
+            is_active
+          )
+        `)
+        .eq('id', id)
+        .single();
+    } else if (resource === 'blog_posts') {
+      query = supabase
+        .from(resource)
+        .select(`
+          *,
+          blog_categories (
+            id,
+            name,
+            slug,
+            is_active
+          )
+        `)
+        .eq('id', id)
+        .single();
+    } else {
+      query = supabase
+        .from(resource)
+        .select('*')
+        .eq('id', id)
+        .single();
+    }
+
+    const { data, error } = await query;
 
     if (error) {
+      console.error('❌ Supabase getOne error:', error);
       throw new Error(error.message);
     }
+
+    console.log(`✅ Successfully fetched ${resource} with ID: ${id}`);
+    console.log('📊 Data:', data);
+    console.log('📊 Data type:', typeof data);
+    console.log('📊 Data keys:', data ? Object.keys(data) : 'null');
 
     return {
       data,

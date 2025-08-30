@@ -23,13 +23,32 @@ DROP TRIGGER IF EXISTS trigger_shipping_methods_updated_at ON shipping_methods;
 DROP TRIGGER IF EXISTS trigger_payment_methods_updated_at ON payment_methods;
 DROP TRIGGER IF EXISTS trigger_notifications_updated_at ON notifications;
 
+-- Xóa triggers cho Materialized Views
+DROP TRIGGER IF EXISTS trigger_refresh_categories_mv ON categories;
+DROP TRIGGER IF EXISTS trigger_refresh_categories_mv_products ON products;
+DROP TRIGGER IF EXISTS trigger_refresh_categories_mv_media ON media;
+DROP TRIGGER IF EXISTS trigger_refresh_categories_materialized_views ON categories;
+DROP TRIGGER IF EXISTS trigger_refresh_categories_materialized_views ON products;
+DROP TRIGGER IF EXISTS trigger_refresh_categories_materialized_views ON media;
+
 -- Xóa tất cả functions
 DROP FUNCTION IF EXISTS handle_new_user() CASCADE;
 DROP FUNCTION IF EXISTS update_updated_at_column() CASCADE;
+DROP FUNCTION IF EXISTS update_category_product_count() CASCADE;
+DROP FUNCTION IF EXISTS refresh_categories_materialized_views() CASCADE;
+DROP FUNCTION IF EXISTS trigger_refresh_categories_materialized_views() CASCADE;
+DROP FUNCTION IF EXISTS refresh_categories_dashboard() CASCADE;
+DROP FUNCTION IF EXISTS trigger_refresh_categories_dashboard() CASCADE;
 
--- Xóa tất cả views (nếu có)
+-- Xóa tất cả views và materialized views (nếu có)
 DROP VIEW IF EXISTS seo_overview_advanced CASCADE;
 DROP VIEW IF EXISTS seo_improvement_detailed CASCADE;
+
+-- Xóa Materialized Views
+DROP MATERIALIZED VIEW IF EXISTS categories_with_images CASCADE;
+DROP MATERIALIZED VIEW IF EXISTS categories_with_stats CASCADE;
+DROP MATERIALIZED VIEW IF EXISTS categories_display CASCADE;
+DROP MATERIALIZED VIEW IF EXISTS categories_dashboard CASCADE;
 
 -- Xóa tất cả tables theo thứ tự dependencies
 DROP TABLE IF EXISTS order_items CASCADE;
@@ -57,6 +76,10 @@ DROP TABLE IF EXISTS payment_methods CASCADE;
 DROP TABLE IF EXISTS notifications CASCADE;
 DROP TABLE IF EXISTS tags CASCADE;
 DROP TABLE IF EXISTS media CASCADE;
+
+-- Xóa SEO tables
+DROP TABLE IF EXISTS seo_pages CASCADE;
+DROP TABLE IF EXISTS seo_page_types CASCADE;
 
 -- Xóa tất cả indexes (nếu có)
 DROP INDEX IF EXISTS idx_profiles_user_id CASCADE;
@@ -153,6 +176,33 @@ DROP INDEX IF EXISTS idx_blog_comments_post_id CASCADE;
 DROP INDEX IF EXISTS idx_blog_comments_is_approved CASCADE;
 DROP INDEX IF EXISTS idx_blog_comments_is_spam CASCADE;
 
+-- Xóa indexes cho Materialized Views
+DROP INDEX IF EXISTS idx_categories_with_images_active_sort CASCADE;
+DROP INDEX IF EXISTS idx_categories_with_images_slug CASCADE;
+DROP INDEX IF EXISTS idx_categories_with_images_parent_id CASCADE;
+DROP INDEX IF EXISTS idx_categories_with_stats_active_sort CASCADE;
+DROP INDEX IF EXISTS idx_categories_with_stats_slug CASCADE;
+DROP INDEX IF EXISTS idx_categories_with_stats_product_count CASCADE;
+DROP INDEX IF EXISTS idx_categories_display_sort CASCADE;
+DROP INDEX IF EXISTS idx_categories_display_slug CASCADE;
+DROP INDEX IF EXISTS idx_categories_display_product_count CASCADE;
+DROP INDEX IF EXISTS idx_categories_dashboard_active_sort CASCADE;
+DROP INDEX IF EXISTS idx_categories_dashboard_slug CASCADE;
+
+-- Xóa indexes cho SEO tables
+DROP INDEX IF EXISTS idx_seo_pages_url CASCADE;
+DROP INDEX IF EXISTS idx_seo_pages_page_type_id CASCADE;
+DROP INDEX IF EXISTS idx_seo_pages_reference_type CASCADE;
+DROP INDEX IF EXISTS idx_seo_pages_is_active CASCADE;
+DROP INDEX IF EXISTS idx_seo_pages_seo_score CASCADE;
+DROP INDEX IF EXISTS idx_seo_page_types_name CASCADE;
+DROP INDEX IF EXISTS idx_seo_page_types_is_active CASCADE;
+
+-- Xóa indexes mới cho categories (sau khi tối ưu)
+DROP INDEX IF EXISTS idx_categories_featured_image_id CASCADE;
+DROP INDEX IF EXISTS idx_categories_active_sort CASCADE;
+DROP INDEX IF EXISTS idx_categories_active_featured CASCADE;
+
 -- Xóa tất cả sequences (nếu có)
 DROP SEQUENCE IF EXISTS profiles_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS user_addresses_id_seq CASCADE;
@@ -180,6 +230,10 @@ DROP SEQUENCE IF EXISTS blog_posts_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS blog_post_tags_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS blog_comments_id_seq CASCADE;
 
+-- Xóa sequences cho SEO tables
+DROP SEQUENCE IF EXISTS seo_pages_id_seq CASCADE;
+DROP SEQUENCE IF EXISTS seo_page_types_id_seq CASCADE;
+
 -- Xóa tất cả types (nếu có)
 DROP TYPE IF EXISTS gender_type CASCADE;
 DROP TYPE IF EXISTS address_type CASCADE;
@@ -192,6 +246,19 @@ DROP TYPE IF EXISTS notification_type CASCADE;
 -- Xóa tất cả schemas (nếu có) - CHÚ Ý: KHÔNG XÓA auth schema của Supabase
 -- DROP SCHEMA IF EXISTS public CASCADE;
 -- CREATE SCHEMA public;
+
+-- =====================================================
+-- THÔNG BÁO HOÀN THÀNH XÓA
+-- =====================================================
+SELECT 
+    '=== HOÀN THÀNH XÓA TẤT CẢ ĐỐI TƯỢNG CŨ ===' as info,
+    '✅ Đã xóa tất cả triggers' as step1,
+    '✅ Đã xóa tất cả functions' as step2,
+    '✅ Đã xóa tất cả views và materialized views' as step3,
+    '✅ Đã xóa tất cả tables' as step4,
+    '✅ Đã xóa tất cả indexes' as step5,
+    '✅ Đã xóa tất cả sequences' as step6,
+    '✅ Sẵn sàng tạo mới database' as step7;
 
 -- =====================================================
 -- BẮT ĐẦU TẠO MỚI TẤT CẢ ĐỐI TƯỢNG
@@ -284,6 +351,7 @@ CREATE TABLE categories (
     description TEXT,                                               -- Mô tả danh mục
     parent_id UUID REFERENCES categories(id),                       -- Danh mục cha (cho danh mục con)
     featured_image_id UUID REFERENCES media(id),                   -- Hình ảnh đại diện danh mục
+    product_count INTEGER DEFAULT 0,                               -- Số lượng sản phẩm trong danh mục (được update tự động)
     is_active BOOLEAN DEFAULT true,                                -- Danh mục có hoạt động hay không
     sort_order INTEGER DEFAULT 0,                                  -- Thứ tự sắp xếp hiển thị
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),             -- Thời gian tạo danh mục
@@ -652,6 +720,123 @@ CREATE TABLE notifications (
 );
 
 -- =====================================================
+-- 22. BẢNG SEO_PAGE_TYPES (LOẠI TRANG SEO)
+-- =====================================================
+CREATE TABLE seo_page_types (
+    id SERIAL PRIMARY KEY,
+    name TEXT UNIQUE NOT NULL,                    -- 'page', 'product', 'category', 'user', 'system'
+    display_name TEXT NOT NULL,                   -- 'Trang tĩnh', 'Sản phẩm', 'Danh mục', 'Người dùng', 'Hệ thống'
+    description TEXT,                             -- Mô tả chi tiết loại trang
+    is_active BOOLEAN DEFAULT true,               -- Trạng thái hoạt động
+    sort_order INTEGER DEFAULT 0,                 -- Thứ tự sắp xếp
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- =====================================================
+-- 23. BẢNG SEO_PAGES (THÔNG TIN SEO CHO TỪNG TRANG)
+-- =====================================================
+CREATE TABLE seo_pages (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    
+    -- Thông tin cơ bản
+    page_type_id INTEGER NOT NULL REFERENCES seo_page_types(id),
+    page_url TEXT UNIQUE NOT NULL,                -- URL của trang (ví dụ: /shop-details/iphone-15)
+    page_title TEXT NOT NULL,                     -- Tiêu đề trang (title tag)
+    meta_description TEXT,                        -- Meta description
+    meta_keywords TEXT[],                         -- Mảng từ khóa
+    
+    -- Thông tin tham chiếu
+    reference_type TEXT NOT NULL,                 -- 'product', 'category', 'user', 'page', 'system', 'blog'
+    reference_id UUID,                            -- ID của bảng tham chiếu (products.id, categories.id, etc.)
+    
+    -- Open Graph (Enhanced 2025+)
+    og_title TEXT,                                -- Open Graph title
+    og_description TEXT,                          -- Open Graph description
+    og_image TEXT,                                -- Open Graph image URL
+    og_type TEXT DEFAULT 'website',               -- Open Graph type
+    og_site_name TEXT,                            -- Tên website
+    og_locale TEXT DEFAULT 'vi_VN',               -- Ngôn ngữ
+    og_audio TEXT,                                -- Audio file URL
+    og_video TEXT,                                -- Video file URL
+    
+    -- Twitter Card (Enhanced 2025+)
+    twitter_card TEXT DEFAULT 'summary_large_image',
+    twitter_title TEXT,                           -- Twitter title
+    twitter_description TEXT,                     -- Twitter description
+    twitter_image TEXT,                           -- Twitter image URL
+    twitter_creator TEXT,                         -- Twitter creator handle
+    twitter_site TEXT,                            -- Twitter site handle
+    
+    -- Schema.org Structured Data
+    schema_markup JSONB,                          -- JSON-LD structured data
+    
+    -- Core Web Vitals 2.0 (2025+)
+    core_web_vitals JSONB,                        -- LCP, FID, CLS, INP, TTFB
+    
+    -- AI & ML SEO (2025+)
+    ai_ml_metrics JSONB,                          -- AI relevance score, ML ranking factors
+    
+    -- E-E-A-T (2025+)
+    eeat_metrics JSONB,                           -- Experience, Expertise, Authoritativeness, Trust
+    
+    -- Voice & Visual Search (2025+)
+    voice_visual_metrics JSONB,                   -- Voice search optimization, visual search data
+    
+    -- Privacy & Compliance (2025+)
+    privacy_compliance JSONB,                     -- GDPR, CCPA, privacy signals
+    
+    -- Future-proof fields (2026+)
+    future_metrics JSONB,                         -- Quantum SEO, Neural networks, BCI, Spatial computing
+    
+    -- Thông tin kỹ thuật (Enhanced 2025+)
+    canonical_url TEXT,                           -- Canonical URL
+    robots_directive TEXT DEFAULT 'index,follow', -- Robots meta tag
+    hreflang JSONB,                               -- Hreflang tags cho đa ngôn ngữ
+    language TEXT DEFAULT 'vi',                   -- Ngôn ngữ chính của trang
+    charset TEXT DEFAULT 'UTF-8',                 -- Character encoding
+    viewport TEXT DEFAULT 'width=device-width, initial-scale=1', -- Viewport meta tag
+    
+    -- Thống kê và phân tích
+    seo_score INTEGER DEFAULT 0,                  -- Điểm SEO tổng thể (0-100)
+    keyword_difficulty INTEGER,                   -- Độ khó từ khóa (0-100)
+    search_volume INTEGER,                        -- Lượt tìm kiếm hàng tháng
+    
+    -- Performance metrics (2025+)
+    page_load_time DECIMAL(8,3),                  -- Thời gian tải trang (giây)
+    mobile_friendly_score INTEGER,                -- Điểm thân thiện mobile (0-100)
+    accessibility_score INTEGER,                  -- Điểm accessibility (0-100)
+    core_web_vitals_score INTEGER,                -- Điểm Core Web Vitals (0-100)
+    
+    -- Social metrics (2025+)
+    social_shares INTEGER DEFAULT 0,              -- Số lượt chia sẻ mạng xã hội
+    social_engagement DECIMAL(8,2) DEFAULT 0,     -- Tỷ lệ tương tác mạng xã hội
+    social_click_through_rate DECIMAL(5,2),       -- Tỷ lệ click qua mạng xã hội
+    
+    -- Content metrics (2025+)
+    content_length INTEGER,                       -- Độ dài nội dung (số ký tự)
+    content_readability_score INTEGER,            -- Điểm khả năng đọc nội dung (0-100)
+    content_freshness_score INTEGER,              -- Điểm độ mới của nội dung (0-100)
+    
+    -- Link metrics (2025+)
+    internal_links_count INTEGER DEFAULT 0,       -- Số liên kết nội bộ
+    external_links_count INTEGER DEFAULT 0,       -- Số liên kết ngoài
+    broken_links_count INTEGER DEFAULT 0,          -- Số liên kết bị hỏng
+    
+    -- Image optimization (2025+)
+    image_optimization_score INTEGER,             -- Điểm tối ưu hóa hình ảnh (0-100)
+    
+    -- Trạng thái và flags
+    is_active BOOLEAN DEFAULT true,               -- Trạng thái hoạt động
+    is_featured BOOLEAN DEFAULT false,            -- Trang SEO nổi bật
+    is_indexed BOOLEAN DEFAULT true,              -- Được index bởi search engine
+    is_ssl_secure BOOLEAN DEFAULT true,           -- Bảo mật SSL
+    
+    -- Timestamps
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- =====================================================
 -- TẠO INDEXES CHO HIỆU SUẤT
 -- =====================================================
 
@@ -668,6 +853,9 @@ CREATE INDEX idx_categories_slug ON categories(slug);
 CREATE INDEX idx_categories_parent_id ON categories(parent_id);
 CREATE INDEX idx_categories_is_active ON categories(is_active);
 CREATE INDEX idx_categories_sort_order ON categories(sort_order);
+CREATE INDEX idx_categories_featured_image_id ON categories(featured_image_id);
+CREATE INDEX idx_categories_active_sort ON categories(is_active, sort_order);
+CREATE INDEX idx_categories_active_featured ON categories(is_active, featured_image_id);
 
 -- Indexes cho bảng products
 CREATE INDEX idx_products_slug ON products(slug);
@@ -800,6 +988,26 @@ CREATE INDEX idx_notifications_type ON notifications(type);
 CREATE INDEX idx_notifications_is_read ON notifications(is_read);
 CREATE INDEX idx_notifications_created_at ON notifications(created_at);
 
+-- Indexes cho bảng seo_page_types
+CREATE INDEX idx_seo_page_types_name ON seo_page_types(name);
+CREATE INDEX idx_seo_page_types_is_active ON seo_page_types(is_active);
+
+-- Indexes cho bảng seo_pages
+CREATE INDEX idx_seo_pages_url ON seo_pages(page_url);
+CREATE INDEX idx_seo_pages_page_type_id ON seo_pages(page_type_id);
+CREATE INDEX idx_seo_pages_reference_type ON seo_pages(reference_type);
+CREATE INDEX idx_seo_pages_is_active ON seo_pages(is_active);
+CREATE INDEX idx_seo_pages_seo_score ON seo_pages(seo_score DESC);
+CREATE INDEX idx_seo_pages_meta_keywords ON seo_pages USING GIN(meta_keywords);
+CREATE INDEX idx_seo_pages_schema_markup ON seo_pages USING GIN(schema_markup);
+CREATE INDEX idx_seo_pages_core_web_vitals ON seo_pages USING GIN(core_web_vitals);
+CREATE INDEX idx_seo_pages_ai_ml_metrics ON seo_pages USING GIN(ai_ml_metrics);
+CREATE INDEX idx_seo_pages_eeat_metrics ON seo_pages USING GIN(eeat_metrics);
+CREATE INDEX idx_seo_pages_voice_visual_metrics ON seo_pages USING GIN(voice_visual_metrics);
+CREATE INDEX idx_seo_pages_privacy_compliance ON seo_pages USING GIN(privacy_compliance);
+CREATE INDEX idx_seo_pages_future_metrics ON seo_pages USING GIN(future_metrics);
+CREATE INDEX idx_seo_pages_hreflang ON seo_pages USING GIN(hreflang);
+
 -- =====================================================
 -- TẠO TRIGGERS CHO AUTO-UPDATE
 -- =====================================================
@@ -810,6 +1018,48 @@ RETURNS TRIGGER AS $$
 BEGIN
     NEW.updated_at = NOW();
     RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function tự động cập nhật product_count trong categories
+CREATE OR REPLACE FUNCTION update_category_product_count()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Nếu là INSERT hoặc UPDATE
+    IF TG_OP = 'INSERT' OR TG_OP = 'UPDATE' THEN
+        -- Cập nhật product_count cho category của sản phẩm mới
+        UPDATE categories 
+        SET product_count = (
+            SELECT COUNT(*) 
+            FROM products 
+            WHERE category_id = NEW.category_id AND is_active = true
+        )
+        WHERE id = NEW.category_id;
+        
+        -- Nếu có category_id cũ (trong trường hợp UPDATE)
+        IF TG_OP = 'UPDATE' AND OLD.category_id IS DISTINCT FROM NEW.category_id THEN
+            UPDATE categories 
+            SET product_count = (
+                SELECT COUNT(*) 
+                FROM products 
+                WHERE category_id = OLD.category_id AND is_active = true
+            )
+            WHERE id = OLD.category_id;
+        END IF;
+    END IF;
+    
+    -- Nếu là DELETE
+    IF TG_OP = 'DELETE' THEN
+        UPDATE categories 
+        SET product_count = (
+            SELECT COUNT(*) 
+            FROM products 
+            WHERE category_id = OLD.category_id AND is_active = true
+        )
+        WHERE id = OLD.category_id;
+    END IF;
+    
+    RETURN COALESCE(NEW, OLD);
 END;
 $$ LANGUAGE plpgsql;
 
@@ -833,6 +1083,12 @@ CREATE TRIGGER trigger_products_updated_at
     BEFORE UPDATE ON products
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
+
+-- Triggers để tự động cập nhật product_count trong categories
+CREATE TRIGGER trigger_products_category_count
+    AFTER INSERT OR UPDATE OR DELETE ON products
+    FOR EACH ROW
+    EXECUTE FUNCTION update_category_product_count();
 
 CREATE TRIGGER trigger_product_variants_updated_at
     BEFORE UPDATE ON product_variants
@@ -926,6 +1182,12 @@ CREATE TRIGGER trigger_notifications_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
+-- Triggers cho bảng seo_pages
+CREATE TRIGGER trigger_seo_pages_updated_at
+    BEFORE UPDATE ON seo_pages
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
 -- =====================================================
 -- TẠO TRIGGER TỰ ĐỘNG TẠO PROFILE KHI USER ĐĂNG KÝ
 -- =====================================================
@@ -980,13 +1242,15 @@ CREATE TRIGGER on_auth_user_created
 -- 22. shipping_methods (12 cột) - Phương thức vận chuyển
 -- 23. payment_methods (8 cột) - Phương thức thanh toán
 -- 24. notifications (8 cột) - Thông báo
+-- 25. seo_page_types (6 cột) - Loại trang SEO
+-- 26. seo_pages (50+ cột) - Thông tin SEO cho từng trang
 -- =====================================================
 -- LƯU Ý: Table product_images đã được xóa, thay thế bằng hệ thống media tập trung
 -- Ưu điểm: Quản lý tập trung, tái sử dụng, SEO tốt hơn, dễ bảo trì
 
 
 -- =====================================================
--- HOÀN THÀNH TẠO TẤT CẢ TABLES (26 TABLES)
+-- HOÀN THÀNH TẠO TẤT CẢ TABLES (28 TABLES)
 -- =====================================================
 
 -- =====================================================
@@ -1065,6 +1329,7 @@ COMMENT ON COLUMN categories.slug IS 'URL slug duy nhất cho danh mục';
 COMMENT ON COLUMN categories.description IS 'Mô tả chi tiết danh mục';
 COMMENT ON COLUMN categories.parent_id IS 'ID danh mục cha (để tạo cấu trúc phân cấp)';
 COMMENT ON COLUMN categories.featured_image_id IS 'ID tham chiếu đến bảng media cho ảnh đại diện';
+COMMENT ON COLUMN categories.product_count IS 'Số lượng sản phẩm trong danh mục (được update tự động)';
 COMMENT ON COLUMN categories.is_active IS 'Trạng thái hoạt động của danh mục';
 COMMENT ON COLUMN categories.sort_order IS 'Thứ tự sắp xếp hiển thị';
 COMMENT ON COLUMN categories.created_at IS 'Thời gian tạo danh mục';
@@ -1424,4 +1689,21 @@ COMMENT ON COLUMN seo_pages.updated_at IS 'Thời gian cập nhật trang SEO cu
 
 -- =====================================================
 -- HOÀN THÀNH THÊM COMMENTS CHO TẤT CẢ TABLES VÀ COLUMNS
+-- =====================================================
+
+-- =====================================================
+-- THÔNG BÁO HOÀN THÀNH TẠO TABLES
+-- =====================================================
+SELECT 
+    '=== HOÀN THÀNH TẠO TẤT CẢ TABLES ===' as info,
+    '✅ Đã tạo 26 tables chính' as step1,
+    '✅ Đã tạo 2 tables SEO' as step2,
+    '✅ Đã tạo 60+ indexes' as step3,
+    '✅ Đã tạo 25+ triggers' as step4,
+    '✅ Đã tạo 10+ functions' as step5,
+    '✅ Đã tạo comments cho tất cả tables' as step6,
+    '✅ Database schema đã sẵn sàng cho dữ liệu' as step7;
+
+-- =====================================================
+-- HOÀN THÀNH TẠO TẤT CẢ TABLES (28 TABLES)
 -- =====================================================

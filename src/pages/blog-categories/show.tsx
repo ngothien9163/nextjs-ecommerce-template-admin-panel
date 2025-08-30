@@ -1,5 +1,6 @@
 import React from 'react';
-import { Show, useShow } from '@refinedev/antd';
+import { Show } from '@refinedev/antd';
+import { useShow } from "@refinedev/core";
 import { Descriptions, Card, Tag, Switch, Row, Col, Typography } from 'antd';
 import { BlogCategory } from '../../lib/supabase';
 

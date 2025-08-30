@@ -1,5 +1,6 @@
 import React from 'react';
-import { Show, useShow } from '@refinedev/antd';
+import { Show } from '@refinedev/antd';
+import { useShow } from "@refinedev/core";
 import { useOne } from '@refinedev/core';
 import { Descriptions, Card, Tag, Typography, Space } from 'antd';
 import { BlogComment, BlogPost, Profile } from '../../lib/supabase';

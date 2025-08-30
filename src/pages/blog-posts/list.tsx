@@ -10,14 +10,6 @@ export const BlogPostList: React.FC = () => {
     syncWithLocation: true,
   });
 
-  const { data: categoryData, isLoading: categoryIsLoading } = useMany<BlogCategory>({
-    resource: 'blog_categories',
-    ids: tableProps?.dataSource?.map((item: any) => item.category_id).filter(Boolean) ?? [],
-    queryOptions: {
-      enabled: !!tableProps?.dataSource,
-    },
-  });
-
   const { data: authorData, isLoading: authorIsLoading } = useMany<Profile>({
     resource: 'profiles',
     ids: tableProps?.dataSource?.map((item: any) => item.author_id).filter(Boolean) ?? [],
@@ -51,12 +43,18 @@ export const BlogPostList: React.FC = () => {
       dataIndex: 'category_id',
       key: 'category_id',
       width: 150,
-      render: (value: string) => {
-        if (categoryIsLoading) return 'Đang tải...';
-        const category = categoryData?.data?.find((item) => item.id === value);
-        return category ? (
-          <Tag color="blue">{category.name}</Tag>
-        ) : '-';
+      render: (value: string, record: any) => {
+        if (record.blog_categories) {
+          return (
+            <div>
+              <Tag color="blue">{record.blog_categories.name}</Tag>
+              <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+                {record.blog_categories.slug}
+              </div>
+            </div>
+          );
+        }
+        return '-';
       },
     },
     {

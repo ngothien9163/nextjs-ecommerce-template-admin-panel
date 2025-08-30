@@ -1,90 +1,146 @@
 import React from 'react';
-import { Create, useForm } from '@refinedev/antd';
-import { Form, Input, Switch, InputNumber, Select } from 'antd';
+import { Create, useForm, useSelect } from '@refinedev/antd';
+import { Form, Input, Select, Switch, Card, Row, Col, Space, Tooltip } from 'antd';
+import { InfoCircleOutlined, FolderOutlined } from '@ant-design/icons';
 import { Category } from '../../lib/supabase';
 
 const { TextArea } = Input;
 
 export const CategoryCreate: React.FC = () => {
   const { formProps, saveButtonProps } = useForm<Category>();
+  const { selectProps: parentCategorySelectProps } = useSelect<Category>({
+    resource: 'categories',
+    optionLabel: 'name',
+    optionValue: 'id',
+  });
+
+  const renderInfoIcon = (tooltip: string) => (
+    <Tooltip title={tooltip} placement="top">
+      <InfoCircleOutlined style={{ color: '#1890ff', marginLeft: '8px' }} />
+    </Tooltip>
+  );
 
   return (
     <Create saveButtonProps={saveButtonProps}>
       <Form {...formProps} layout="vertical">
-        <Form.Item
-          label="Tên danh mục"
-          name="name"
-          rules={[{ required: true, message: 'Vui lòng nhập tên danh mục!' }]}
+        <Card 
+          title={
+            <Space>
+              <FolderOutlined style={{ color: '#52c41a' }} />
+              <span>Thông tin danh mục</span>
+            </Space>
+          }
+          style={{ marginBottom: '24px' }}
         >
-          <Input placeholder="Nhập tên danh mục" />
-        </Form.Item>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>Tên danh mục</span>
+                    {renderInfoIcon('Tên hiển thị của danh mục, sẽ hiển thị trên website')}
+                  </Space>
+                }
+                name="name"
+                rules={[{ required: true, message: 'Vui lòng nhập tên danh mục!' }]}
+              >
+                <Input placeholder="Nhập tên danh mục" size="large" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>Slug</span>
+                    {renderInfoIcon('URL thân thiện SEO, tự động tạo từ tên danh mục')}
+                  </Space>
+                }
+                name="slug"
+                rules={[{ required: true, message: 'Vui lòng nhập slug!' }]}
+              >
+                <Input placeholder="ten-danh-muc" size="large" />
+              </Form.Item>
+            </Col>
+          </Row>
 
-        <Form.Item
-          label="Slug"
-          name="slug"
-          rules={[{ required: true, message: 'Vui lòng nhập slug!' }]}
-        >
-          <Input placeholder="ten-danh-muc" />
-        </Form.Item>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>Danh mục cha</span>
+                    {renderInfoIcon('Danh mục cấp cao hơn, để tạo cấu trúc phân cấp')}
+                  </Space>
+                }
+                name="parent_id"
+              >
+                <Select 
+                  placeholder="Chọn danh mục cha (nếu có)" 
+                  {...parentCategorySelectProps} 
+                  size="large"
+                  allowClear
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>Thứ tự hiển thị</span>
+                    {renderInfoIcon('Số càng nhỏ càng hiển thị trước, dùng để sắp xếp danh mục')}
+                  </Space>
+                }
+                name="sort_order"
+                initialValue={0}
+              >
+                <Input placeholder="0" size="large" type="number" />
+              </Form.Item>
+            </Col>
+          </Row>
 
-        <Form.Item
-          label="Mô tả"
-          name="description"
-        >
-          <TextArea rows={4} placeholder="Nhập mô tả danh mục" />
-        </Form.Item>
-
-        <Form.Item
-          label="Danh mục cha"
-          name="parent_id"
-        >
-          <Select
-            placeholder="Chọn danh mục cha (nếu có)"
-            allowClear
-            showSearch
-            optionFilterProp="children"
+          <Form.Item
+            label={
+              <Space>
+                <span>Mô tả</span>
+                {renderInfoIcon('Mô tả chi tiết về danh mục, giúp khách hàng hiểu rõ hơn')}
+              </Space>
+            }
+            name="description"
           >
-            {/* Categories will be loaded here */}
-          </Select>
-        </Form.Item>
+            <TextArea rows={4} placeholder="Mô tả danh mục" size="large" />
+          </Form.Item>
 
-        <Form.Item
-          label="URL hình ảnh"
-          name="image_url"
-        >
-          <Input placeholder="https://example.com/image.jpg" />
-        </Form.Item>
-
-        <Form.Item
-          label="Thứ tự sắp xếp"
-          name="sort_order"
-          initialValue={0}
-        >
-          <InputNumber min={0} style={{ width: '100%' }} />
-        </Form.Item>
-
-        <Form.Item
-          label="Tiêu đề SEO"
-          name="meta_title"
-        >
-          <Input placeholder="Tiêu đề SEO cho danh mục" />
-        </Form.Item>
-
-        <Form.Item
-          label="Mô tả SEO"
-          name="meta_description"
-        >
-          <TextArea rows={3} placeholder="Mô tả SEO cho danh mục" />
-        </Form.Item>
-
-        <Form.Item
-          label="Trạng thái hoạt động"
-          name="is_active"
-          valuePropName="checked"
-          initialValue={true}
-        >
-          <Switch />
-        </Form.Item>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>ID ảnh đại diện</span>
+                    {renderInfoIcon('ID của ảnh từ bảng media, ảnh này sẽ hiển thị cho danh mục')}
+                  </Space>
+                }
+                name="featured_image_id"
+              >
+                <Input placeholder="Nhập ID ảnh từ media table" size="large" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>Hoạt động</span>
+                    {renderInfoIcon('Bật/tắt hiển thị danh mục trên website')}
+                  </Space>
+                }
+                name="is_active"
+                valuePropName="checked"
+                initialValue={true}
+              >
+                <Switch />
+              </Form.Item>
+            </Col>
+          </Row>
+        </Card>
       </Form>
     </Create>
   );

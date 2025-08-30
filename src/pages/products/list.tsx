@@ -57,7 +57,19 @@ export const ProductList: React.FC = () => {
           dataIndex="category_id"
           key="category_id"
           width={120}
-          render={(value: string) => value || '-'}
+          render={(value: string, record: any) => {
+            if (record.categories) {
+              return (
+                <div>
+                  <div style={{ fontWeight: 'bold' }}>{record.categories.name}</div>
+                  <div style={{ fontSize: '12px', color: '#666' }}>
+                    {record.categories.slug}
+                  </div>
+                </div>
+              );
+            }
+            return value || '-';
+          }}
         />
         <Table.Column
           title="Giá"
