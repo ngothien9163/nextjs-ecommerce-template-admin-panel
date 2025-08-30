@@ -528,4 +528,218 @@
   padding: 24px !important;
 }
 
+/* Form Optimization Styles */
+
+/* Force all form inputs to take full width with higher specificity */
+.ant-form-item .ant-form-item-control-input .ant-input,
+.ant-form-item .ant-form-item-control-input .ant-input-number,
+.ant-form-item .ant-form-item-control-input .ant-select,
+.ant-form-item .ant-form-item-control-input .ant-textarea,
+.ant-form-item .ant-form-item-control-input .ant-picker {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 100% !important;
+}
+
+/* Force Select components to take full width */
+.ant-form-item .ant-select,
+.ant-form-item .ant-select-selector {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 100% !important;
+}
+
+/* Force InputNumber components to take full width */
+.ant-form-item .ant-input-number {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 100% !important;
+}
+
+/* Force DatePicker components to take full width */
+.ant-form-item .ant-picker {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 100% !important;
+}
+
+/* Force TextArea components to take full width */
+.ant-form-item .ant-input-textarea {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 100% !important;
+}
+
+/* Override any inline styles that might interfere with higher specificity */
+.ant-form-item .ant-form-item-control-input .ant-input[style*="width"],
+.ant-form-item .ant-form-item-control-input .ant-select[style*="width"],
+.ant-form-item .ant-form-item-control-input .ant-input-number[style*="width"],
+.ant-form-item .ant-form-item-control-input .ant-textarea[style*="width"],
+.ant-form-item .ant-form-item-control-input .ant-picker[style*="width"] {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 100% !important;
+}
+
+/* Additional specificity for Col components */
+.ant-col .ant-form-item .ant-form-item-control-input .ant-input,
+.ant-col .ant-form-item .ant-form-item-control-input .ant-input-number,
+.ant-col .ant-form-item .ant-form-item-control-input .ant-select,
+.ant-col .ant-form-item .ant-form-item-control-input .ant-textarea,
+.ant-col .ant-form-item .ant-form-item-control-input .ant-picker {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 100% !important;
+}
+
+/* Ensure form items have proper spacing */
+.ant-form-item {
+  margin-bottom: 16px;
+  width: 100%;
+}
+
+/* Ensure Row and Col components work properly */
+.ant-row {
+  margin-left: -12px;
+  margin-right: -12px;
+  width: 100%;
+}
+
+.ant-col {
+  padding-left: 12px;
+  padding-right: 12px;
+  width: 100%;
+}
+
+/* Force Col components to use full width */
+.ant-col-12,
+.ant-col-24,
+.ant-col-8,
+.ant-col-6 {
+  width: 100% !important;
+  flex: 1 !important;
+}
+
+/* Ensure form item controls take full width */
+.ant-form-item-control {
+  width: 100% !important;
+}
+
+.ant-form-item-control-input {
+  width: 100% !important;
+}
+
+.ant-form-item-control-input-content {
+  width: 100% !important;
+}
+
+/* Ensure Card components have proper padding */
+.ant-card {
+  border-radius: 8px;
+}
+
+.ant-card-body {
+  padding: 24px;
+}
+
+/* Ensure Collapse panels have proper spacing */
+.ant-collapse-content-box {
+  padding: 16px 0;
+}
+
+/* Ensure Switch components are properly aligned */
+.ant-form-item-control-input .ant-switch {
+  margin-top: 4px;
+}
+
+/* Override Ant Design's default input styles */
+.ant-input,
+.ant-input-number,
+.ant-select,
+.ant-textarea,
+.ant-picker {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Force all form controls to be full width */
+.ant-form-item-control-input-content > * {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 100% !important;
+}
+
+/* Override any flex properties that might interfere */
+.ant-form-item-control-input-content {
+  display: block !important;
+  width: 100% !important;
+}
+
+/* Ensure Card content takes full width */
+.ant-card-body {
+  width: 100% !important;
+}
+
+/* Force all form elements to be block level */
+.ant-form-item-control-input-content .ant-input,
+.ant-form-item-control-input-content .ant-input-number,
+.ant-form-item-control-input-content .ant-select,
+.ant-form-item-control-input-content .ant-textarea,
+.ant-form-item-control-input-content .ant-picker {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 100% !important;
+}
+
+/* Override Ant Design's internal styles with maximum specificity */
+.ant-form-item-control-input-content .ant-input,
+.ant-form-item-control-input-content .ant-input-number,
+.ant-form-item-control-input-content .ant-select,
+.ant-form-item-control-input-content .ant-textarea,
+.ant-form-item-control-input-content .ant-picker,
+.ant-form-item-control-input-content .ant-input[style],
+.ant-form-item-control-input-content .ant-input-number[style],
+.ant-form-item-control-input-content .ant-select[style],
+.ant-form-item-control-input-content .ant-textarea[style],
+.ant-form-item-control-input-content .ant-picker[style] {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 100% !important;
+  box-sizing: border-box !important;
+  display: block !important;
+}
+
+/* Override any inline styles with !important */
+.ant-form-item-control-input-content .ant-input[style*="width"],
+.ant-form-item-control-input-content .ant-input-number[style*="width"],
+.ant-form-item-control-input-content .ant-select[style*="width"],
+.ant-form-item-control-input-content .ant-textarea[style*="width"],
+.ant-form-item-control-input-content .ant-picker[style*="width"] {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 100% !important;
+}
+
+/* Final override - force all form inputs to be full width */
+* .ant-input,
+* .ant-input-number,
+* .ant-select,
+* .ant-textarea,
+* .ant-picker {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Override any remaining styles */
+.ant-form-item-control-input-content * {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 100% !important;
+}
+
 

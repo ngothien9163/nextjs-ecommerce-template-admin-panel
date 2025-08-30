@@ -4,7 +4,7 @@ import { BlogPost, BlogCategory, Profile } from '../../lib/supabase';
 import { BlogPostForm } from '../../components/blog-post-form';
 
 export const BlogPostCreate: React.FC = () => {
-  const { formProps, saveButtonProps } = useForm<BlogPost>({ resource: 'blog_posts' });
+  const { formProps, saveButtonProps } = useForm<BlogPost>();
   const { selectProps: categorySelectProps } = useSelect<BlogCategory>({
     resource: 'blog_categories',
     optionLabel: 'name',

@@ -4,8 +4,7 @@ import { BlogPost, BlogCategory, Profile } from '../../lib/supabase';
 import { BlogPostForm } from '../../components/blog-post-form';
 
 export const BlogPostEdit: React.FC = () => {
-  const { formProps, saveButtonProps, queryResult, formLoading } = useForm<BlogPost>({ resource: 'blog_posts' });
-  const { data: blogPostData } = queryResult || {};
+  const { formProps, saveButtonProps, queryResult } = useForm<BlogPost>();
   const { selectProps: categorySelectProps } = useSelect<BlogCategory>({
     resource: 'blog_categories',
     optionLabel: 'name',
@@ -18,7 +17,7 @@ export const BlogPostEdit: React.FC = () => {
   });
 
   return (
-    <Edit saveButtonProps={saveButtonProps} isLoading={formLoading}>
+    <Edit saveButtonProps={saveButtonProps}>
       <BlogPostForm 
         form={formProps} 
         isEdit={true}

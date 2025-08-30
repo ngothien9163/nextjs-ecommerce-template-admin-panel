@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Form, Input, Select, Switch, InputNumber, Card, Row, Col, Typography, Space, Tooltip, Collapse, DatePicker } from 'antd';
 import { InfoCircleOutlined, FileTextOutlined, EditOutlined, UserOutlined, PictureOutlined, SettingOutlined, CalendarOutlined } from '@ant-design/icons';
 import MDEditor from '@uiw/react-md-editor';
@@ -21,6 +21,29 @@ export const BlogPostForm: React.FC<BlogPostFormProps> = ({
   categorySelectProps,
   authorSelectProps
 }) => {
+  // Force all input fields to be full width
+  useEffect(() => {
+    const forceFullWidth = () => {
+      const inputs = document.querySelectorAll('.ant-input, .ant-input-number, .ant-select, .ant-textarea, .ant-picker');
+      inputs.forEach((input: any) => {
+        if (input) {
+          input.style.width = '100%';
+          input.style.maxWidth = '100%';
+          input.style.minWidth = '100%';
+          input.style.boxSizing = 'border-box';
+        }
+      });
+    };
+
+    // Run immediately
+    forceFullWidth();
+    
+    // Run after a short delay to catch any dynamically added elements
+    setTimeout(forceFullWidth, 100);
+    setTimeout(forceFullWidth, 500);
+    setTimeout(forceFullWidth, 1000);
+  }, []);
+
   const renderInfoIcon = (tooltip: string) => (
     <Tooltip title={tooltip} placement="top">
       <InfoCircleOutlined style={{ color: '#1890ff', marginLeft: '8px' }} />
@@ -28,7 +51,7 @@ export const BlogPostForm: React.FC<BlogPostFormProps> = ({
   );
 
   return (
-    <>
+    <Form {...form}>
       <Collapse 
         defaultActiveKey={['basic', 'content', 'category', 'media', 'settings', 'schedule']} 
         ghost
@@ -59,7 +82,7 @@ export const BlogPostForm: React.FC<BlogPostFormProps> = ({
                   name="title"
                   rules={[{ required: true, message: 'Vui lòng nhập tiêu đề bài viết!' }]}
                 >
-                  <Input placeholder="Nhập tiêu đề bài viết" size="large" />
+                  <Input placeholder="Nhập tiêu đề bài viết" size="large" style={{ width: '100%' }} />
                 </Form.Item>
               </Col>
               <Col span={12}>
@@ -73,7 +96,7 @@ export const BlogPostForm: React.FC<BlogPostFormProps> = ({
                   name="slug"
                   rules={[{ required: true, message: 'Vui lòng nhập slug!' }]}
                 >
-                  <Input placeholder="tieu-de-bai-viet" size="large" />
+                  <Input placeholder="tieu-de-bai-viet" size="large" style={{ width: '100%' }} />
                 </Form.Item>
               </Col>
             </Row>
@@ -87,7 +110,7 @@ export const BlogPostForm: React.FC<BlogPostFormProps> = ({
               }
               name="excerpt"
             >
-              <TextArea rows={3} placeholder="Nhập tóm tắt bài viết" size="large" />
+              <TextArea rows={3} placeholder="Nhập tóm tắt bài viết" size="large" style={{ width: '100%' }} />
             </Form.Item>
           </Card>
         </Panel>
@@ -147,11 +170,12 @@ export const BlogPostForm: React.FC<BlogPostFormProps> = ({
                   name="category_id"
                   rules={[{ required: true, message: 'Vui lòng chọn danh mục!' }]}
                 >
-                  <Select 
-                    placeholder="Chọn danh mục blog" 
-                    {...categorySelectProps} 
-                    size="large" 
-                  />
+                                     <Select 
+                     placeholder="Chọn danh mục blog" 
+                     {...categorySelectProps} 
+                     size="large" 
+                     style={{ width: '100%' }}
+                   />
                 </Form.Item>
               </Col>
               <Col span={12}>
@@ -165,11 +189,12 @@ export const BlogPostForm: React.FC<BlogPostFormProps> = ({
                   name="author_id"
                   rules={[{ required: true, message: 'Vui lòng chọn tác giả!' }]}
                 >
-                  <Select 
-                    placeholder="Chọn tác giả" 
-                    {...authorSelectProps} 
-                    size="large" 
-                  />
+                                     <Select 
+                     placeholder="Chọn tác giả" 
+                     {...authorSelectProps} 
+                     size="large" 
+                     style={{ width: '100%' }}
+                   />
                 </Form.Item>
               </Col>
             </Row>
@@ -199,7 +224,7 @@ export const BlogPostForm: React.FC<BlogPostFormProps> = ({
                   }
                   name="featured_image_id"
                 >
-                  <Input placeholder="Nhập ID ảnh từ media table" size="large" />
+                  <Input placeholder="Nhập ID ảnh từ media table" size="large" style={{ width: '100%' }} />
                 </Form.Item>
               </Col>
               <Col span={12}>
@@ -248,7 +273,7 @@ export const BlogPostForm: React.FC<BlogPostFormProps> = ({
                   name="status"
                   rules={[{ required: true, message: 'Vui lòng chọn trạng thái!' }]}
                 >
-                  <Select placeholder="Chọn trạng thái" size="large">
+                                     <Select placeholder="Chọn trạng thái" size="large" style={{ width: '100%' }}>
                     <Select.Option value="draft">Nháp</Select.Option>
                     <Select.Option value="published">Đã xuất bản</Select.Option>
                     <Select.Option value="archived">Lưu trữ</Select.Option>
@@ -335,7 +360,7 @@ export const BlogPostForm: React.FC<BlogPostFormProps> = ({
 
       {/* Thông tin SEO */}
       <SEOForm form={form} isEdit={isEdit} />
-    </>
+    </Form>
   );
 };
 

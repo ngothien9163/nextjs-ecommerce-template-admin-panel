@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Form, Input, InputNumber, Select, Switch, Space, Row, Col, Card, Typography, Tooltip, Collapse } from 'antd';
 import { InfoCircleOutlined, ShoppingOutlined, DollarOutlined, InboxOutlined, SafetyOutlined, FileTextOutlined, SettingOutlined } from '@ant-design/icons';
 import { SEOForm } from '../seo-form';
@@ -19,6 +19,28 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   isEdit = false, 
   categorySelectProps 
 }) => {
+  // Force all input fields to be full width
+  useEffect(() => {
+    const forceFullWidth = () => {
+      const inputs = document.querySelectorAll('.ant-input, .ant-input-number, .ant-select, .ant-textarea, .ant-picker');
+      inputs.forEach((input: any) => {
+        if (input) {
+          input.style.width = '100%';
+          input.style.maxWidth = '100%';
+          input.style.minWidth = '100%';
+          input.style.boxSizing = 'border-box';
+        }
+      });
+    };
+
+    // Run immediately
+    forceFullWidth();
+    
+    // Run after a short delay to catch any dynamically added elements
+    setTimeout(forceFullWidth, 100);
+    setTimeout(forceFullWidth, 500);
+    setTimeout(forceFullWidth, 1000);
+  }, []);
 
   const warrantyOptions = [
     { label: '3 tháng', value: '3 months' },
@@ -78,7 +100,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   name="name"
                   rules={[{ required: true, message: 'Vui lòng nhập tên sản phẩm!' }]}
                 >
-                  <Input placeholder="Nhập tên sản phẩm" size="large" />
+                  <Input placeholder="Nhập tên sản phẩm" size="large" style={{ width: '100%' }} />
                 </Form.Item>
               </Col>
             </Row>
@@ -95,7 +117,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   name="slug"
                   rules={[{ required: true, message: 'Vui lòng nhập slug!' }]}
                 >
-                  <Input placeholder="ten-san-pham" size="large" />
+                  <Input placeholder="ten-san-pham" size="large" style={{ width: '100%' }} />
                 </Form.Item>
               </Col>
               <Col span={12}>
@@ -113,6 +135,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                     placeholder="Chọn danh mục" 
                     {...categorySelectProps} 
                     size="large" 
+                    style={{ width: '100%' }}
                   />
                 </Form.Item>
               </Col>
@@ -129,7 +152,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   }
                   name="brand"
                 >
-                  <Input placeholder="Nhập thương hiệu" size="large" />
+                  <Input placeholder="Nhập thương hiệu" size="large" style={{ width: '100%' }} />
                 </Form.Item>
               </Col>
               <Col span={12}>
@@ -142,7 +165,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   }
                   name="sku"
                 >
-                  <Input placeholder="Nhập mã SKU" size="large" />
+                  <Input placeholder="Nhập mã SKU" size="large" style={{ width: '100%' }} />
                 </Form.Item>
               </Col>
             </Row>
@@ -158,7 +181,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   }
                   name="featured_image_id"
                 >
-                  <Input placeholder="Nhập ID ảnh từ media table" size="large" />
+                  <Input placeholder="Nhập ID ảnh từ media table" size="large" style={{ width: '100%' }} />
                 </Form.Item>
               </Col>
             </Row>
@@ -319,7 +342,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   }
                   name="dimensions"
                 >
-                  <Input placeholder='{"length": 10, "width": 5, "height": 2}' size="large" />
+                  <Input placeholder='{"length": 10, "width": 5, "height": 2}' size="large" style={{ width: '100%' }} />
                 </Form.Item>
               </Col>
             </Row>
@@ -349,7 +372,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   }
                   name="warranty"
                 >
-                  <Select placeholder="Chọn thời hạn bảo hành" size="large">
+                  <Select placeholder="Chọn thời hạn bảo hành" size="large" style={{ width: '100%' }}>
                     {warrantyOptions.map(option => (
                       <Select.Option key={option.value} value={option.value}>
                         {option.label}
@@ -368,7 +391,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   }
                   name="return_policy"
                 >
-                  <Select placeholder="Chọn chính sách đổi trả" size="large">
+                  <Select placeholder="Chọn chính sách đổi trả" size="large" style={{ width: '100%' }}>
                     {returnPolicyOptions.map(option => (
                       <Select.Option key={option.value} value={option.value}>
                         {option.label}
@@ -402,7 +425,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               }
               name="short_description"
             >
-              <TextArea rows={3} placeholder="Mô tả ngắn gọn sản phẩm" size="large" />
+              <TextArea rows={3} placeholder="Mô tả ngắn gọn sản phẩm" size="large" style={{ width: '100%' }} />
             </Form.Item>
 
             <Form.Item
@@ -414,7 +437,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               }
               name="description"
             >
-              <TextArea rows={6} placeholder="Mô tả chi tiết sản phẩm" size="large" />
+              <TextArea rows={6} placeholder="Mô tả chi tiết sản phẩm" size="large" style={{ width: '100%' }} />
             </Form.Item>
           </Card>
         </Panel>

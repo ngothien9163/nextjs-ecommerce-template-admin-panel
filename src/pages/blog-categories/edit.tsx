@@ -7,11 +7,7 @@ const { TextArea } = Input;
 const { Title } = Typography;
 
 export const BlogCategoryEdit: React.FC = () => {
-  const { formProps, saveButtonProps, queryResult } = useForm<BlogCategory>({
-    resource: 'blog_categories',
-  });
-
-  const { data: blogCategoryData } = queryResult || {};
+  const { formProps, saveButtonProps, queryResult } = useForm<BlogCategory>();
 
   return (
     <Edit saveButtonProps={saveButtonProps}>
