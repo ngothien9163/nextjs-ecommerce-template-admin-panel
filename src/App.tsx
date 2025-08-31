@@ -16,6 +16,7 @@ import { ColorModeContextProvider } from "./contexts/color-mode";
 import { dataProvider as customDataProvider } from "./lib/dataProvider";
 
 // Import CSS chung
+import "./styles/media-management.css";
 
 // Import our custom pages
 import { CategoryList } from "./pages/categories";
@@ -58,6 +59,11 @@ import { ProductVariantList } from "./pages/product-variants";
 import { ProductVariantCreate } from "./pages/product-variants/create";
 import { ProductVariantEdit } from "./pages/product-variants/edit";
 import { ProductVariantShow } from "./pages/product-variants/show";
+
+import { MediaList } from "./pages/media";
+import { MediaCreate } from "./pages/media/create";
+import { MediaEdit } from "./pages/media/edit";
+import { MediaShow } from "./pages/media/show";
 
 import { Dashboard } from "./pages/dashboard";
 
@@ -159,6 +165,17 @@ function App() {
                   label: "Biến thể sản phẩm",
                 },
               },
+              {
+                name: "media",
+                list: "/media",
+                create: "/media/create",
+                edit: "/media/edit/:id",
+                show: "/media/show/:id",
+                meta: {
+                  canDelete: true,
+                  label: "Media",
+                },
+              },
             ]}
             options={{
               syncWithLocation: true,
@@ -224,6 +241,12 @@ function App() {
                   <Route path="create" element={<ProductVariantCreate />} />
                   <Route path="edit/:id" element={<ProductVariantEdit />} />
                   <Route path="show/:id" element={<ProductVariantShow />} />
+                </Route>
+                <Route path="/media">
+                  <Route index element={<MediaList />} />
+                  <Route path="create" element={<MediaCreate />} />
+                  <Route path="edit/:id" element={<MediaEdit />} />
+                  <Route path="show/:id" element={<MediaShow />} />
                 </Route>
               </Route>
             </Routes>

@@ -50,6 +50,7 @@ export const CustomDeleteButton: React.FC<CustomDeleteButtonProps> = ({
       'tags': 'tag',
       'orders': 'đơn hàng',
       'product-variants': 'biến thể sản phẩm',
+      'media': 'hình ảnh',
     };
 
     const resourceName = resourceMap[resource] || 'mục này';
