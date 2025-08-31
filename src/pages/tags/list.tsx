@@ -1,7 +1,8 @@
 import React from 'react';
-import { List, useTable, EditButton, DeleteButton, ShowButton } from '@refinedev/antd';
+import { List, useTable, EditButton, ShowButton } from '@refinedev/antd';
 import { Table, Space, Tag as AntTag } from 'antd';
 import { Tag } from '../../lib/supabase';
+import { CustomDeleteButton } from '../../components/custom-delete-button';
 
 export const TagList: React.FC = () => {
   const { tableProps } = useTable<Tag>();
@@ -72,7 +73,12 @@ export const TagList: React.FC = () => {
         <Space>
           <ShowButton hideText size="small" recordItemId={record.id} />
           <EditButton hideText size="small" recordItemId={record.id} />
-          <DeleteButton hideText size="small" recordItemId={record.id} />
+          <CustomDeleteButton 
+            recordItemId={record.id} 
+            resource="tags"
+            size="small"
+            hideText
+          />
         </Space>
       ),
     },

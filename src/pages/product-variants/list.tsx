@@ -1,7 +1,8 @@
 import React from "react";
-import { List, EditButton, DeleteButton, ShowButton, CreateButton, useTable } from "@refinedev/antd";
-import { Table, Space, Tag, Switch, Typography } from "antd";
-import { useSelect } from "@refinedev/antd";
+import { List, EditButton, ShowButton, CreateButton, useTable, useSelect } from "@refinedev/antd";
+import { Space, Table, Tag, Switch, Typography } from "antd";
+import { ProductVariant } from "../../lib/supabase";
+import { CustomDeleteButton } from "../../components/custom-delete-button";
 
 const { Text } = Typography;
 
@@ -107,7 +108,12 @@ export const ProductVariantList: React.FC = () => {
             <Space>
               <ShowButton hideText size="small" recordItemId={record.id} />
               <EditButton hideText size="small" recordItemId={record.id} />
-              <DeleteButton hideText size="small" recordItemId={record.id} />
+              <CustomDeleteButton 
+                recordItemId={record.id} 
+                resource="product-variants"
+                size="small"
+                hideText
+              />
             </Space>
           )}
         />

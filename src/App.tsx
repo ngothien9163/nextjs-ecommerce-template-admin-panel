@@ -16,7 +16,6 @@ import { ColorModeContextProvider } from "./contexts/color-mode";
 import { dataProvider as customDataProvider } from "./lib/dataProvider";
 
 // Import CSS chung
-import "./styles/form-optimization.css";
 
 // Import our custom pages
 import { CategoryList } from "./pages/categories";

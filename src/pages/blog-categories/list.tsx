@@ -1,7 +1,8 @@
 import React from 'react';
-import { List, useTable, EditButton, DeleteButton, ShowButton } from '@refinedev/antd';
+import { List, useTable, EditButton, ShowButton } from '@refinedev/antd';
 import { Table, Space, Tag, Switch } from 'antd';
 import { BlogCategory } from '../../lib/supabase';
+import { CustomDeleteButton } from '../../components/custom-delete-button';
 
 export const BlogCategoryList: React.FC = () => {
   const { tableProps } = useTable<BlogCategory>({
@@ -76,7 +77,12 @@ export const BlogCategoryList: React.FC = () => {
         <Space>
           <ShowButton hideText size="small" recordItemId={record.id} />
           <EditButton hideText size="small" recordItemId={record.id} />
-          <DeleteButton hideText size="small" recordItemId={record.id} />
+          <CustomDeleteButton 
+            recordItemId={record.id} 
+            resource="blog-categories"
+            size="small"
+            hideText
+          />
         </Space>
       ),
     },

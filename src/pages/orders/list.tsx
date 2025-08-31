@@ -1,5 +1,4 @@
 import {
-  DeleteButton,
   EditButton,
   List,
   ShowButton,
@@ -7,6 +6,7 @@ import {
 } from "@refinedev/antd";
 import type { BaseRecord } from "@refinedev/core";
 import { Space, Table, Tag, Typography } from "antd";
+import { CustomDeleteButton } from "../../components/custom-delete-button";
 
 const { Text } = Typography;
 
@@ -112,7 +112,12 @@ export const OrderList = () => {
             <Space>
               <EditButton hideText size="small" recordItemId={record.id} />
               <ShowButton hideText size="small" recordItemId={record.id} />
-              <DeleteButton hideText size="small" recordItemId={record.id} />
+              <CustomDeleteButton 
+                recordItemId={record.id} 
+                resource="orders"
+                size="small"
+                hideText
+              />
             </Space>
           )}
         />

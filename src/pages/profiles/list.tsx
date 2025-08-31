@@ -1,5 +1,4 @@
 import {
-  DeleteButton,
   EditButton,
   List,
   ShowButton,
@@ -7,6 +6,7 @@ import {
 } from "@refinedev/antd";
 import type { BaseRecord } from "@refinedev/core";
 import { Space, Table, Tag, Avatar } from "antd";
+import { CustomDeleteButton } from "../../components/custom-delete-button";
 
 export const ProfileList = () => {
   const { tableProps } = useTable({
@@ -75,7 +75,12 @@ export const ProfileList = () => {
             <Space>
               <EditButton hideText size="small" recordItemId={record.id} />
               <ShowButton hideText size="small" recordItemId={record.id} />
-              <DeleteButton hideText size="small" recordItemId={record.id} />
+              <CustomDeleteButton 
+                recordItemId={record.id} 
+                resource="profiles"
+                size="small"
+                hideText
+              />
             </Space>
           )}
         />

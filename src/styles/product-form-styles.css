@@ -1,0 +1,272 @@
+/* Product Form Styles - Enhanced Section Styling */
+
+/* Product Form Wrapper */
+.product-form-wrapper {
+  min-height: 100vh;
+  padding: 20px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+/* Collapse Container */
+.product-form-wrapper .ant-collapse {
+  background: transparent;
+  border: none;
+}
+
+/* Individual Panel Styling */
+.product-form-wrapper .ant-collapse-item {
+  border: 1px solid #e8e8e8;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.product-form-wrapper .ant-collapse-item:hover {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+/* Panel Header Styling */
+.product-form-wrapper .ant-collapse-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px 24px;
+  font-weight: 600;
+  font-size: 16px;
+  color: white;
+  border-bottom: 1px solid #f0f0f0;
+  transition: all 0.3s ease;
+}
+
+.product-form-wrapper .ant-collapse-header:hover {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+/* Panel Header Icons */
+.product-form-wrapper .ant-collapse-header .anticon {
+  margin-right: 12px;
+  font-size: 18px;
+  color: white;
+}
+
+/* Panel Content */
+.product-form-wrapper .ant-collapse-content {
+  border-top: none;
+  background: white;
+}
+
+.product-form-wrapper .ant-collapse-content-box {
+  padding: 24px;
+  background: white;
+}
+
+/* Section Spacing */
+.product-form-wrapper .ant-collapse-item + .ant-collapse-item {
+  margin-top: 16px;
+}
+
+/* Card Styling within Panels */
+.product-form-wrapper .ant-card {
+  border: none;
+  box-shadow: none;
+  background: transparent;
+}
+
+.product-form-wrapper .ant-card-body {
+  padding: 0;
+}
+
+/* Form Items */
+.product-form-wrapper .ant-form-item {
+  margin-bottom: 20px;
+}
+
+.product-form-wrapper .ant-form-item-label > label {
+  font-weight: 500;
+  color: #262626;
+  font-size: 14px;
+}
+
+/* Input Styling */
+.product-form-wrapper .ant-input,
+.product-form-wrapper .ant-input-number,
+.product-form-wrapper .ant-select-selector,
+.product-form-wrapper .ant-picker {
+  border-radius: 8px;
+  border: 2px solid #f0f0f0;
+  transition: all 0.3s ease;
+  height: 40px;
+}
+
+.product-form-wrapper .ant-input:hover,
+.product-form-wrapper .ant-input-number:hover,
+.product-form-wrapper .ant-select-selector:hover,
+.product-form-wrapper .ant-picker:hover {
+  border-color: #40a9ff;
+  box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.1);
+}
+
+.product-form-wrapper .ant-input:focus,
+.product-form-wrapper .ant-input-number:focus,
+.product-form-wrapper .ant-select-focused .ant-select-selector,
+.product-form-wrapper .ant-picker-focused {
+  border-color: #1890ff;
+  box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.2);
+}
+
+/* TextArea Styling */
+.product-form-wrapper .ant-input-textarea .ant-input {
+  border-radius: 8px;
+  border: 2px solid #f0f0f0;
+  min-height: 80px;
+}
+
+.product-form-wrapper .ant-input-textarea .ant-input:hover {
+  border-color: #40a9ff;
+  box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.1);
+}
+
+.product-form-wrapper .ant-input-textarea .ant-input:focus {
+  border-color: #1890ff;
+  box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.2);
+}
+
+/* Switch Styling */
+.product-form-wrapper .ant-switch {
+  background-color: #d9d9d9;
+  min-width: 48px;
+  height: 24px;
+}
+
+.product-form-wrapper .ant-switch-checked {
+  background-color: #52c41a;
+}
+
+/* Select Dropdown */
+.product-form-wrapper .ant-select-dropdown {
+  border-radius: 8px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.product-form-wrapper .ant-select-item {
+  padding: 10px 16px;
+  transition: background-color 0.2s ease;
+}
+
+.product-form-wrapper .ant-select-item:hover {
+  background-color: #f5f5f5;
+}
+
+.product-form-wrapper .ant-select-item-option-selected {
+  background-color: #e6f7ff;
+  color: #1890ff;
+}
+
+/* Row and Column Spacing */
+.product-form-wrapper .ant-row {
+  margin-bottom: 16px;
+}
+
+.product-form-wrapper .ant-col {
+  margin-bottom: 8px;
+}
+
+/* Form Validation */
+.product-form-wrapper .ant-form-item-has-error .ant-input,
+.product-form-wrapper .ant-form-item-has-error .ant-input-number,
+.product-form-wrapper .ant-form-item-has-error .ant-select-selector,
+.product-form-wrapper .ant-form-item-has-error .ant-picker {
+  border-color: #ff4d4f;
+}
+
+.product-form-wrapper .ant-form-item-has-error .ant-input:focus,
+.product-form-wrapper .ant-form-item-has-error .ant-input-number:focus,
+.product-form-wrapper .ant-form-item-has-error .ant-select-selector:focus,
+.product-form-wrapper .ant-form-item-has-error .ant-picker:focus {
+  border-color: #ff4d4f;
+  box-shadow: 0 0 0 3px rgba(255, 77, 79, 0.2);
+}
+
+.product-form-wrapper .ant-form-item-explain-error {
+  color: #ff4d4f;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+/* Tooltip Enhancement */
+.product-form-wrapper .ant-tooltip {
+  max-width: 300px;
+}
+
+.product-form-wrapper .ant-tooltip-inner {
+  background-color: #262626;
+  color: white;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .product-form-wrapper {
+    padding: 16px;
+  }
+  
+  .product-form-wrapper .ant-collapse-header {
+    padding: 16px 20px;
+    font-size: 14px;
+  }
+  
+  .product-form-wrapper .ant-collapse-content-box {
+    padding: 16px;
+  }
+  
+  .product-form-wrapper .ant-collapse-item {
+    margin-bottom: 16px;
+  }
+}
+
+/* Animation for Panel Expansion */
+.product-form-wrapper .ant-collapse-content-active {
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Section-specific styling */
+.product-form-wrapper .ant-collapse-item[data-key="basic"] .ant-collapse-header {
+  background: linear-gradient(135deg, #52c41a 0%, #73d13d 100%);
+}
+
+.product-form-wrapper .ant-collapse-item[data-key="pricing"] .ant-collapse-header {
+  background: linear-gradient(135deg, #1890ff 0%, #40a9ff 100%);
+}
+
+.product-form-wrapper .ant-collapse-item[data-key="inventory"] .ant-collapse-header {
+  background: linear-gradient(135deg, #722ed1 0%, #9254de 100%);
+}
+
+.product-form-wrapper .ant-collapse-item[data-key="warranty"] .ant-collapse-header {
+  background: linear-gradient(135deg, #fa8c16 0%, #ffa940 100%);
+}
+
+.product-form-wrapper .ant-collapse-item[data-key="description"] .ant-collapse-header {
+  background: linear-gradient(135deg, #13c2c2 0%, #36cfc9 100%);
+}
+
+.product-form-wrapper .ant-collapse-item[data-key="status"] .ant-collapse-header {
+  background: linear-gradient(135deg, #eb2f96 0%, #f759ab 100%);
+}
+

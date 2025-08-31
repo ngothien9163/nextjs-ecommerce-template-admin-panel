@@ -1,0 +1,338 @@
+/* Common Form Styles - For Categories and Products */
+
+/* Basic wrapper */
+.form-wrapper {
+  min-height: 100vh;
+  padding: 20px;
+  background: #f5f5f5;
+}
+
+.form-card {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 24px;
+  background: white;
+}
+
+.form-card .ant-card-head {
+  background: #fafafa;
+  border-bottom: 1px solid #e8e8e8;
+  padding: 16px 24px;
+}
+
+.form-card .ant-card-head-title {
+  font-weight: 600;
+  color: #262626;
+  font-size: 16px;
+}
+
+.form-card .ant-card-body {
+  padding: 24px;
+}
+
+/* Form Items */
+.form-item {
+  margin-bottom: 16px;
+}
+
+.form-item .ant-form-item-label > label {
+  font-weight: 500;
+  color: #262626;
+  font-size: 14px;
+}
+
+/* Switch Fix */
+.form-wrapper .form-item .ant-switch {
+  min-width: 44px;
+  height: 22px;
+}
+
+/* Collapse Panel Styling */
+.ant-collapse-item {
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+}
+
+.ant-collapse-item:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.ant-collapse-header {
+  background: #fafafa;
+  padding: 16px 24px;
+  font-weight: 600;
+  font-size: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.ant-collapse-content {
+  border-top: none;
+}
+
+.ant-collapse-content-box {
+  padding: 24px;
+}
+
+/* Panel Header Icons */
+.ant-collapse-header .anticon {
+  margin-right: 12px;
+  font-size: 18px;
+}
+
+/* Input Styling */
+.ant-input,
+.ant-input-number,
+.ant-select-selector,
+.ant-picker {
+  border-radius: 6px;
+  border: 1px solid #d9d9d9;
+  transition: all 0.3s ease;
+}
+
+.ant-input:hover,
+.ant-input-number:hover,
+.ant-select-selector:hover,
+.ant-picker:hover {
+  border-color: #40a9ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+}
+
+.ant-input:focus,
+.ant-input-number:focus,
+.ant-select-selector:focus,
+.ant-picker:focus,
+.ant-input-focused,
+.ant-input-number-focused,
+.ant-select-focused .ant-select-selector,
+.ant-picker-focused {
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+/* Large Input Sizing */
+.ant-input-lg,
+.ant-input-number-lg,
+.ant-select-lg .ant-select-selector,
+.ant-picker-lg {
+  height: 40px;
+  font-size: 14px;
+}
+
+/* TextArea Styling */
+.ant-input-textarea .ant-input {
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.ant-input-textarea .ant-input:hover {
+  border-color: #40a9ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+}
+
+.ant-input-textarea .ant-input:focus {
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+/* Switch Styling */
+.ant-switch {
+  background-color: #d9d9d9;
+}
+
+.ant-switch-checked {
+  background-color: #52c41a;
+}
+
+.ant-switch:focus {
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+/* Card Styling */
+.ant-card {
+  border-radius: 8px;
+  border: 1px solid #f0f0f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+}
+
+.ant-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+/* Row and Column Spacing */
+.ant-row {
+  margin-bottom: 16px;
+}
+
+.ant-row:last-child {
+  margin-bottom: 0;
+}
+
+.ant-col {
+  margin-bottom: 8px;
+}
+
+/* Form Validation Styling */
+.ant-form-item-has-error .ant-input,
+.ant-form-item-has-error .ant-input-number,
+.ant-form-item-has-error .ant-select-selector,
+.ant-form-item-has-error .ant-picker {
+  border-color: #ff4d4f;
+}
+
+.ant-form-item-has-error .ant-input:focus,
+.ant-form-item-has-error .ant-input-number:focus,
+.ant-form-item-has-error .ant-select-selector:focus,
+.ant-form-item-has-error .ant-picker:focus {
+  border-color: #ff4d4f;
+  box-shadow: 0 0 0 2px rgba(255, 77, 79, 0.2);
+}
+
+.ant-form-item-explain-error {
+  color: #ff4d4f;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+/* Select Dropdown Styling */
+.ant-select-dropdown {
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.ant-select-item {
+  padding: 8px 12px;
+  transition: background-color 0.2s ease;
+}
+
+.ant-select-item:hover {
+  background-color: #f5f5f5;
+}
+
+.ant-select-item-option-selected {
+  background-color: #e6f7ff;
+  color: #1890ff;
+}
+
+/* DatePicker Styling */
+.ant-picker-dropdown {
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.ant-picker-panel {
+  border-radius: 6px;
+}
+
+/* Info Icon Tooltip Enhancement */
+.ant-tooltip {
+  max-width: 300px;
+}
+
+.ant-tooltip-inner {
+  background-color: #262626;
+  color: white;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .form-wrapper {
+    padding: 16px;
+  }
+  
+  .form-card .ant-card-body {
+    padding: 16px;
+  }
+  
+  .ant-collapse-header {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+  
+  .ant-collapse-content-box {
+    padding: 16px;
+  }
+  
+  .ant-input-lg,
+  .ant-input-number-lg,
+  .ant-select-lg .ant-select-selector,
+  .ant-picker-lg {
+    height: 36px;
+    font-size: 13px;
+  }
+}
+
+/* Animation for Panel Expansion */
+.ant-collapse-content-active {
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Hover Effects for Interactive Elements */
+.ant-input:hover,
+.ant-input-number:hover,
+.ant-select:hover .ant-select-selector,
+.ant-picker:hover {
+  transform: translateY(-1px);
+  transition: transform 0.2s ease;
+}
+
+/* Focus States Enhancement */
+.ant-input:focus,
+.ant-input-number:focus,
+.ant-select-focused .ant-select-selector,
+.ant-picker-focused {
+  transform: translateY(-1px);
+  transition: transform 0.2s ease;
+}
+
+/* Success States */
+.ant-form-item-has-success .ant-input,
+.ant-form-item-has-success .ant-input-number,
+.ant-form-item-has-success .ant-select-selector,
+.ant-form-item-has-success .ant-picker {
+  border-color: #52c41a;
+}
+
+.ant-form-item-has-success .ant-input:focus,
+.ant-form-item-has-success .ant-input-number:focus,
+.ant-form-item-has-success .ant-select-selector:focus,
+.ant-form-item-has-success .ant-picker:focus {
+  border-color: #52c41a;
+  box-shadow: 0 0 0 2px rgba(82, 196, 26, 0.2);
+}
+
+/* Warning States */
+.ant-form-item-has-warning .ant-input,
+.ant-form-item-has-warning .ant-input-number,
+.ant-form-item-has-warning .ant-select-selector,
+.ant-form-item-has-warning .ant-picker {
+  border-color: #faad14;
+}
+
+.ant-form-item-has-warning .ant-input:focus,
+.ant-form-item-has-warning .ant-input-number:focus,
+.ant-form-item-has-warning .ant-select-selector:focus,
+.ant-form-item-has-warning .ant-picker:focus {
+  border-color: #faad14;
+  box-shadow: 0 0 0 2px rgba(250, 173, 20, 0.2);
+}

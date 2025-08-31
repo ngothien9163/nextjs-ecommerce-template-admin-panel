@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { Form, Input, InputNumber, Select, Switch, Space, Row, Col, Card, Typography, Tooltip, Collapse } from 'antd';
 import { InfoCircleOutlined, ShoppingOutlined, DollarOutlined, InboxOutlined, SafetyOutlined, FileTextOutlined, SettingOutlined } from '@ant-design/icons';
 import { SEOForm } from '../seo-form';
-import '../../styles/form-optimization.css';
+import '../../styles/product-form-styles.css';
 
 const { TextArea } = Input;
 const { Title } = Typography;
@@ -19,7 +19,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   isEdit = false, 
   categorySelectProps 
 }) => {
-  // Force all input fields to be full width
+  // Force all input fields to be full width - Commented out to avoid conflicts with category forms
+  /*
   useEffect(() => {
     const forceFullWidth = () => {
       const inputs = document.querySelectorAll('.ant-input, .ant-input-number, .ant-select, .ant-textarea, .ant-picker');
@@ -41,6 +42,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     setTimeout(forceFullWidth, 500);
     setTimeout(forceFullWidth, 1000);
   }, []);
+  */
 
   const warrantyOptions = [
     { label: '3 tháng', value: '3 months' },
@@ -69,13 +71,14 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   );
 
   return (
-    <Form {...form}>
-      <Collapse 
-        defaultActiveKey={['basic', 'pricing', 'inventory', 'warranty', 'description', 'status']} 
-        ghost
-        expandIconPosition="end"
-        style={{ marginBottom: '24px' }}
-      >
+    <div className="product-form-wrapper">
+      <Form {...form}>
+        <Collapse 
+          defaultActiveKey={['basic', 'pricing', 'inventory', 'warranty', 'description', 'status']} 
+          ghost
+          expandIconPosition="end"
+          style={{ marginBottom: '24px' }}
+        >
         {/* Thông tin cơ bản */}
         <Panel 
           header={
@@ -519,6 +522,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       {/* Thông tin SEO */}
       <SEOForm form={form} isEdit={isEdit} />
     </Form>
+    </div>
   );
 };
 

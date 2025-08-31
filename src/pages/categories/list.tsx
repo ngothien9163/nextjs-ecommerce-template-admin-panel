@@ -1,5 +1,4 @@
 import {
-  DeleteButton,
   EditButton,
   List,
   ShowButton,
@@ -9,6 +8,7 @@ import type { BaseRecord } from "@refinedev/core";
 import { Space, Table, Button, message } from "antd";
 import { useEffect, useState } from "react";
 import { testSupabaseConnection, testEnvironmentVariables } from "../../lib/supabase";
+import { CustomDeleteButton } from "../../components/custom-delete-button";
 
 export const CategoryList = () => {
   const { tableProps } = useTable({
@@ -75,7 +75,12 @@ export const CategoryList = () => {
             <Space>
               <EditButton hideText size="small" recordItemId={record.id} />
               <ShowButton hideText size="small" recordItemId={record.id} />
-              <DeleteButton hideText size="small" recordItemId={record.id} />
+              <CustomDeleteButton 
+                recordItemId={record.id} 
+                resource="categories"
+                size="small"
+                hideText
+              />
             </Space>
           )}
         />

@@ -1,8 +1,9 @@
 import React from 'react';
-import { List, useTable, EditButton, DeleteButton, ShowButton } from '@refinedev/antd';
-import { useMany, useOne } from '@refinedev/core';
-import { Table, Space, Tag, Switch, Typography } from 'antd';
+import { List, useTable, EditButton, ShowButton } from '@refinedev/antd';
+import { Table, Space, Tag, Typography, Switch } from 'antd';
 import { BlogComment, BlogPost, Profile } from '../../lib/supabase';
+import { CustomDeleteButton } from '../../components/custom-delete-button';
+import { useMany, useOne } from '@refinedev/core';
 
 const { Text } = Typography;
 
@@ -109,7 +110,12 @@ export const BlogCommentList: React.FC = () => {
         <Space>
           <ShowButton hideText size="small" recordItemId={record.id} />
           <EditButton hideText size="small" recordItemId={record.id} />
-          <DeleteButton hideText size="small" recordItemId={record.id} />
+          <CustomDeleteButton 
+            recordItemId={record.id} 
+            resource="blog-comments"
+            size="small"
+            hideText
+          />
         </Space>
       ),
     },
