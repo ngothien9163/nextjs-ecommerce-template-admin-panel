@@ -2,37 +2,25 @@ import React, { useState, useCallback } from "react";
 import { Create, useForm } from "@refinedev/antd";
 import {
   Form,
-  Input,
-  Switch,
   Button,
   Card,
   Space,
   message,
   Typography,
   Image,
-  Tooltip,
-  Select,
   Tag,
 } from "antd";
 import {
   UploadOutlined,
-  InfoCircleOutlined,
-  UserOutlined,
-  CopyrightOutlined,
-  FileTextOutlined,
-  PictureOutlined,
-  TagsOutlined,
-  EditOutlined,
-  EyeOutlined,
 } from "@ant-design/icons";
 import { useDropzone } from "react-dropzone";
 import { supabase } from "../../lib/supabase";
 import { dataProvider } from "../../lib/dataProvider";
-import { KeywordsInput } from "../../components/keywords-input";
+import { MediaFormFields } from "../../components/media-form-fields";
+import { MediaTechnicalInfo } from "../../components/media-technical-info";
+import { MediaSEOSection } from "../../components/media-seo-section";
 
-const { TextArea } = Input;
 const { Text } = Typography;
-const { Option } = Select;
 
 // Interface cho form values
 interface MediaFormValues {
@@ -44,18 +32,7 @@ interface MediaFormValues {
 
 
 
-const LICENSE_PRESETS = [
-  { value: "CC0", label: "CC0 (Public Domain) - Miền công cộng, tự do sử dụng" },
-  { value: "CC BY", label: "CC BY (Attribution) - Ghi công tác giả" },
-  { value: "CC BY-SA", label: "CC BY-SA (Attribution-ShareAlike) - Ghi công và chia sẻ tương tự" },
-  { value: "CC BY-ND", label: "CC BY-ND (Attribution-NoDerivs) - Ghi công, không chỉnh sửa" },
-  { value: "CC BY-NC", label: "CC BY-NC (Attribution-NonCommercial) - Ghi công, không thương mại" },
-  { value: "CC BY-NC-SA", label: "CC BY-NC-SA (Attribution-NonCommercial-ShareAlike) - Ghi công, không thương mại, chia sẻ tương tự" },
-  { value: "CC BY-NC-ND", label: "CC BY-NC-ND (Attribution-NonCommercial-NoDerivs) - Ghi công, không thương mại, không chỉnh sửa" },
-  { value: "All Rights Reserved", label: "All Rights Reserved - Bảo lưu mọi quyền" },
-  { value: "Fair Use", label: "Fair Use - Sử dụng hợp lý" },
-  { value: "Custom", label: "Custom - Tùy chỉnh" },
-];
+
 
 export const MediaCreate: React.FC = () => {
   const [uploadedFiles, setUploadedFiles] = useState<
@@ -940,486 +917,23 @@ export const MediaCreate: React.FC = () => {
                   )}
                 </div>
               )}
-              <Form.Item
-                label={
-                  <Space>
-                    <FileTextOutlined />
-                    Tên file
-                    <Tooltip title="Tên file gốc, sẽ được hiển thị trong admin panel">
-                      <InfoCircleOutlined style={{ color: "#1890ff" }} />
-                    </Tooltip>
-                  </Space>
-                }
-                name="file_name"
-                rules={[{ required: true, message: "Vui lòng nhập tên file!" }]}
-              >
-                <Input placeholder="Tên file gốc" />
-              </Form.Item>
+              <MediaFormFields 
+                mode="create" 
+                uploadedFiles={uploadedFiles}
+                selectedFileIndex={selectedFileIndex}
+                form={formProps.form}
+              />
 
-              <Form.Item
-                label={
-                  <Space>
-                    <EyeOutlined />
-                    Alt Text
-                    <Tooltip title="Mô tả hình ảnh cho SEO và accessibility, rất quan trọng cho người dùng khiếm thị">
-                      <InfoCircleOutlined style={{ color: "#1890ff" }} />
-                    </Tooltip>
-                  </Space>
-                }
-                name="alt_text"
-                rules={[{ required: true, message: "Vui lòng nhập alt text!" }]}
-              >
-                <Input placeholder="Mô tả hình ảnh cho SEO" />
-              </Form.Item>
+              <MediaTechnicalInfo 
+                mode="create" 
+                uploadedFiles={uploadedFiles}
+                selectedFileIndex={selectedFileIndex}
+              />
 
-              <Form.Item
-                label={
-                  <Space>
-                    <EditOutlined />
-                    Title
-                    <Tooltip title="Tiêu đề hiển thị khi hover chuột lên hình ảnh">
-                      <InfoCircleOutlined style={{ color: "#1890ff" }} />
-                    </Tooltip>
-                  </Space>
-                }
-                name="title"
-              >
-                <Input placeholder="Tiêu đề khi hover" />
-              </Form.Item>
 
-              <Form.Item
-                label={
-                  <Space>
-                    <PictureOutlined />
-                    Caption
-                    <Tooltip title="Chú thích chi tiết về hình ảnh, có thể hiển thị dưới hình ảnh">
-                      <InfoCircleOutlined style={{ color: "#1890ff" }} />
-                    </Tooltip>
-                    {uploadedFiles.length > 0 && (
-                      <Button
-                        size="small"
-                        type="dashed"
-                        onClick={() => {
-                          const file = uploadedFiles[selectedFileIndex]?.file;
-                          if (file && formProps.form) {
-                            const fileName = file.name.replace(/\.[^/.]+$/, "");
-                            const smartAltText = fileName
-                              .replace(/[-_]/g, " ")
-                              .replace(/\b\w/g, (l) => l.toUpperCase())
-                              .replace(/\s+/g, " ")
-                              .trim();
 
-                            const captions = [
-                              `${smartAltText} - Hình ảnh chất lượng cao`,
-                              `Ảnh ${smartAltText.toLowerCase()} đẹp và rõ nét`,
-                              `${smartAltText} - Tài liệu hình ảnh chuyên nghiệp`,
-                              `Hình ảnh ${smartAltText.toLowerCase()} phù hợp cho nhiều mục đích sử dụng`,
-                              `${smartAltText} - Bức ảnh được chụp với độ phân giải cao`,
-                              `Khám phá vẻ đẹp của ${smartAltText.toLowerCase()} qua góc nhìn chuyên nghiệp`,
-                              `${smartAltText} - Hình ảnh tối ưu cho thiết kế và marketing`,
-                              `Tài liệu hình ảnh ${smartAltText.toLowerCase()} chất lượng, sẵn sàng sử dụng`,
-                              `${smartAltText} - Bộ sưu tập hình ảnh đa dạng và phong phú`,
-                              `Hình ảnh ${smartAltText.toLowerCase()} chuyên nghiệp, phù hợp cho mọi dự án`,
-                            ];
 
-                            const currentCaption =
-                              formProps.form.getFieldValue("caption");
-                            const currentIndex =
-                              captions.indexOf(currentCaption);
-                            const nextIndex =
-                              (currentIndex + 1) % captions.length;
-                            formProps.form.setFieldsValue({
-                              caption: captions[nextIndex],
-                            });
-                          }
-                        }}
-                        title="Chọn gợi ý Caption khác"
-                      >
-                        🔄 Gợi ý
-                      </Button>
-                    )}
-                  </Space>
-                }
-                name="caption"
-              >
-                <TextArea rows={3} placeholder="Chú thích hình ảnh" />
-              </Form.Item>
 
-              <Form.Item
-                label={
-                  <Space>
-                    <EditOutlined />
-                    Meta Description
-                    <Tooltip title="Mô tả chi tiết cho SEO, giúp tăng thứ hạng tìm kiếm">
-                      <InfoCircleOutlined style={{ color: "#1890ff" }} />
-                    </Tooltip>
-                    {uploadedFiles.length > 0 && (
-                      <Button
-                        size="small"
-                        type="dashed"
-                        onClick={() => {
-                          const file = uploadedFiles[selectedFileIndex]?.file;
-                          if (file && formProps.form) {
-                            const fileName = file.name.replace(/\.[^/.]+$/, "");
-                            const smartAltText = fileName
-                              .replace(/[-_]/g, " ")
-                              .replace(/\b\w/g, (l) => l.toUpperCase())
-                              .replace(/\s+/g, " ")
-                              .trim();
-
-                            const metaDescriptions = [
-                              `Hình ảnh ${smartAltText.toLowerCase()}, chất lượng cao, phù hợp cho website và marketing.`,
-                              `Ảnh ${smartAltText.toLowerCase()} đẹp, rõ nét, tối ưu cho SEO và trải nghiệm người dùng.`,
-                              `${smartAltText} - Hình ảnh chuyên nghiệp, phù hợp cho các dự án thương mại và cá nhân.`,
-                              `Tải hình ảnh ${smartAltText.toLowerCase()} miễn phí, chất lượng cao, không có watermark.`,
-                              `Khám phá ${smartAltText.toLowerCase()} với hình ảnh chất lượng 4K, tối ưu cho mọi thiết bị.`,
-                              `${smartAltText} - Bộ sưu tập hình ảnh đa dạng, phù hợp cho thiết kế và nội dung sáng tạo.`,
-                              `Hình ảnh ${smartAltText.toLowerCase()} chuyên nghiệp, hỗ trợ đa định dạng và tương thích mọi trình duyệt.`,
-                              `Tải xuống ${smartAltText.toLowerCase()} miễn phí, độ phân giải cao, không giới hạn sử dụng.`,
-                              `${smartAltText} - Tài nguyên hình ảnh chất lượng, tối ưu cho SEO và tốc độ tải trang.`,
-                              `Khám phá bộ sưu tập ${smartAltText.toLowerCase()} đa dạng, phù hợp cho mọi nhu cầu thiết kế.`,
-                            ];
-
-                            const currentDescription =
-                              formProps.form.getFieldValue("meta_description");
-                            const currentIndex =
-                              metaDescriptions.indexOf(currentDescription);
-                            const nextIndex =
-                              (currentIndex + 1) % metaDescriptions.length;
-                            formProps.form.setFieldsValue({
-                              meta_description: metaDescriptions[nextIndex],
-                            });
-                          }
-                        }}
-                        title="Chọn gợi ý Meta Description khác"
-                      >
-                        🔄 Gợi ý
-                      </Button>
-                    )}
-                  </Space>
-                }
-                name="meta_description"
-              >
-                <TextArea rows={2} placeholder="Mô tả chi tiết cho SEO" />
-              </Form.Item>
-
-              <Form.Item
-                name="meta_keywords"
-              >
-                <KeywordsInput
-                  label="Meta Keywords"
-                  tooltip="Nhập từ khóa SEO, phân cách bằng dấu phẩy. Ví dụ: Laptop Asus ExpertBook B1, Gaming, Computer"
-                  placeholder="Nhập từ khóa, phân cách bằng dấu phẩy"
-                  maxTags={15}
-                  allowDuplicates={false}
-                />
-              </Form.Item>
-
-              <Form.Item
-                label={
-                  <Space>
-                    <EditOutlined />
-                    Image Dimensions
-                    <Tooltip title="Kích thước hình ảnh (width x height) - Được lấy tự động từ file">
-                      <InfoCircleOutlined style={{ color: '#1890ff' }} />
-                    </Tooltip>
-                    {uploadedFiles.length > 0 && uploadedFiles[selectedFileIndex]?.dimensions && (
-                      <Tag color="green">
-                        Tự động: {uploadedFiles[selectedFileIndex].dimensions.width}x{uploadedFiles[selectedFileIndex].dimensions.height}
-                      </Tag>
-                    )}
-                  </Space>
-                }
-                name="image_dimensions"
-              >
-                <Input 
-                  placeholder="Ví dụ: 1920x1080" 
-                  readOnly={!!(uploadedFiles.length > 0 && uploadedFiles[selectedFileIndex]?.dimensions)}
-                  style={{
-                    backgroundColor: uploadedFiles.length > 0 && uploadedFiles[selectedFileIndex]?.dimensions ? '#f6ffed' : 'white'
-                  }}
-                />
-              </Form.Item>
-
-              <Form.Item
-                label={
-                  <Space>
-                    <EditOutlined />
-                    File Size (KB)
-                    <Tooltip title="Kích thước file tính bằng KB - Được lấy tự động từ file">
-                      <InfoCircleOutlined style={{ color: '#1890ff' }} />
-                    </Tooltip>
-                    {uploadedFiles.length > 0 && uploadedFiles[selectedFileIndex]?.fileSizeKB && (
-                      <Tag color="green">
-                        Tự động: {uploadedFiles[selectedFileIndex].fileSizeKB} KB
-                      </Tag>
-                    )}
-                  </Space>
-                }
-                name="file_size_kb"
-              >
-                <Input 
-                  placeholder="Ví dụ: 245" 
-                  readOnly={!!(uploadedFiles.length > 0 && uploadedFiles[selectedFileIndex]?.fileSizeKB)}
-                  style={{
-                    backgroundColor: uploadedFiles.length > 0 && uploadedFiles[selectedFileIndex]?.fileSizeKB ? '#f6ffed' : 'white'
-                  }}
-                />
-              </Form.Item>
-
-              <Form.Item
-                label={
-                  <Space>
-                    <EditOutlined />
-                    Image Format
-                    <Tooltip title="Định dạng hình ảnh - Được lấy tự động từ file">
-                      <InfoCircleOutlined style={{ color: '#1890ff' }} />
-                    </Tooltip>
-                    {uploadedFiles.length > 0 && uploadedFiles[selectedFileIndex]?.imageFormat && (
-                      <Tag color="green">
-                        Tự động: {uploadedFiles[selectedFileIndex].imageFormat}
-                      </Tag>
-                    )}
-                  </Space>
-                }
-                name="image_format"
-              >
-                <Select 
-                  placeholder="Chọn định dạng hình ảnh"
-                  disabled={!!(uploadedFiles.length > 0 && uploadedFiles[selectedFileIndex]?.imageFormat)}
-                  style={{
-                    backgroundColor: uploadedFiles.length > 0 && uploadedFiles[selectedFileIndex]?.imageFormat ? '#f6ffed' : 'white'
-                  }}
-                >
-                  <Option value="JPEG">JPEG - Phù hợp cho ảnh thực tế</Option>
-                  <Option value="PNG">
-                    PNG - Phù hợp cho ảnh có trong suốt
-                  </Option>
-                  <Option value="WebP">
-                    WebP - Định dạng hiện đại, nén tốt
-                  </Option>
-                  <Option value="AVIF">
-                    AVIF - Định dạng mới nhất, nén tốt nhất
-                  </Option>
-                  <Option value="SVG">SVG - Vector, phù hợp cho icon</Option>
-                  <Option value="GIF">GIF - Animation</Option>
-                </Select>
-              </Form.Item>
-
-              <Form.Item
-                label={
-                  <Space>
-                    <EditOutlined />
-                    MIME Type
-                    <Tooltip title="Loại MIME của file - Được lấy tự động từ file">
-                      <InfoCircleOutlined style={{ color: '#1890ff' }} />
-                    </Tooltip>
-                    {uploadedFiles.length > 0 && uploadedFiles[selectedFileIndex]?.file.type && (
-                      <Tag color="green">
-                        Tự động: {uploadedFiles[selectedFileIndex].file.type}
-                      </Tag>
-                    )}
-                  </Space>
-                }
-                name="mime_type"
-              >
-                <Input 
-                  placeholder="Ví dụ: image/jpeg" 
-                  readOnly={!!(uploadedFiles.length > 0 && uploadedFiles[selectedFileIndex]?.file.type)}
-                  style={{
-                    backgroundColor: uploadedFiles.length > 0 && uploadedFiles[selectedFileIndex]?.file.type ? '#f6ffed' : 'white'
-                  }}
-                />
-              </Form.Item>
-
-              <Form.Item
-                label={
-                  <Space>
-                    <EditOutlined />
-                    File Path
-                    <Tooltip title="Đường dẫn file trong storage - Được tạo tự động">
-                      <InfoCircleOutlined style={{ color: '#1890ff' }} />
-                    </Tooltip>
-                    {uploadedFiles.length > 0 && uploadedFiles[selectedFileIndex]?.uploaded && (
-                      <Tag color="green">
-                        ✓ Đã upload: {uploadedFiles[selectedFileIndex].uploadedFilePath}
-                      </Tag>
-                    )}
-                  </Space>
-                }
-                name="file_path"
-              >
-                <Input 
-                  placeholder="Tự động tạo khi upload file" 
-                  readOnly
-                  style={{ backgroundColor: '#f6ffed' }}
-                />
-              </Form.Item>
-
-              <Form.Item
-                label={
-                  <Space>
-                    <EditOutlined />
-                    File URL
-                    <Tooltip title="URL công khai của file - Được tạo sau khi upload">
-                      <InfoCircleOutlined style={{ color: '#1890ff' }} />
-                    </Tooltip>
-                    {uploadedFiles.length > 0 && uploadedFiles[selectedFileIndex]?.uploaded && (
-                      <Tag color="green">
-                        ✓ Đã upload
-                      </Tag>
-                    )}
-                  </Space>
-                }
-                name="file_url"
-              >
-                <Input 
-                  placeholder="Tự động tạo sau khi upload file" 
-                  readOnly
-                  style={{ backgroundColor: '#f6ffed' }}
-                />
-              </Form.Item>
-
-              <Form.Item
-                label={
-                  <Space>
-                    <EditOutlined />
-                    Lazy Loading
-                    <Tooltip title="Bật/tắt lazy loading cho hình ảnh - Tối ưu performance">
-                      <InfoCircleOutlined style={{ color: "#1890ff" }} />
-                    </Tooltip>
-                  </Space>
-                }
-                name="lazy_loading"
-                valuePropName="checked"
-                initialValue={true}
-              >
-                <Switch checkedChildren="Bật" unCheckedChildren="Tắt" />
-              </Form.Item>
-
-              <Form.Item
-                label={
-                  <Space>
-                    <EditOutlined />
-                    Priority Loading
-                    <Tooltip title="Ưu tiên tải hình ảnh quan trọng (Above the fold)">
-                      <InfoCircleOutlined style={{ color: "#1890ff" }} />
-                    </Tooltip>
-                  </Space>
-                }
-                name="priority_loading"
-                valuePropName="checked"
-                initialValue={false}
-              >
-                <Switch checkedChildren="Cao" unCheckedChildren="Thường" />
-              </Form.Item>
-
-              <Form.Item
-                label={
-                  <Space>
-                    <UserOutlined />
-                    Credit
-                    <Tooltip title="Nguồn gốc hoặc người tạo ra hình ảnh (Mặc định: Original Content - Tối ưu SEO)">
-                      <InfoCircleOutlined style={{ color: "#1890ff" }} />
-                    </Tooltip>
-                    <a
-                      href="/credit-license-guide.html#credit"
-                      target="_blank"
-                      style={{
-                        color: "#1890ff",
-                        textDecoration: "none",
-                        fontSize: "12px",
-                      }}
-                      title="Xem hướng dẫn Credit"
-                    >
-                      📖 Hướng dẫn
-                    </a>
-                  </Space>
-                }
-                name="credit"
-                initialValue="Original Content"
-              >
-                <Select
-                  placeholder="Original Content (Mặc định - Tối ưu SEO)"
-                  allowClear
-                  showSearch
-                  optionFilterProp="children"
-                >
-                  <Option value="Unsplash">🆓 Unsplash</Option>
-                  <Option value="Pexels">🆓 Pexels</Option>
-                  <Option value="Pixabay">🆓 Pixabay</Option>
-                  <Option value="Freepik">🆓 Freepik</Option>
-                  <Option value="Wikimedia Commons">
-                    🆓 Wikimedia Commons
-                  </Option>
-                  <Option value="OpenClipart">🆓 OpenClipart</Option>
-                  <Option value="Flaticon">🆓 Flaticon</Option>
-                  <Option value="Adobe Stock">💰 Adobe Stock</Option>
-                  <Option value="Shutterstock">💰 Shutterstock</Option>
-                  <Option value="Getty Images">💰 Getty Images</Option>
-                  <Option value="iStock">💰 iStock</Option>
-                  <Option value="Depositphotos">💰 Depositphotos</Option>
-                  <Option value="Original Content">🎨 Original Content</Option>
-                  <Option value="Self Created">🎨 Self Created</Option>
-                  <Option value="Custom Design">🎨 Custom Design</Option>
-                  <Option value="Custom">📝 Custom</Option>
-                </Select>
-              </Form.Item>
-
-              <Form.Item
-                label={
-                  <Space>
-                    <CopyrightOutlined />
-                    License
-                    <Tooltip title="Giấy phép sử dụng hình ảnh, quan trọng cho bản quyền (Mặc định: All Rights Reserved - Bảo lưu mọi quyền)">
-                      <InfoCircleOutlined style={{ color: "#1890ff" }} />
-                    </Tooltip>
-                    <a
-                      href="/credit-license-guide.html#license"
-                      target="_blank"
-                      style={{
-                        color: "#1890ff",
-                        textDecoration: "none",
-                        fontSize: "12px",
-                      }}
-                      title="Xem hướng dẫn License"
-                    >
-                      📖 Hướng dẫn
-                    </a>
-                  </Space>
-                }
-                name="license"
-                initialValue="All Rights Reserved"
-              >
-                <Select
-                  placeholder="All Rights Reserved (Mặc định - Bảo lưu mọi quyền)"
-                  allowClear
-                  showSearch
-                  optionFilterProp="children"
-                >
-                  {LICENSE_PRESETS.map((license) => (
-                    <Option key={license.value} value={license.value}>
-                      {license.label}
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
-
-              <Form.Item
-                label={
-                  <Space>
-                    Trạng thái
-                    <Tooltip title="Bật/tắt hiển thị hình ảnh trên website">
-                      <InfoCircleOutlined style={{ color: "#1890ff" }} />
-                    </Tooltip>
-                  </Space>
-                }
-                name="is_active"
-                valuePropName="checked"
-                initialValue={true}
-              >
-                <Switch checkedChildren="Hiển thị" unCheckedChildren="Ẩn" />
-              </Form.Item>
             </Card>
 
             {/* Card SEO nâng cao */}
@@ -1439,85 +953,7 @@ export const MediaCreate: React.FC = () => {
               } 
               style={{ marginBottom: "20px" }}
             >
-              <Form.Item
-                label={
-                  <Space>
-                    <TagsOutlined />
-                    SEO Score
-                    <Tooltip title="Điểm SEO của media (0-100) - Càng cao càng tốt. Giá trị hợp lý: 80-95">
-                      <InfoCircleOutlined style={{ color: "#1890ff" }} />
-                    </Tooltip>
-                  </Space>
-                }
-                name="seo_score"
-                initialValue={0}
-              >
-                <Input type="number" min={0} max={100} placeholder="0-100" />
-              </Form.Item>
-
-              <Form.Item
-                label={
-                  <Space>
-                    <TagsOutlined />
-                    Accessibility Score
-                    <Tooltip title="Điểm accessibility (0-100) - Hỗ trợ người khuyết tật. Giá trị hợp lý: 85-95">
-                      <InfoCircleOutlined style={{ color: "#1890ff" }} />
-                    </Tooltip>
-                  </Space>
-                }
-                name="accessibility_score"
-                initialValue={0}
-              >
-                <Input type="number" min={0} max={100} placeholder="0-100" />
-              </Form.Item>
-
-              <Form.Item
-                label={
-                  <Space>
-                    <TagsOutlined />
-                    Performance Score
-                    <Tooltip title="Điểm performance (0-100) - Tốc độ tải và hiệu năng. Giá trị hợp lý: 85-95">
-                      <InfoCircleOutlined style={{ color: "#1890ff" }} />
-                    </Tooltip>
-                  </Space>
-                }
-                name="performance_score"
-                initialValue={0}
-              >
-                <Input type="number" min={0} max={100} placeholder="0-100" />
-              </Form.Item>
-
-              <Form.Item
-                label={
-                  <Space>
-                    <TagsOutlined />
-                    Usage Count
-                    <Tooltip title="Số lần file được sử dụng trong hệ thống. Giá trị hợp lý: 0-10">
-                      <InfoCircleOutlined style={{ color: "#1890ff" }} />
-                    </Tooltip>
-                  </Space>
-                }
-                name="usage_count"
-                initialValue={0}
-              >
-                <Input type="number" min={0} placeholder="Số lần sử dụng" readOnly style={{ backgroundColor: '#f6ffed' }} />
-              </Form.Item>
-
-              <Form.Item
-                label={
-                  <Space>
-                    <TagsOutlined />
-                    Version
-                    <Tooltip title="Phiên bản của file, bắt đầu từ 1. Giá trị hợp lý: 1-4">
-                      <InfoCircleOutlined style={{ color: "#1890ff" }} />
-                    </Tooltip>
-                  </Space>
-                }
-                name="version"
-                initialValue={1}
-              >
-                <Input type="number" min={1} placeholder="Phiên bản file" />
-              </Form.Item>
+              <MediaSEOSection mode="create" onAutoFillSEOScores={() => autoFillSEOScores(true)} />
             </Card>
           </Form>
         </div>
