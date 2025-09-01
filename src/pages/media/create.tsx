@@ -45,16 +45,16 @@ interface MediaFormValues {
 
 
 const LICENSE_PRESETS = [
-  "CC0 (Public Domain) - Miền công cộng, tự do sử dụng",
-  "CC BY (Attribution) - Ghi công tác giả",
-  "CC BY-SA (Attribution-ShareAlike) - Ghi công và chia sẻ tương tự",
-  "CC BY-ND (Attribution-NoDerivs) - Ghi công, không chỉnh sửa",
-  "CC BY-NC (Attribution-NonCommercial) - Ghi công, không thương mại",
-  "CC BY-NC-SA (Attribution-NonCommercial-ShareAlike) - Ghi công, không thương mại, chia sẻ tương tự",
-  "CC BY-NC-ND (Attribution-NonCommercial-NoDerivs) - Ghi công, không thương mại, không chỉnh sửa",
-  "All Rights Reserved - Bảo lưu mọi quyền",
-  "Fair Use - Sử dụng hợp lý",
-  "Custom - Tùy chỉnh",
+  { value: "CC0", label: "CC0 (Public Domain) - Miền công cộng, tự do sử dụng" },
+  { value: "CC BY", label: "CC BY (Attribution) - Ghi công tác giả" },
+  { value: "CC BY-SA", label: "CC BY-SA (Attribution-ShareAlike) - Ghi công và chia sẻ tương tự" },
+  { value: "CC BY-ND", label: "CC BY-ND (Attribution-NoDerivs) - Ghi công, không chỉnh sửa" },
+  { value: "CC BY-NC", label: "CC BY-NC (Attribution-NonCommercial) - Ghi công, không thương mại" },
+  { value: "CC BY-NC-SA", label: "CC BY-NC-SA (Attribution-NonCommercial-ShareAlike) - Ghi công, không thương mại, chia sẻ tương tự" },
+  { value: "CC BY-NC-ND", label: "CC BY-NC-ND (Attribution-NonCommercial-NoDerivs) - Ghi công, không thương mại, không chỉnh sửa" },
+  { value: "All Rights Reserved", label: "All Rights Reserved - Bảo lưu mọi quyền" },
+  { value: "Fair Use", label: "Fair Use - Sử dụng hợp lý" },
+  { value: "Custom", label: "Custom - Tùy chỉnh" },
 ];
 
 export const MediaCreate: React.FC = () => {
@@ -99,6 +99,44 @@ export const MediaCreate: React.FC = () => {
       img.src = URL.createObjectURL(file);
     });
   };
+    // Hàm tự động điền thông số SEO nâng cao
+  const autoFillSEOScores = useCallback((showMessage = false) => {
+    if (!formProps.form) {
+      console.log('❌ Form not available for auto-fill SEO scores');
+      return;
+    }
+    
+    const currentValues = formProps.form.getFieldsValue();
+    
+    // Tạo các giá trị SEO hợp lý
+    const seoScores = [85, 92, 78, 95, 88, 90, 82, 94, 87, 91];
+    const accessibilityScores = [90, 85, 88, 92, 86, 89, 84, 91, 87, 93];
+    const performanceScores = [88, 92, 85, 94, 89, 91, 83, 95, 86, 90];
+    const usageCounts = [0, 1, 3, 5, 2, 7, 4, 6, 8, 9];
+    const versions = [1, 1, 2, 1, 3, 1, 2, 1, 4, 1];
+
+    const randomIndex = Math.floor(Math.random() * 10);
+    
+    const seoValues = {
+      seo_score: seoScores[randomIndex],
+      accessibility_score: accessibilityScores[randomIndex],
+      performance_score: performanceScores[randomIndex],
+      usage_count: usageCounts[randomIndex],
+      version: versions[randomIndex],
+    };
+    
+    console.log('🔧 Auto-filling SEO scores:', seoValues);
+    
+    formProps.form.setFieldsValue({
+      ...currentValues,
+      ...seoValues,
+    });
+    
+    if (showMessage) {
+      message.success('Đã tự động điền thông số SEO nâng cao!');
+    }
+  }, [formProps.form]);
+
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
       // Tạo array promises để xử lý tất cả files đồng thời
@@ -173,35 +211,33 @@ export const MediaCreate: React.FC = () => {
             `Hình ảnh ${smartAltText.toLowerCase()} chuyên nghiệp, phù hợp cho mọi dự án`,
           ];
 
-          // Tạo keywords từ tên file (array format cho Select)
-          const keywords = [
-            fileName.replace(/[-_]/g, ' '), // Tên file gốc
-            ...fileName
-              .replace(/[-_]/g, ' ')
-              .split(' ')
-              .filter((word) => word.length > 2)
-          ];
+                     // Tạo keywords từ tên file (các cụm từ 2-3 từ có ý nghĩa)
+           const keywords = generateKeywords(fileName);
 
-          formProps.form.setFieldsValue({
-            file_name: fileName,
-            alt_text: smartAltText,
-            title: smartAltText,
-            caption: captions[0], // Sử dụng caption đầu tiên
-            meta_description: metaDescriptions[0], // Sử dụng description đầu tiên
-            meta_keywords: keywords,
+                      formProps.form.setFieldsValue({
+             file_name: fileName,
+             alt_text: smartAltText,
+             title: smartAltText,
+             caption: captions[0], // Sử dụng caption đầu tiên
+             meta_description: metaDescriptions[0], // Sử dụng description đầu tiên
+             meta_keywords: keywords,
             image_format: firstFile.imageFormat,
             image_dimensions: `${firstFile.dimensions?.width || 0}x${firstFile.dimensions?.height || 0}`,
             file_size_kb: firstFile.fileSizeKB?.toString() || '0',
             mime_type: firstFile.file.type,
-            file_path: 'Sẽ được tạo khi upload',
-            file_url: 'Sẽ được tạo sau khi upload',
+            // file_path và file_url sẽ được set sau khi upload
             lazy_loading: true,
             priority_loading: false,
-          });
+           });
+           
+           // Tự động điền thông số SEO nâng cao khi chọn file đầu tiên
+           setTimeout(() => {
+             autoFillSEOScores();
+           }, 200);
         }
       }
     },
-    [formProps.form]
+    [formProps.form, autoFillSEOScores]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -234,6 +270,34 @@ export const MediaCreate: React.FC = () => {
     }
     
     return fileName;
+  };
+
+  // Hàm tạo keywords từ tên file (các cụm từ 2-3 từ có ý nghĩa)
+  const generateKeywords = (fileName: string): string[] => {
+    // Loại bỏ extension file
+    const nameWithoutExt = fileName.replace(/\.[^/.]+$/, '');
+    const words = nameWithoutExt.replace(/[-_]/g, ' ').split(' ').filter((word) => word.length > 2);
+    const keywords = [];
+    
+    // Thêm tên file gốc (không có extension) như một keyword
+    keywords.push(nameWithoutExt.replace(/[-_]/g, ' '));
+    
+    // Tạo các cụm từ 2-3 từ
+    for (let i = 0; i < words.length - 1; i++) {
+      // Cụm 2 từ
+      keywords.push(`${words[i]} ${words[i + 1]}`);
+      
+      // Cụm 3 từ (nếu có đủ từ)
+      if (i < words.length - 2) {
+        keywords.push(`${words[i]} ${words[i + 1]} ${words[i + 2]}`);
+      }
+    }
+    
+    // Thêm một số từ khóa chung về hình ảnh
+    keywords.push('hình ảnh chất lượng cao', 'ảnh đẹp', 'tài liệu hình ảnh', 'hình ảnh chuyên nghiệp');
+    
+    // Loại bỏ trùng lặp và giới hạn số lượng
+    return [...new Set(keywords)].slice(0, 10);
   };
 
   const handleUpload = async () => {
@@ -282,11 +346,24 @@ export const MediaCreate: React.FC = () => {
         
         if (uploadedFile.uploaded) {
           const currentValues = formProps.form.getFieldsValue();
+          
+          // Cập nhật form ngay lập tức với thông tin file đã upload
           formProps.form.setFieldsValue({
             ...currentValues,
             file_path: uploadedFile.uploadedFilePath,
             file_url: uploadedFile.url,
           });
+          
+          console.log('🔧 Updated form with uploaded file info:', {
+            file_path: uploadedFile.uploadedFilePath,
+            file_url: uploadedFile.url
+          });
+          
+          // Tự động điền thông số SEO nâng cao
+          setTimeout(() => {
+            autoFillSEOScores();
+            message.info('Đã tự động điền thông số SEO nâng cao!');
+          }, 200);
         }
       }
       
@@ -358,14 +435,8 @@ export const MediaCreate: React.FC = () => {
         `Hình ảnh ${smartAltText.toLowerCase()} chuyên nghiệp, phù hợp cho mọi dự án`,
       ];
 
-      // Tạo keywords từ tên file (array format cho Select)
-      const keywords = [
-        fileName.replace(/[-_]/g, ' '), // Tên file gốc
-        ...fileName
-          .replace(/[-_]/g, ' ')
-          .split(' ')
-          .filter((word) => word.length > 2)
-      ];
+      // Tạo keywords từ tên file (các cụm từ 2-3 từ có ý nghĩa)
+      const keywords = generateKeywords(fileName);
 
       // Nếu chưa có thông tin dimensions, thử lấy lại
       let dimensions = fileData.dimensions;
@@ -395,28 +466,51 @@ export const MediaCreate: React.FC = () => {
         }
       }
 
-          // Cập nhật lại form với thông tin file mới
-          formProps.form.setFieldsValue({
-            file_name: fileName,
-            alt_text: smartAltText,
-            title: smartAltText,
-            caption: captions[0], // Sử dụng caption đầu tiên
-            meta_description: metaDescriptions[0], // Sử dụng description đầu tiên
-            meta_keywords: keywords,
-            image_format: imageFormat || file.type.split('/')[1]?.toUpperCase() || 'JPEG',
-            image_dimensions: `${dimensions?.width || 0}x${dimensions?.height || 0}`,
-            file_size_kb: (fileSizeKB || Math.round(file.size / 1024)).toString(),
-            mime_type: file.type,
-            file_path: uploadedFiles[index]?.uploaded ? `media/${file.name}` : 'Sẽ được tạo khi upload',
-            file_url: uploadedFiles[index]?.url || 'Sẽ được tạo sau khi upload',
-            lazy_loading: true,
-            priority_loading: false,
-          });
+                     // Cập nhật lại form với thông tin file mới
+           formProps.form.setFieldsValue({
+             file_name: fileName,
+             alt_text: smartAltText,
+             title: smartAltText,
+             caption: captions[0], // Sử dụng caption đầu tiên
+             meta_description: metaDescriptions[0], // Sử dụng description đầu tiên
+             meta_keywords: keywords,
+             image_format: imageFormat || file.type.split('/')[1]?.toUpperCase() || 'JPEG',
+             image_dimensions: `${dimensions?.width || 0}x${dimensions?.height || 0}`,
+             file_size_kb: (fileSizeKB || Math.round(file.size / 1024)).toString(),
+             mime_type: file.type,
+             // file_path và file_url sẽ được set sau khi upload
+             lazy_loading: true,
+             priority_loading: false,
+           });
+           
+           // Cập nhật file_path và file_url nếu file đã upload
+           if (uploadedFiles[index]?.uploaded && uploadedFiles[index]?.uploadedFilePath) {
+             formProps.form.setFieldsValue({
+               file_path: uploadedFiles[index].uploadedFilePath,
+               file_url: uploadedFiles[index].url,
+             });
+             
+             console.log('🔧 Updated form with selected uploaded file info:', {
+               file_path: uploadedFiles[index].uploadedFilePath,
+               file_url: uploadedFiles[index].url
+             });
+           }
+           
+           // Tự động điền thông số SEO nâng cao khi chọn file
+           setTimeout(() => {
+             autoFillSEOScores();
+           }, 200);
     }
   };
 
   const handleFormSubmit = async (values: MediaFormValues) => {
     try {
+      // Kiểm tra có file được chọn không
+      if (uploadedFiles.length === 0) {
+        message.error('Vui lòng chọn ít nhất một file!');
+        return;
+      }
+      
       // Kiểm tra nếu có file nhưng chưa upload, tự động upload trước
       if (uploadedFiles.length > 0 && !uploadedFiles[selectedFileIndex]?.uploaded) {
         message.info('Đang upload file lên Supabase Storage...');
@@ -444,18 +538,44 @@ export const MediaCreate: React.FC = () => {
           .from("media")
           .getPublicUrl(filePath);
 
-        // Cập nhật uploadedFiles với thông tin mới
-        const updatedFiles = [...uploadedFiles];
-        updatedFiles[selectedFileIndex] = {
-          ...fileData,
-          uploaded: true,
-          url: urlData.publicUrl,
-          uploadedFileName: uniqueFileName,
-          uploadedFilePath: filePath,
-        };
-        setUploadedFiles(updatedFiles);
+                 // Cập nhật uploadedFiles với thông tin mới
+         const updatedFiles = [...uploadedFiles];
+         updatedFiles[selectedFileIndex] = {
+           ...fileData,
+           uploaded: true,
+           url: urlData.publicUrl,
+           uploadedFileName: uniqueFileName,
+           uploadedFilePath: filePath,
+         };
+         setUploadedFiles(updatedFiles);
+         
+         // Cập nhật lại selectedFile để sử dụng trong phần tiếp theo
+         uploadedFiles[selectedFileIndex] = updatedFiles[selectedFileIndex];
 
-        message.success('Upload file thành công!');
+         // Tự động điền thông số SEO nâng cao sau khi upload
+         if (formProps.form) {
+           const currentValues = formProps.form.getFieldsValue();
+           
+           // Cập nhật form ngay lập tức với thông tin file đã upload
+           formProps.form.setFieldsValue({
+             ...currentValues,
+             file_path: filePath,
+             file_url: urlData.publicUrl,
+           });
+           
+           console.log('🔧 Updated form with uploaded file info (submit):', {
+             file_path: filePath,
+             file_url: urlData.publicUrl
+           });
+           
+           // Tự động điền thông số SEO nâng cao
+           setTimeout(() => {
+             autoFillSEOScores();
+             message.info('Đã tự động điền thông số SEO nâng cao!');
+           }, 200);
+         }
+
+         message.success('Upload file thành công!');
       }
 
       // Data provider đã xử lý array fields, chỉ cần xử lý thông tin file
@@ -463,6 +583,7 @@ export const MediaCreate: React.FC = () => {
 
       // Thêm file_url và thông tin chi tiết từ file được chọn
       if (uploadedFiles.length > 0) {
+        // Lấy file hiện tại (có thể đã được upload trong phần trên)
         const selectedFile = uploadedFiles[selectedFileIndex];
         
         // Nếu file đã upload, lấy URL từ Supabase
@@ -470,9 +591,9 @@ export const MediaCreate: React.FC = () => {
           cleanValues.file_url = selectedFile.url;
           cleanValues.file_path = selectedFile.uploadedFilePath || `media/${selectedFile.uploadedFileName || selectedFile.file.name}`;
         } else {
-          // Nếu chưa upload, sử dụng thông tin từ form
-          cleanValues.file_url = values.file_url || 'Chưa upload';
-          cleanValues.file_path = values.file_path || 'Chưa upload';
+          // Nếu chưa upload, báo lỗi và dừng submit
+          message.error('Vui lòng upload file trước khi lưu!');
+          return;
         }
         
         cleanValues.file_size = selectedFile.file.size;
@@ -1129,7 +1250,7 @@ export const MediaCreate: React.FC = () => {
                 name="file_path"
               >
                 <Input 
-                  placeholder="Sẽ được tạo tự động khi upload" 
+                  placeholder="Tự động tạo khi upload file" 
                   readOnly
                   style={{ backgroundColor: '#f6ffed' }}
                 />
@@ -1153,7 +1274,7 @@ export const MediaCreate: React.FC = () => {
                 name="file_url"
               >
                 <Input 
-                  placeholder="Sẽ được tạo tự động sau khi upload" 
+                  placeholder="Tự động tạo sau khi upload file" 
                   readOnly
                   style={{ backgroundColor: '#f6ffed' }}
                 />
@@ -1268,7 +1389,7 @@ export const MediaCreate: React.FC = () => {
                   </Space>
                 }
                 name="license"
-                initialValue="All Rights Reserved - Bảo lưu mọi quyền"
+                initialValue="All Rights Reserved"
               >
                 <Select
                   placeholder="All Rights Reserved (Mặc định - Bảo lưu mọi quyền)"
@@ -1277,8 +1398,8 @@ export const MediaCreate: React.FC = () => {
                   optionFilterProp="children"
                 >
                   {LICENSE_PRESETS.map((license) => (
-                    <Option key={license} value={license}>
-                      {license}
+                    <Option key={license.value} value={license.value}>
+                      {license.label}
                     </Option>
                   ))}
                 </Select>
@@ -1306,33 +1427,14 @@ export const MediaCreate: React.FC = () => {
               title={
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <span>Thông tin SEO nâng cao</span>
-                  <Button
-                    size="small"
-                    type="dashed"
-                    onClick={() => {
-                      if (formProps.form) {
-                        // Tạo các giá trị SEO hợp lý
-                        const seoScores = [85, 92, 78, 95, 88, 90, 82, 94, 87, 91];
-                        const accessibilityScores = [90, 85, 88, 92, 86, 89, 84, 91, 87, 93];
-                        const performanceScores = [88, 92, 85, 94, 89, 91, 83, 95, 86, 90];
-                        const usageCounts = [0, 1, 3, 5, 2, 7, 4, 6, 8, 9];
-                        const versions = [1, 1, 2, 1, 3, 1, 2, 1, 4, 1];
-
-                        const randomIndex = Math.floor(Math.random() * 10);
-                        
-                        formProps.form.setFieldsValue({
-                          seo_score: seoScores[randomIndex],
-                          accessibility_score: accessibilityScores[randomIndex],
-                          performance_score: performanceScores[randomIndex],
-                          usage_count: usageCounts[randomIndex],
-                          version: versions[randomIndex],
-                        });
-                      }
-                    }}
-                    title="Điền các giá trị SEO hợp lý"
-                  >
-                    🔄 Gợi ý
-                  </Button>
+                                     <Button
+                     size="small"
+                     type="dashed"
+                     onClick={() => autoFillSEOScores(true)}
+                     title="Điền các giá trị SEO hợp lý"
+                   >
+                     🔄 Gợi ý
+                   </Button>
                 </div>
               } 
               style={{ marginBottom: "20px" }}

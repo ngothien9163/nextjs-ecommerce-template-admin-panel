@@ -9,7 +9,7 @@ import {
   Space,
   Tag,
   Typography,
-  Divider,
+  Modal,
 } from "antd";
 import {
   EyeOutlined,
@@ -18,7 +18,7 @@ import {
   LinkOutlined,
 } from "@ant-design/icons";
 
-const { Title, Text, Paragraph } = Typography;
+const { Text } = Typography;
 
 export const MediaShow: React.FC = () => {
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);

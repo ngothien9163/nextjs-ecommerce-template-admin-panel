@@ -61,16 +61,16 @@ const CREDIT_PRESETS = [
 ];
 
 const LICENSE_PRESETS = [
-  "CC0 (Public Domain) - Miền công cộng, tự do sử dụng",
-  "CC BY (Attribution) - Ghi công tác giả",
-  "CC BY-SA (Attribution-ShareAlike) - Ghi công và chia sẻ tương tự",
-  "CC BY-ND (Attribution-NoDerivs) - Ghi công, không chỉnh sửa",
-  "CC BY-NC (Attribution-NonCommercial) - Ghi công, không thương mại",
-  "CC BY-NC-SA (Attribution-NonCommercial-ShareAlike) - Ghi công, không thương mại, chia sẻ tương tự",
-  "CC BY-NC-ND (Attribution-NonCommercial-NoDerivs) - Ghi công, không thương mại, không chỉnh sửa",
-  "All Rights Reserved - Bảo lưu mọi quyền",
-  "Fair Use - Sử dụng hợp lý",
-  "Custom - Tùy chỉnh",
+  { value: "CC0", label: "CC0 (Public Domain) - Miền công cộng, tự do sử dụng" },
+  { value: "CC BY", label: "CC BY (Attribution) - Ghi công tác giả" },
+  { value: "CC BY-SA", label: "CC BY-SA (Attribution-ShareAlike) - Ghi công và chia sẻ tương tự" },
+  { value: "CC BY-ND", label: "CC BY-ND (Attribution-NoDerivs) - Ghi công, không chỉnh sửa" },
+  { value: "CC BY-NC", label: "CC BY-NC (Attribution-NonCommercial) - Ghi công, không thương mại" },
+  { value: "CC BY-NC-SA", label: "CC BY-NC-SA (Attribution-NonCommercial-ShareAlike) - Ghi công, không thương mại, chia sẻ tương tự" },
+  { value: "CC BY-NC-ND", label: "CC BY-NC-ND (Attribution-NonCommercial-NoDerivs) - Ghi công, không thương mại, không chỉnh sửa" },
+  { value: "All Rights Reserved", label: "All Rights Reserved - Bảo lưu mọi quyền" },
+  { value: "Fair Use", label: "Fair Use - Sử dụng hợp lý" },
+  { value: "Custom", label: "Custom - Tùy chỉnh" },
 ];
 
 export const MediaEdit: React.FC = () => {
@@ -362,8 +362,8 @@ export const MediaEdit: React.FC = () => {
                   optionFilterProp="children"
                 >
                   {LICENSE_PRESETS.map((preset) => (
-                    <Option key={preset} value={preset}>
-                      {preset}
+                    <Option key={preset.value} value={preset.value}>
+                      {preset.label}
                     </Option>
                   ))}
                 </Select>
