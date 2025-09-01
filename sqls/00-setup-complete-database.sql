@@ -6,8 +6,8 @@
 -- HƯỚNG DẪN SỬ DỤNG:
 -- =====================================================
 -- 1. Chạy script này để setup toàn bộ database
--- 2. Script sẽ tạo tất cả tables, insert dữ liệu mẫu, và tạo materialized views
--- 3. Thời gian chạy: ~2-3 phút tùy theo database size
+-- 2. Script sẽ tạo tất cả tables và insert dữ liệu mẫu
+-- 3. Thời gian chạy: ~1-2 phút tùy theo database size
 
 -- =====================================================
 -- BƯỚC 1: TẠO TẤT CẢ TABLES (BAO GỒM SEO TABLES)
@@ -15,17 +15,12 @@
 \i sqls/01-create-all-tables.sql
 
 -- =====================================================
--- BƯỚC 2: INSERT DỮ LIỆU MẪU CHO TẤT CẢ TABLES (BAO GỒM SEO)
+-- BƯỚC 2: INSERT DỮ LIỆU MẪU CHO TẤT CẢ TABLES
 -- =====================================================
 \i sqls/02-insert-all-data.sql
 
 -- =====================================================
--- BƯỚC 3: TẠO MATERIALIZED VIEWS CHO PERFORMANCE
--- =====================================================
-\i sqls/03-create-materialized-views.sql
-
--- =====================================================
--- BƯỚC 4: KIỂM TRA KẾT QUẢ SETUP
+-- BƯỚC 3: KIỂM TRA KẾT QUẢ SETUP
 -- =====================================================
 
 -- Kiểm tra số lượng records trong từng bảng chính
@@ -58,6 +53,11 @@ SELECT
 FROM media
 UNION ALL
 SELECT 
+    'SEO Medias' as table_name,
+    COUNT(*) as record_count
+FROM seo_medias
+UNION ALL
+SELECT 
     'SEO Pages' as table_name,
     COUNT(*) as record_count
 FROM seo_pages
@@ -84,46 +84,44 @@ SELECT
 FROM categories c
 ORDER BY sort_order;
 
--- Kiểm tra materialized views
+-- Kiểm tra indexes và triggers
 SELECT 
-    '=== KIỂM TRA MATERIALIZED VIEWS ===' as info;
+    '=== KIỂM TRA INDEXES VÀ TRIGGERS ===' as info;
 
 SELECT 
-    schemaname,
-    matviewname,
-    pg_size_pretty(pg_total_relation_size(schemaname||'.'||matviewname)) as size
-FROM pg_matviews 
-WHERE schemaname = 'public' AND matviewname LIKE 'categories%';
-
--- Kiểm tra hiệu suất materialized view
+    'Indexes' as type,
+    COUNT(*) as count
+FROM pg_indexes 
+WHERE schemaname = 'public'
+UNION ALL
 SELECT 
-    '=== KIỂM TRA HIỆU SUẤT ===' as info;
-
-EXPLAIN (ANALYZE, BUFFERS) 
-SELECT id, name, slug, image_url, image_alt
-FROM categories_display
-ORDER BY sort_order
-LIMIT 5;
+    'Triggers' as type,
+    COUNT(*) as count
+FROM pg_trigger 
+WHERE tgrelid IN (
+    SELECT oid FROM pg_class 
+    WHERE relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public')
+);
 
 -- =====================================================
--- BƯỚC 5: THÔNG BÁO HOÀN THÀNH
+-- BƯỚC 4: THÔNG BÁO HOÀN THÀNH
 -- =====================================================
 
 SELECT 
     '=== HOÀN THÀNH SETUP DATABASE ===' as info,
-    '✅ Tất cả tables đã được tạo' as step1,
+    '✅ Tất cả tables đã được tạo (30 tables chính + 3 tables SEO)' as step1,
     '✅ Dữ liệu mẫu đã được insert' as step2,
     '✅ SEO system đã được setup' as step3,
-    '✅ Materialized views đã được tạo' as step4,
-    '✅ Triggers và functions đã được tạo' as step5,
-    '✅ Indexes đã được tạo cho performance' as step6;
+    '✅ Triggers và functions đã được tạo' as step4,
+    '✅ Indexes đã được tạo cho performance' as step5;
 
 SELECT 
     '=== BƯỚC TIẾP THEO ===' as next_steps,
     '1. Truy cập http://localhost:3000 để xem website' as step1,
-    '2. Sử dụng Materialized Views trong API: categories_display' as step2,
-    '3. Quản lý SEO qua bảng seo_pages' as step3,
-    '4. Thêm sản phẩm mới qua bảng products' as step4;
+    '2. Quản lý SEO qua bảng seo_pages' as step2,
+    '3. Quản lý SEO media qua bảng seo_medias' as step3,
+    '4. Thêm sản phẩm mới qua bảng products' as step4,
+    '5. Setup Supabase Storage (nếu cần): chạy sqls/02-setup-supabase-storage.sql' as step5;
 
 -- =====================================================
 -- HOÀN THÀNH SETUP TOÀN BỘ DATABASE

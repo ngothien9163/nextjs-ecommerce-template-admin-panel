@@ -78,6 +78,9 @@ export const MediaCreate: React.FC = () => {
       preview: string;
       uploaded: boolean;
       url?: string;
+      dimensions?: { width: number; height: number };
+      fileSizeKB?: number;
+      imageFormat?: string;
     }>
   >([]);
   const [selectedFileIndex, setSelectedFileIndex] = useState<number>(0);
@@ -86,29 +89,72 @@ export const MediaCreate: React.FC = () => {
     resource: "media",
   });
 
+  // Hàm để lấy thông tin chi tiết từ file ảnh
+  const getImageDetails = (file: File): Promise<{
+    dimensions: { width: number; height: number };
+    fileSizeKB: number;
+    imageFormat: string;
+  }> => {
+    return new Promise((resolve, reject) => {
+      const img = document.createElement('img');
+      img.onload = () => {
+        resolve({
+          dimensions: { width: img.width, height: img.height },
+          fileSizeKB: Math.round(file.size / 1024),
+          imageFormat: file.type.split('/')[1]?.toUpperCase() || 'JPEG'
+        });
+        URL.revokeObjectURL(img.src);
+      };
+      img.onerror = () => {
+        reject(new Error('Không thể đọc thông tin hình ảnh'));
+      };
+      img.src = URL.createObjectURL(file);
+    });
+  };
   const onDrop = useCallback(
-    (acceptedFiles: File[]) => {
-      const newFiles = acceptedFiles.map((file) => ({
-        file,
-        preview: URL.createObjectURL(file),
-        uploaded: false,
-      }));
+    async (acceptedFiles: File[]) => {
+      // Tạo array promises để xử lý tất cả files đồng thời
+      const filePromises = acceptedFiles.map(async (file) => {
+        try {
+          const details = await getImageDetails(file);
+          return {
+            file,
+            preview: URL.createObjectURL(file),
+            uploaded: false,
+            dimensions: details.dimensions,
+            fileSizeKB: details.fileSizeKB,
+            imageFormat: details.imageFormat
+          };
+        } catch (error) {
+          console.error('Lỗi khi đọc thông tin file:', file.name, error);
+          return {
+            file,
+            preview: URL.createObjectURL(file),
+            uploaded: false,
+            dimensions: { width: 0, height: 0 },
+            fileSizeKB: Math.round(file.size / 1024),
+            imageFormat: file.type.split('/')[1]?.toUpperCase() || 'JPEG'
+          };
+        }
+      });
+
+      const newFiles = await Promise.all(filePromises);
       setUploadedFiles((prev) => [...prev, ...newFiles]);
 
       // Tự động điền thông tin từ file đầu tiên nếu form chưa có dữ liệu
-      if (acceptedFiles.length > 0 && formProps.form) {
+      if (newFiles.length > 0 && formProps.form) {
         const currentValues = formProps.form.getFieldsValue() as any;
-        const firstFile = acceptedFiles[0];
+        const firstFile = newFiles[0];
 
         // Chỉ điền nếu các field chưa có dữ liệu
         if (!currentValues.file_name) {
-          const fileName = firstFile.name.replace(/\.[^/.]+$/, ""); // Bỏ extension
+          const fileName = firstFile.file.name.replace(/\.[^/.]+$/, ''); // Bỏ extension
 
           // Tạo alt text và title thông minh hơn
           const smartAltText = fileName
-            .replace(/[-_]/g, " ")
+            .replace(/[-_]/g, ' ')
             .replace(/\b\w/g, (l) => l.toUpperCase())
-            .replace(/\s+/g, " ")
+            .replace(/\s+/g, ' ')
             .trim();
 
           // Tạo meta description từ alt text với nhiều gợi ý
@@ -129,10 +175,10 @@ export const MediaCreate: React.FC = () => {
 
           // Tạo keywords từ tên file
           const keywords = fileName
-            .replace(/[-_]/g, " ")
-            .split(" ")
+            .replace(/[-_]/g, ' ')
+            .split(' ')
             .filter((word) => word.length > 2)
-            .join(", ");
+            .join(', ');
 
           formProps.form.setFieldsValue({
             file_name: fileName,
@@ -141,7 +187,12 @@ export const MediaCreate: React.FC = () => {
             caption: captions[0], // Sử dụng caption đầu tiên
             meta_description: metaDescriptions[0], // Sử dụng description đầu tiên
             meta_keywords: keywords,
-            image_format: firstFile.type.split("/")[1]?.toUpperCase() || "JPEG",
+            image_format: firstFile.imageFormat,
+            image_dimensions: `${firstFile.dimensions?.width || 0}x${firstFile.dimensions?.height || 0}`,
+            file_size_kb: firstFile.fileSizeKB?.toString() || '0',
+            mime_type: firstFile.file.type,
+            file_path: 'Sẽ được tạo khi upload',
+            file_url: 'Sẽ được tạo sau khi upload',
             lazy_loading: true,
             priority_loading: false,
           });
@@ -196,6 +247,22 @@ export const MediaCreate: React.FC = () => {
 
       const uploadedFilesData = await Promise.all(uploadPromises);
       setUploadedFiles(uploadedFilesData);
+      
+      // Cập nhật form với thông tin file đã upload (nếu có file đang được chọn)
+      if (uploadedFilesData.length > 0 && formProps.form) {
+        const currentIndex = Math.min(selectedFileIndex, uploadedFilesData.length - 1);
+        const uploadedFile = uploadedFilesData[currentIndex];
+        
+        if (uploadedFile.uploaded) {
+          const currentValues = formProps.form.getFieldsValue();
+          formProps.form.setFieldsValue({
+            ...currentValues,
+            file_path: `media/${uploadedFile.file.name}`,
+            file_url: uploadedFile.url,
+          });
+        }
+      }
+      
       message.success("Upload thành công!");
     } catch (error) {
       console.error("Upload error:", error);
@@ -220,19 +287,20 @@ export const MediaCreate: React.FC = () => {
     });
   };
 
-  const selectFile = (index: number) => {
+  const selectFile = async (index: number) => {
     setSelectedFileIndex(index);
 
     // Cập nhật form với thông tin của file được chọn
     if (uploadedFiles[index] && formProps.form) {
-      const file = uploadedFiles[index].file;
-      const fileName = file.name.replace(/\.[^/.]+$/, ""); // Bỏ extension
+      const fileData = uploadedFiles[index];
+      const file = fileData.file;
+      const fileName = file.name.replace(/\.[^/.]+$/, ''); // Bỏ extension
 
       // Tạo alt text và title thông minh hơn
       const smartAltText = fileName
-        .replace(/[-_]/g, " ")
+        .replace(/[-_]/g, ' ')
         .replace(/\b\w/g, (l) => l.toUpperCase())
-        .replace(/\s+/g, " ")
+        .replace(/\s+/g, ' ')
         .trim();
 
       // Tạo meta description từ alt text với nhiều gợi ý
@@ -253,22 +321,56 @@ export const MediaCreate: React.FC = () => {
 
       // Tạo keywords từ tên file
       const keywords = fileName
-        .replace(/[-_]/g, " ")
-        .split(" ")
+        .replace(/[-_]/g, ' ')
+        .split(' ')
         .filter((word) => word.length > 2)
-        .join(", ");
+        .join(', ');
 
-      formProps.form.setFieldsValue({
-        file_name: fileName,
-        alt_text: smartAltText,
-        title: smartAltText,
-        caption: captions[0], // Sử dụng caption đầu tiên
-        meta_description: metaDescriptions[0], // Sử dụng description đầu tiên
-        meta_keywords: keywords,
-        image_format: file.type.split("/")[1]?.toUpperCase() || "JPEG",
-        lazy_loading: true,
-        priority_loading: false,
-      });
+      // Nếu chưa có thông tin dimensions, thử lấy lại
+      let dimensions = fileData.dimensions;
+      let fileSizeKB = fileData.fileSizeKB;
+      let imageFormat = fileData.imageFormat;
+
+      if (!dimensions || dimensions.width === 0) {
+        try {
+          const details = await getImageDetails(file);
+          dimensions = details.dimensions;
+          fileSizeKB = details.fileSizeKB;
+          imageFormat = details.imageFormat;
+          
+          // Cập nhật lại uploadedFiles với thông tin mới
+          setUploadedFiles(prev => {
+            const updated = [...prev];
+            updated[index] = {
+              ...updated[index],
+              dimensions,
+              fileSizeKB,
+              imageFormat
+            };
+            return updated;
+          });
+        } catch (error) {
+          console.error('Lỗi khi lấy thông tin hình ảnh:', error);
+        }
+      }
+
+          // Cập nhật lại form với thông tin file mới
+          formProps.form.setFieldsValue({
+            file_name: fileName,
+            alt_text: smartAltText,
+            title: smartAltText,
+            caption: captions[0], // Sử dụng caption đầu tiên
+            meta_description: metaDescriptions[0], // Sử dụng description đầu tiên
+            meta_keywords: keywords,
+            image_format: imageFormat || file.type.split('/')[1]?.toUpperCase() || 'JPEG',
+            image_dimensions: `${dimensions?.width || 0}x${dimensions?.height || 0}`,
+            file_size_kb: (fileSizeKB || Math.round(file.size / 1024)).toString(),
+            mime_type: file.type,
+            file_path: uploadedFiles[index]?.uploaded ? `media/${file.name}` : 'Sẽ được tạo khi upload',
+            file_url: uploadedFiles[index]?.url || 'Sẽ được tạo sau khi upload',
+            lazy_loading: true,
+            priority_loading: false,
+          });
     }
   };
 
@@ -279,14 +381,14 @@ export const MediaCreate: React.FC = () => {
         const value = values[key];
         // Nếu là array, chuyển thành string
         if (Array.isArray(value)) {
-          acc[key] = value.join(", ");
+          acc[key] = value.join(', ');
         } else {
           acc[key] = value;
         }
         return acc;
       }, {} as any);
 
-      // Thêm file_url từ file được chọn
+      // Thêm file_url và thông tin chi tiết từ file được chọn
       if (
         uploadedFiles.length > 0 &&
         uploadedFiles[selectedFileIndex]?.uploaded
@@ -295,28 +397,38 @@ export const MediaCreate: React.FC = () => {
         cleanValues.file_url = selectedFile.url;
         cleanValues.file_path = `media/${selectedFile.file.name}`;
         cleanValues.file_size = selectedFile.file.size;
+        cleanValues.file_size_kb = selectedFile.fileSizeKB || Math.round(selectedFile.file.size / 1024);
         cleanValues.mime_type = selectedFile.file.type;
+        
+        // Thêm thông tin dimensions nếu có
+        if (selectedFile.dimensions) {
+          cleanValues.dimensions = JSON.stringify(selectedFile.dimensions);
+          cleanValues.image_dimensions = `${selectedFile.dimensions.width}x${selectedFile.dimensions.height}`;
+        }
+        
+        // Thêm image_format
+        cleanValues.image_format = selectedFile.imageFormat || selectedFile.file.type.split('/')[1]?.toUpperCase() || 'JPEG';
       }
 
-      console.log("Submitting values:", cleanValues);
+      console.log('Submitting values:', cleanValues);
 
       // Sử dụng supabaseAdmin để tạo record
       const { data, error } = await supabaseAdmin
-        .from("media")
+        .from('media')
         .insert(cleanValues)
         .select()
         .single();
 
       if (error) {
-        console.error("Database error:", error);
+        console.error('Database error:', error);
         throw error;
       }
 
-      message.success("Tạo media thành công!");
+      message.success('Tạo media thành công!');
       formProps.form?.resetFields();
       setUploadedFiles([]);
     } catch (error: any) {
-      console.error("Submit error:", error);
+      console.error('Submit error:', error);
       message.error(`Có lỗi xảy ra: ${error?.message || error}`);
     }
   };
@@ -434,6 +546,12 @@ export const MediaCreate: React.FC = () => {
                       </Text>
                       <Text type="secondary" style={{ fontSize: "10px" }}>
                         {(fileData.file.size / 1024 / 1024).toFixed(2)} MB
+                        {fileData.dimensions && (
+                          <> | {fileData.dimensions.width}x{fileData.dimensions.height}</>
+                        )}
+                        {fileData.imageFormat && (
+                          <> | {fileData.imageFormat}</>
+                        )}
                       </Text>
                       <div
                         style={{
@@ -554,6 +672,45 @@ export const MediaCreate: React.FC = () => {
                 </div>
               }
             >
+              {uploadedFiles.length > 0 && (
+                <div style={{ 
+                  marginBottom: '16px',
+                  padding: '12px', 
+                  backgroundColor: '#f6ffed', 
+                  border: '1px solid #b7eb8f', 
+                  borderRadius: '6px' 
+                }}>
+                  <Text strong style={{ color: '#52c41a', marginBottom: '8px', display: 'block' }}>
+                    ✓ Thông tin tự động đã được lấy:
+                  </Text>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '12px' }}>
+                    <div>
+                      <strong>Kích thước:</strong> {uploadedFiles[selectedFileIndex]?.dimensions ? 
+                        `${uploadedFiles[selectedFileIndex].dimensions.width}x${uploadedFiles[selectedFileIndex].dimensions.height}` : 
+                        'Chưa xác định'
+                      }
+                    </div>
+                    <div>
+                      <strong>Dung lượng:</strong> {uploadedFiles[selectedFileIndex]?.fileSizeKB ? 
+                        `${uploadedFiles[selectedFileIndex].fileSizeKB} KB` : 
+                        'Chưa xác định'
+                      }
+                    </div>
+                    <div>
+                      <strong>Định dạng:</strong> {uploadedFiles[selectedFileIndex]?.imageFormat || 'Chưa xác định'}
+                    </div>
+                    <div>
+                      <strong>MIME Type:</strong> {uploadedFiles[selectedFileIndex]?.file.type || 'Chưa xác định'}
+                    </div>
+                  </div>
+                  {uploadedFiles[selectedFileIndex]?.uploaded && (
+                    <div style={{ marginTop: '8px', color: '#52c41a' }}>
+                      <strong>✓ Đã upload thành công!</strong> <br/>
+                      <Text code copyable style={{ fontSize: '11px' }}>{uploadedFiles[selectedFileIndex].url}</Text>
+                    </div>
+                  )}
+                </div>
+              )}
               <Form.Item
                 label={
                   <Space>
@@ -725,14 +882,25 @@ export const MediaCreate: React.FC = () => {
                   <Space>
                     <EditOutlined />
                     Image Dimensions
-                    <Tooltip title="Kích thước hình ảnh (width x height) - Quan trọng cho SEO và performance">
-                      <InfoCircleOutlined style={{ color: "#1890ff" }} />
+                    <Tooltip title="Kích thước hình ảnh (width x height) - Được lấy tự động từ file">
+                      <InfoCircleOutlined style={{ color: '#1890ff' }} />
                     </Tooltip>
+                    {uploadedFiles.length > 0 && uploadedFiles[selectedFileIndex]?.dimensions && (
+                      <Tag color="green">
+                        Tự động: {uploadedFiles[selectedFileIndex].dimensions.width}x{uploadedFiles[selectedFileIndex].dimensions.height}
+                      </Tag>
+                    )}
                   </Space>
                 }
                 name="image_dimensions"
               >
-                <Input placeholder="Ví dụ: 1920x1080" />
+                <Input 
+                  placeholder="Ví dụ: 1920x1080" 
+                  readOnly={!!(uploadedFiles.length > 0 && uploadedFiles[selectedFileIndex]?.dimensions)}
+                  style={{
+                    backgroundColor: uploadedFiles.length > 0 && uploadedFiles[selectedFileIndex]?.dimensions ? '#f6ffed' : 'white'
+                  }}
+                />
               </Form.Item>
 
               <Form.Item
@@ -740,14 +908,25 @@ export const MediaCreate: React.FC = () => {
                   <Space>
                     <EditOutlined />
                     File Size (KB)
-                    <Tooltip title="Kích thước file tính bằng KB - Quan trọng cho performance">
-                      <InfoCircleOutlined style={{ color: "#1890ff" }} />
+                    <Tooltip title="Kích thước file tính bằng KB - Được lấy tự động từ file">
+                      <InfoCircleOutlined style={{ color: '#1890ff' }} />
                     </Tooltip>
+                    {uploadedFiles.length > 0 && uploadedFiles[selectedFileIndex]?.fileSizeKB && (
+                      <Tag color="green">
+                        Tự động: {uploadedFiles[selectedFileIndex].fileSizeKB} KB
+                      </Tag>
+                    )}
                   </Space>
                 }
                 name="file_size_kb"
               >
-                <Input placeholder="Ví dụ: 245" />
+                <Input 
+                  placeholder="Ví dụ: 245" 
+                  readOnly={!!(uploadedFiles.length > 0 && uploadedFiles[selectedFileIndex]?.fileSizeKB)}
+                  style={{
+                    backgroundColor: uploadedFiles.length > 0 && uploadedFiles[selectedFileIndex]?.fileSizeKB ? '#f6ffed' : 'white'
+                  }}
+                />
               </Form.Item>
 
               <Form.Item
@@ -755,14 +934,25 @@ export const MediaCreate: React.FC = () => {
                   <Space>
                     <EditOutlined />
                     Image Format
-                    <Tooltip title="Định dạng hình ảnh - Quan trọng cho SEO và performance">
-                      <InfoCircleOutlined style={{ color: "#1890ff" }} />
+                    <Tooltip title="Định dạng hình ảnh - Được lấy tự động từ file">
+                      <InfoCircleOutlined style={{ color: '#1890ff' }} />
                     </Tooltip>
+                    {uploadedFiles.length > 0 && uploadedFiles[selectedFileIndex]?.imageFormat && (
+                      <Tag color="green">
+                        Tự động: {uploadedFiles[selectedFileIndex].imageFormat}
+                      </Tag>
+                    )}
                   </Space>
                 }
                 name="image_format"
               >
-                <Select placeholder="Chọn định dạng hình ảnh">
+                <Select 
+                  placeholder="Chọn định dạng hình ảnh"
+                  disabled={!!(uploadedFiles.length > 0 && uploadedFiles[selectedFileIndex]?.imageFormat)}
+                  style={{
+                    backgroundColor: uploadedFiles.length > 0 && uploadedFiles[selectedFileIndex]?.imageFormat ? '#f6ffed' : 'white'
+                  }}
+                >
                   <Option value="JPEG">JPEG - Phù hợp cho ảnh thực tế</Option>
                   <Option value="PNG">
                     PNG - Phù hợp cho ảnh có trong suốt
@@ -776,6 +966,70 @@ export const MediaCreate: React.FC = () => {
                   <Option value="SVG">SVG - Vector, phù hợp cho icon</Option>
                   <Option value="GIF">GIF - Animation</Option>
                 </Select>
+              </Form.Item>
+
+              <Form.Item
+                label={
+                  <Space>
+                    <EditOutlined />
+                    MIME Type
+                    <Tooltip title="Loại MIME của file - Được lấy tự động từ file">
+                      <InfoCircleOutlined style={{ color: '#1890ff' }} />
+                    </Tooltip>
+                    {uploadedFiles.length > 0 && uploadedFiles[selectedFileIndex]?.file.type && (
+                      <Tag color="green">
+                        Tự động: {uploadedFiles[selectedFileIndex].file.type}
+                      </Tag>
+                    )}
+                  </Space>
+                }
+                name="mime_type"
+              >
+                <Input 
+                  placeholder="Ví dụ: image/jpeg" 
+                  readOnly={!!(uploadedFiles.length > 0 && uploadedFiles[selectedFileIndex]?.file.type)}
+                  style={{
+                    backgroundColor: uploadedFiles.length > 0 && uploadedFiles[selectedFileIndex]?.file.type ? '#f6ffed' : 'white'
+                  }}
+                />
+              </Form.Item>
+
+              <Form.Item
+                label={
+                  <Space>
+                    <EditOutlined />
+                    File Path
+                    <Tooltip title="Đường dẫn file trong storage - Được tạo tự động">
+                      <InfoCircleOutlined style={{ color: '#1890ff' }} />
+                    </Tooltip>
+                  </Space>
+                }
+                name="file_path"
+              >
+                <Input 
+                  placeholder="Sẽ được tạo tự động khi upload" 
+                  readOnly
+                  style={{ backgroundColor: '#f6ffed' }}
+                />
+              </Form.Item>
+
+              <Form.Item
+                label={
+                  <Space>
+                    <EditOutlined />
+                    File URL
+                    <Tooltip title="URL công khai của file - Được tạo sau khi upload">
+                      <InfoCircleOutlined style={{ color: '#1890ff' }} />
+                    </Tooltip>
+                  </Space>
+                }
+                name="file_url"
+              >
+                <Input 
+                  placeholder="Sẽ được tạo tự động sau khi upload" 
+                  readOnly
+                  style={{ backgroundColor: '#f6ffed' }}
+                />
               </Form.Item>
 
               <Form.Item
@@ -917,6 +1171,89 @@ export const MediaCreate: React.FC = () => {
                 initialValue={true}
               >
                 <Switch checkedChildren="Hiển thị" unCheckedChildren="Ẩn" />
+              </Form.Item>
+            </Card>
+
+            {/* Card SEO nâng cao */}
+            <Card title="Thông tin SEO nâng cao" style={{ marginBottom: "20px" }}>
+              <Form.Item
+                label={
+                  <Space>
+                    <TagsOutlined />
+                    SEO Score
+                    <Tooltip title="Điểm SEO của media (0-100) - Càng cao càng tốt">
+                      <InfoCircleOutlined style={{ color: "#1890ff" }} />
+                    </Tooltip>
+                  </Space>
+                }
+                name="seo_score"
+                initialValue={0}
+              >
+                <Input type="number" min={0} max={100} placeholder="0-100" />
+              </Form.Item>
+
+              <Form.Item
+                label={
+                  <Space>
+                    <TagsOutlined />
+                    Accessibility Score
+                    <Tooltip title="Điểm accessibility (0-100) - Hỗ trợ người khuyết tật">
+                      <InfoCircleOutlined style={{ color: "#1890ff" }} />
+                    </Tooltip>
+                  </Space>
+                }
+                name="accessibility_score"
+                initialValue={0}
+              >
+                <Input type="number" min={0} max={100} placeholder="0-100" />
+              </Form.Item>
+
+              <Form.Item
+                label={
+                  <Space>
+                    <TagsOutlined />
+                    Performance Score
+                    <Tooltip title="Điểm performance (0-100) - Tốc độ tải và hiệu năng">
+                      <InfoCircleOutlined style={{ color: "#1890ff" }} />
+                    </Tooltip>
+                  </Space>
+                }
+                name="performance_score"
+                initialValue={0}
+              >
+                <Input type="number" min={0} max={100} placeholder="0-100" />
+              </Form.Item>
+
+              <Form.Item
+                label={
+                  <Space>
+                    <TagsOutlined />
+                    Usage Count
+                    <Tooltip title="Số lần file được sử dụng trong hệ thống">
+                      <InfoCircleOutlined style={{ color: "#1890ff" }} />
+                    </Tooltip>
+                  </Space>
+                }
+                name="usage_count"
+                initialValue={0}
+              >
+                <Input type="number" min={0} placeholder="Số lần sử dụng" readOnly style={{ backgroundColor: '#f6ffed' }} />
+              </Form.Item>
+
+              <Form.Item
+                label={
+                  <Space>
+                    <TagsOutlined />
+                    Version
+                    <Tooltip title="Phiên bản của file, bắt đầu từ 1">
+                      <InfoCircleOutlined style={{ color: "#1890ff" }} />
+                    </Tooltip>
+                  </Space>
+                }
+                name="version"
+                initialValue={1}
+              >
+                <Input type="number" min={1} placeholder="Phiên bản file" />
               </Form.Item>
             </Card>
           </Form>

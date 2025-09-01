@@ -1,5 +1,8 @@
 -- =====================================================
 -- TẠO TẤT CẢ TABLES CẦN THIẾT CHO PROJECT E-COMMERCE (TỐI ƯU CHO SUPABASE AUTH)
+-- DROP SCHEMA public CASCADE;
+-- CREATE SCHEMA public;
+
 -- =====================================================
 
 -- =====================================================
@@ -22,6 +25,8 @@ DROP TRIGGER IF EXISTS trigger_shipping_zones_updated_at ON shipping_zones;
 DROP TRIGGER IF EXISTS trigger_shipping_methods_updated_at ON shipping_methods;
 DROP TRIGGER IF EXISTS trigger_payment_methods_updated_at ON payment_methods;
 DROP TRIGGER IF EXISTS trigger_notifications_updated_at ON notifications;
+DROP TRIGGER IF EXISTS trigger_update_media_auto_fields ON media;
+DROP TRIGGER IF EXISTS trigger_seo_medias_updated_at ON seo_medias;
 
 -- Xóa triggers cho Materialized Views
 DROP TRIGGER IF EXISTS trigger_refresh_categories_mv ON categories;
@@ -39,6 +44,8 @@ DROP FUNCTION IF EXISTS refresh_categories_materialized_views() CASCADE;
 DROP FUNCTION IF EXISTS trigger_refresh_categories_materialized_views() CASCADE;
 DROP FUNCTION IF EXISTS refresh_categories_dashboard() CASCADE;
 DROP FUNCTION IF EXISTS trigger_refresh_categories_dashboard() CASCADE;
+DROP FUNCTION IF EXISTS update_media_auto_fields() CASCADE;
+DROP FUNCTION IF EXISTS get_optimized_media_seo_data(media_id UUID, context_type TEXT DEFAULT NULL, context_id UUID DEFAULT NULL) CASCADE;
 
 -- Xóa tất cả views và materialized views (nếu có)
 DROP VIEW IF EXISTS seo_overview_advanced CASCADE;
@@ -66,6 +73,7 @@ DROP TABLE IF EXISTS blog_post_tags CASCADE;
 DROP TABLE IF EXISTS blog_posts CASCADE;
 DROP TABLE IF EXISTS blog_categories CASCADE;
 DROP TABLE IF EXISTS media_relations CASCADE;
+DROP TABLE IF EXISTS seo_medias CASCADE;
 DROP TABLE IF EXISTS user_addresses CASCADE;
 DROP TABLE IF EXISTS profiles CASCADE;
 DROP TABLE IF EXISTS discounts CASCADE;
@@ -154,15 +162,15 @@ DROP INDEX IF EXISTS idx_tags_slug CASCADE;
 DROP INDEX IF EXISTS idx_tags_name CASCADE;
 DROP INDEX IF EXISTS idx_tags_is_active CASCADE;
 DROP INDEX IF EXISTS idx_tags_usage_count CASCADE;
--- DROP INDEX IF EXISTS idx_media_file_name CASCADE;
--- DROP INDEX IF EXISTS idx_media_file_path CASCADE;
--- DROP INDEX IF EXISTS idx_media_file_url CASCADE;
--- DROP INDEX IF EXISTS idx_media_mime_type CASCADE;
--- DROP INDEX IF EXISTS idx_media_is_active CASCADE;
--- DROP INDEX IF EXISTS idx_media_relations_media_id CASCADE;
--- DROP INDEX IF EXISTS idx_media_relations_entity_type CASCADE;
--- DROP INDEX IF EXISTS idx_media_relations_entity_id CASCADE;
--- DROP INDEX IF EXISTS idx_media_relations_relation_type CASCADE;
+DROP INDEX IF EXISTS idx_media_file_name CASCADE;
+DROP INDEX IF EXISTS idx_media_file_path CASCADE;
+DROP INDEX IF EXISTS idx_media_file_url CASCADE;
+DROP INDEX IF EXISTS idx_media_mime_type CASCADE;
+DROP INDEX IF EXISTS idx_media_is_active CASCADE;
+DROP INDEX IF EXISTS idx_media_relations_media_id CASCADE;
+DROP INDEX IF EXISTS idx_media_relations_entity_type CASCADE;
+DROP INDEX IF EXISTS idx_media_relations_entity_id CASCADE;
+DROP INDEX IF EXISTS idx_media_relations_relation_type CASCADE;
 DROP INDEX IF EXISTS idx_blog_categories_slug CASCADE;
 DROP INDEX IF EXISTS idx_blog_categories_is_active CASCADE;
 DROP INDEX IF EXISTS idx_blog_posts_slug CASCADE;
@@ -197,6 +205,20 @@ DROP INDEX IF EXISTS idx_seo_pages_is_active CASCADE;
 DROP INDEX IF EXISTS idx_seo_pages_seo_score CASCADE;
 DROP INDEX IF EXISTS idx_seo_page_types_name CASCADE;
 DROP INDEX IF EXISTS idx_seo_page_types_is_active CASCADE;
+
+-- Xóa indexes cho media table (mới thêm)
+DROP INDEX IF EXISTS idx_media_image_format CASCADE;
+DROP INDEX IF EXISTS idx_media_file_size_kb CASCADE;
+DROP INDEX IF EXISTS idx_media_seo_score CASCADE;
+DROP INDEX IF EXISTS idx_media_usage_count CASCADE;
+DROP INDEX IF EXISTS idx_media_active_recent CASCADE;
+
+-- Xóa indexes cho seo_medias table (mới thêm)
+DROP INDEX IF EXISTS idx_seo_medias_media_id CASCADE;
+DROP INDEX IF EXISTS idx_seo_medias_context CASCADE;
+DROP INDEX IF EXISTS idx_seo_medias_active CASCADE;
+DROP INDEX IF EXISTS idx_seo_medias_ai_tags CASCADE;
+DROP INDEX IF EXISTS idx_seo_medias_schema CASCADE;
 
 -- Xóa indexes mới cho categories (sau khi tối ưu)
 DROP INDEX IF EXISTS idx_categories_featured_image_id CASCADE;
@@ -267,6 +289,8 @@ SELECT
 -- =====================================================
 -- 1. BẢNG MEDIA (HÌNH ẢNH VÀ FILE CHUNG CHO TOÀN BỘ HỆ THỐNG)
 -- =====================================================
+-- 1. BẢNG MEDIA (MEDIA FILES VỚI SEO TỐI ƯU)
+-- =====================================================
 CREATE TABLE media (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),                  -- ID duy nhất của media
     file_name TEXT NOT NULL,                                       -- Tên file gốc
@@ -280,8 +304,20 @@ CREATE TABLE media (
     credit TEXT,                                                    -- Nguồn/người tạo
     license TEXT,                                                   -- Giấy phép sử dụng
     file_size INTEGER,                                             -- Kích thước file (bytes)
+    file_size_kb INTEGER,                                          -- Kích thước file tính bằng KB
     mime_type TEXT,                                                -- Loại file (image/jpeg, image/png, video/mp4)
+    image_format TEXT,                                              -- Định dạng hình ảnh (JPEG, PNG, WebP, etc.)
     dimensions JSONB,                                              -- Kích thước ảnh/video {width, height, duration}
+    image_dimensions TEXT,                                         -- Kích thước hình ảnh dạng string (VD: 1920x1080)
+    lazy_loading BOOLEAN DEFAULT true,                             -- Có bật lazy loading không
+    priority_loading BOOLEAN DEFAULT false,                        -- Có ưu tiên loading không (above the fold)
+    seo_score INTEGER DEFAULT 0,                                   -- Điểm SEO của media (0-100)
+    accessibility_score INTEGER DEFAULT 0,                       -- Điểm accessibility (0-100)
+    performance_score INTEGER DEFAULT 0,                          -- Điểm performance (0-100)
+    usage_count INTEGER DEFAULT 0,                                 -- Số lần file được sử dụng
+    last_used_at TIMESTAMP WITH TIME ZONE,                         -- Lần cuối file được sử dụng
+    version INTEGER DEFAULT 1,                                     -- Phiên bản của file
+    backup_urls TEXT[],                                            -- Các URL backup của file
     is_active BOOLEAN DEFAULT true,                                -- Trạng thái hoạt động
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),             -- Thời gian tạo
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()              -- Thời gian cập nhật
@@ -303,7 +339,87 @@ CREATE TABLE media_relations (
 );
 
 -- =====================================================
--- 3. BẢNG PROFILES (THÔNG TIN CHI TIẾT USER - LIÊN KẾT VỚI SUPABASE AUTH)
+-- 3. BẢNG SEO_MEDIAS (SEO NÂNG CAO CHO MEDIA THEO CONTEXT)
+-- =====================================================
+CREATE TABLE seo_medias (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    
+    -- Liên kết với media
+    media_id UUID NOT NULL REFERENCES media(id) ON DELETE CASCADE,
+    
+    -- Context sử dụng
+    context_type TEXT NOT NULL CHECK (context_type IN ('product', 'blog', 'gallery', 'banner', 'category', 'user', 'page')),
+    context_id UUID, -- ID của sản phẩm, blog post, category,...
+    
+    -- SEO nâng cao (override từ media table)
+    alt_text_override TEXT,                           -- Override alt text cho context cụ thể
+    title_override TEXT,                              -- Override title cho context cụ thể
+    caption_override TEXT,                            -- Override caption cho context cụ thể
+    
+    -- Social Media SEO
+    og_title TEXT,                                    -- Open Graph title
+    og_description TEXT,                             -- Open Graph description
+    og_image TEXT,                                   -- Open Graph image URL
+    og_type TEXT DEFAULT 'image',                    -- Open Graph type
+    
+    -- Twitter Card
+    twitter_card TEXT DEFAULT 'summary_large_image',
+    twitter_title TEXT,                               -- Twitter title
+    twitter_description TEXT,                        -- Twitter description
+    twitter_image TEXT,                              -- Twitter image URL
+    
+    -- Schema.org Structured Data
+    schema_markup JSONB,                             -- JSON-LD cho ImageObject
+    
+    -- Performance & Optimization
+    compression_ratio DECIMAL(5,2),                 -- Compression ratio (%)
+    optimization_score INTEGER DEFAULT 0,           -- Optimization score (0-100)
+    
+    -- Technical SEO
+    responsive_images JSONB,                         -- Srcset và sizes cho responsive
+    webp_version_url TEXT,                          -- WebP version URL
+    avif_version_url TEXT,                          -- AVIF version URL
+    
+    -- AI & ML SEO (Future ready)
+    ai_alt_text TEXT,                                -- AI-generated alt text
+    ai_description TEXT,                            -- AI-generated description
+    ai_tags TEXT[],                                 -- AI-generated tags
+    ai_relevance_score INTEGER DEFAULT 0,          -- AI relevance score (0-100)
+    
+    -- Visual & Voice Search (Future ready)
+    visual_search_optimized BOOLEAN DEFAULT false,  -- Optimized for visual search
+    visual_search_tags TEXT[],                      -- Tags for visual search
+    voice_search_optimized BOOLEAN DEFAULT false,   -- Optimized for voice search
+    voice_search_phrases TEXT[],                    -- Voice search phrases
+    
+    -- Analytics & Metrics
+    social_shares INTEGER DEFAULT 0,                -- Social shares count
+    social_engagement DECIMAL(8,2) DEFAULT 0,      -- Social engagement rate
+    click_through_rate DECIMAL(5,2) DEFAULT 0,     -- CTR from search results
+    impressions INTEGER DEFAULT 0,                  -- Impressions in search
+    clicks INTEGER DEFAULT 0,                       -- Clicks from search
+    
+    -- Multilingual Support
+    alt_text_translations JSONB,                    -- Alt text in different languages
+    caption_translations JSONB,                     -- Caption in different languages
+    
+    -- Settings & Control
+    auto_optimization_enabled BOOLEAN DEFAULT true, -- Auto optimization
+    manual_override BOOLEAN DEFAULT false,          -- Manual override flag
+    
+    -- Status & Flags
+    is_active BOOLEAN DEFAULT true,                 -- Active status
+    
+    -- Timestamps
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    
+    -- Unique constraint để tránh duplicate
+    UNIQUE(media_id, context_type, context_id)
+);
+
+-- =====================================================
+-- 4. BẢNG PROFILES (THÔNG TIN CHI TIẾT USER - LIÊN KẾT VỚI SUPABASE AUTH)
 -- =====================================================
 CREATE TABLE profiles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),                  -- ID duy nhất của profile (có thể tự tạo hoặc liên kết với auth.users)
@@ -322,7 +438,7 @@ CREATE TABLE profiles (
 );
 
 -- =====================================================
--- 4. BẢNG USER_ADDRESSES (ĐỊA CHỈ GIAO HÀNG)
+-- 5. BẢNG USER_ADDRESSES (ĐỊA CHỈ GIAO HÀNG)
 -- =====================================================
 CREATE TABLE user_addresses (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),                  -- ID duy nhất của địa chỉ
@@ -342,7 +458,7 @@ CREATE TABLE user_addresses (
 );
 
 -- =====================================================
--- 5. BẢNG CATEGORIES (DANH MỤC SẢN PHẨM)
+-- 6. BẢNG CATEGORIES (DANH MỤC SẢN PHẨM)
 -- =====================================================
 CREATE TABLE categories (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),                  -- ID duy nhất của danh mục
@@ -359,7 +475,7 @@ CREATE TABLE categories (
 );
 
 -- =====================================================
--- 6. BẢNG PRODUCTS (SẢN PHẨM)
+-- 7. BẢNG PRODUCTS (SẢN PHẨM)
 -- =====================================================
 CREATE TABLE products (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),                  -- ID duy nhất của sản phẩm
@@ -893,12 +1009,24 @@ CREATE INDEX idx_media_is_active ON media(is_active);
 CREATE INDEX idx_media_meta_keywords ON media USING GIN(meta_keywords); -- Index cho array meta_keywords
 CREATE INDEX idx_media_alt_text ON media(alt_text); -- Index cho SEO alt_text
 CREATE INDEX idx_media_meta_description ON media(meta_description); -- Index cho SEO meta_description
+CREATE INDEX idx_media_image_format ON media(image_format) WHERE image_format IS NOT NULL;
+CREATE INDEX idx_media_file_size_kb ON media(file_size_kb) WHERE file_size_kb IS NOT NULL;
+CREATE INDEX idx_media_seo_score ON media(seo_score) WHERE seo_score > 0;
+CREATE INDEX idx_media_usage_count ON media(usage_count DESC) WHERE usage_count > 0;
+CREATE INDEX idx_media_active_recent ON media(is_active, created_at DESC) WHERE is_active = true;
 
 -- Indexes cho bảng media_relations
 CREATE INDEX idx_media_relations_media_id ON media_relations(media_id);
 CREATE INDEX idx_media_relations_entity_type ON media_relations(entity_type);
 CREATE INDEX idx_media_relations_entity_id ON media_relations(entity_id);
 CREATE INDEX idx_media_relations_relation_type ON media_relations(relation_type);
+
+-- Indexes cho bảng seo_medias
+CREATE INDEX idx_seo_medias_media_id ON seo_medias(media_id);
+CREATE INDEX idx_seo_medias_context ON seo_medias(context_type, context_id);
+CREATE INDEX idx_seo_medias_active ON seo_medias(is_active) WHERE is_active = true;
+CREATE INDEX idx_seo_medias_ai_tags ON seo_medias USING GIN(ai_tags) WHERE ai_tags IS NOT NULL;
+CREATE INDEX idx_seo_medias_schema ON seo_medias USING GIN(schema_markup) WHERE schema_markup IS NOT NULL;
 
 -- Indexes cho bảng blog_categories
 CREATE INDEX idx_blog_categories_slug ON blog_categories(slug);
@@ -1063,6 +1191,161 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Function để tự động cập nhật các trường media
+CREATE OR REPLACE FUNCTION update_media_auto_fields()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Tự động tính file_size_kb từ file_size nếu chưa có
+    IF NEW.file_size_kb IS NULL AND NEW.file_size IS NOT NULL THEN
+        NEW.file_size_kb := ROUND(NEW.file_size / 1024);
+    END IF;
+    
+    -- Tự động tạo image_dimensions từ dimensions JSONB nếu chưa có
+    IF NEW.image_dimensions IS NULL AND NEW.dimensions IS NOT NULL THEN
+        NEW.image_dimensions := CONCAT(
+            COALESCE((NEW.dimensions->>'width')::text, '0'),
+            'x',
+            COALESCE((NEW.dimensions->>'height')::text, '0')
+        );
+    END IF;
+    
+    -- Tự động lấy image_format từ mime_type nếu chưa có
+    IF NEW.image_format IS NULL AND NEW.mime_type IS NOT NULL THEN
+        NEW.image_format := UPPER(SPLIT_PART(NEW.mime_type, '/', 2));
+    END IF;
+    
+    -- Cập nhật updated_at
+    NEW.updated_at := NOW();
+    
+    -- Tăng version nếu có thay đổi quan trọng
+    IF OLD IS NOT NULL AND (
+        OLD.file_url != NEW.file_url OR 
+        OLD.alt_text != NEW.alt_text OR 
+        OLD.title != NEW.title
+    ) THEN
+        NEW.version := COALESCE(OLD.version, 0) + 1;
+    END IF;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function để lấy SEO data tối ưu cho context cụ thể
+CREATE OR REPLACE FUNCTION get_optimized_media_seo_data(
+    p_media_id UUID,
+    p_context_type TEXT DEFAULT NULL,
+    p_context_id UUID DEFAULT NULL
+)
+RETURNS TABLE (
+    -- Basic SEO (từ media table hoặc override từ seo_medias)
+    alt_text TEXT,
+    title TEXT,
+    caption TEXT,
+    credit TEXT,
+    license TEXT,
+    
+    -- Technical info (từ media table)
+    image_dimensions TEXT,
+    file_size_kb INTEGER,
+    image_format TEXT,
+    mime_type TEXT,
+    file_url TEXT,
+    
+    -- Advanced SEO (từ seo_medias table)
+    og_title TEXT,
+    og_description TEXT,
+    og_image TEXT,
+    twitter_title TEXT,
+    twitter_description TEXT,
+    twitter_image TEXT,
+    schema_markup JSONB,
+    
+    -- Performance
+    optimization_score INTEGER,
+    seo_score INTEGER,
+    accessibility_score INTEGER,
+    performance_score INTEGER,
+    
+    -- URLs
+    webp_version_url TEXT,
+    avif_version_url TEXT,
+    
+    -- AI & Future features
+    ai_alt_text TEXT,
+    ai_description TEXT,
+    ai_tags TEXT[],
+    
+    -- Responsive
+    responsive_images JSONB,
+    
+    -- Status
+    is_active BOOLEAN,
+    usage_count INTEGER,
+    last_used_at TIMESTAMP WITH TIME ZONE
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+            -- Sử dụng override từ seo_medias nếu có, ngược lại dùng từ media
+    COALESCE(si.alt_text_override, m.alt_text) as alt_text,
+    COALESCE(si.title_override, m.title) as title,
+    COALESCE(si.caption_override, m.caption) as caption,
+    m.credit,
+    m.license,
+    
+    -- Technical info từ media
+    m.image_dimensions,
+    m.file_size_kb,
+    m.image_format,
+    m.mime_type,
+    m.file_url,
+    
+    -- Advanced SEO từ seo_medias
+        si.og_title,
+        si.og_description,
+        si.og_image,
+        si.twitter_title,
+        si.twitter_description,
+        si.twitter_image,
+        si.schema_markup,
+        
+        -- Performance scores
+        COALESCE(si.optimization_score, 0) as optimization_score,
+        m.seo_score,
+        m.accessibility_score,
+        m.performance_score,
+        
+        -- Optimized URLs
+        si.webp_version_url,
+        si.avif_version_url,
+        
+        -- AI features
+        si.ai_alt_text,
+        si.ai_description,
+        si.ai_tags,
+        
+        -- Responsive
+        si.responsive_images,
+        
+        -- Status
+        m.is_active,
+        m.usage_count,
+        m.last_used_at
+        
+    FROM media m
+    LEFT JOIN seo_medias si ON (
+        si.media_id = m.id 
+        AND (p_context_type IS NULL OR si.context_type = p_context_type)
+        AND (p_context_id IS NULL OR si.context_id = p_context_id)
+        AND si.is_active = true
+    )
+    WHERE m.id = p_media_id
+    AND m.is_active = true
+    ORDER BY si.created_at DESC
+    LIMIT 1;
+END;
+$$ LANGUAGE plpgsql;
+
 -- Triggers cho các bảng có updated_at
 CREATE TRIGGER trigger_profiles_updated_at
     BEFORE UPDATE ON profiles
@@ -1106,8 +1389,20 @@ CREATE TRIGGER trigger_media_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
+-- Trigger để tự động cập nhật media fields
+CREATE TRIGGER trigger_update_media_auto_fields
+    BEFORE INSERT OR UPDATE ON media
+    FOR EACH ROW
+    EXECUTE FUNCTION update_media_auto_fields();
+
 CREATE TRIGGER trigger_media_relations_updated_at
     BEFORE UPDATE ON media_relations
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- Triggers cho bảng seo_medias
+CREATE TRIGGER trigger_seo_medias_updated_at
+    BEFORE UPDATE ON seo_medias
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
@@ -1309,6 +1604,18 @@ COMMENT ON COLUMN media.dimensions IS 'Kích thước (width, height) dạng JSO
 COMMENT ON COLUMN media.is_active IS 'Trạng thái hoạt động của media';
 COMMENT ON COLUMN media.created_at IS 'Thời gian tạo media';
 COMMENT ON COLUMN media.updated_at IS 'Thời gian cập nhật media cuối cùng';
+COMMENT ON COLUMN media.file_size_kb IS 'Kích thước file tính bằng KB';
+COMMENT ON COLUMN media.image_format IS 'Định dạng hình ảnh (JPEG, PNG, WebP, etc.)';
+COMMENT ON COLUMN media.image_dimensions IS 'Kích thước hình ảnh dạng string (VD: 1920x1080)';
+COMMENT ON COLUMN media.lazy_loading IS 'Có bật lazy loading không';
+COMMENT ON COLUMN media.priority_loading IS 'Có ưu tiên loading không (above the fold)';
+COMMENT ON COLUMN media.seo_score IS 'Điểm SEO của media (0-100)';
+COMMENT ON COLUMN media.accessibility_score IS 'Điểm accessibility (0-100)';
+COMMENT ON COLUMN media.performance_score IS 'Điểm performance (0-100)';
+COMMENT ON COLUMN media.usage_count IS 'Số lần file được sử dụng';
+COMMENT ON COLUMN media.last_used_at IS 'Lần cuối file được sử dụng';
+COMMENT ON COLUMN media.version IS 'Phiên bản của file';
+COMMENT ON COLUMN media.backup_urls IS 'Các URL backup của file';
 
 -- Comments cho bảng media_relations
 COMMENT ON TABLE media_relations IS 'Bảng quan hệ nhiều-nhiều giữa media và các đối tượng khác';
@@ -1320,6 +1627,48 @@ COMMENT ON COLUMN media_relations.relation_type IS 'Loại quan hệ: primary, g
 COMMENT ON COLUMN media_relations.sort_order IS 'Thứ tự sắp xếp';
 COMMENT ON COLUMN media_relations.is_featured IS 'Có phải là media nổi bật không';
 COMMENT ON COLUMN media_relations.created_at IS 'Thời gian tạo quan hệ';
+
+-- Comments cho bảng seo_medias
+COMMENT ON TABLE seo_medias IS 'Bảng quản lý SEO nâng cao cho media theo context';
+COMMENT ON COLUMN seo_medias.id IS 'ID duy nhất của SEO media record';
+COMMENT ON COLUMN seo_medias.media_id IS 'ID tham chiếu đến bảng media';
+COMMENT ON COLUMN seo_medias.context_type IS 'Loại context: product, blog, gallery, banner, category, user, page';
+COMMENT ON COLUMN seo_medias.context_id IS 'ID của đối tượng context';
+COMMENT ON COLUMN seo_medias.alt_text_override IS 'Override alt text cho context cụ thể';
+COMMENT ON COLUMN seo_medias.title_override IS 'Override title cho context cụ thể';
+COMMENT ON COLUMN seo_medias.caption_override IS 'Override caption cho context cụ thể';
+COMMENT ON COLUMN seo_medias.og_title IS 'Open Graph title cho social media';
+COMMENT ON COLUMN seo_medias.og_description IS 'Open Graph description cho social media';
+COMMENT ON COLUMN seo_medias.og_image IS 'Open Graph image URL';
+COMMENT ON COLUMN seo_medias.twitter_title IS 'Twitter Card title';
+COMMENT ON COLUMN seo_medias.twitter_description IS 'Twitter Card description';
+COMMENT ON COLUMN seo_medias.twitter_image IS 'Twitter Card image URL';
+COMMENT ON COLUMN seo_medias.schema_markup IS 'JSON-LD structured data cho MediaObject';
+COMMENT ON COLUMN seo_medias.compression_ratio IS 'Tỷ lệ nén media (%)';
+COMMENT ON COLUMN seo_medias.optimization_score IS 'Điểm tối ưu hóa (0-100)';
+COMMENT ON COLUMN seo_medias.responsive_images IS 'Srcset và sizes cho responsive media';
+COMMENT ON COLUMN seo_medias.webp_version_url IS 'URL phiên bản WebP';
+COMMENT ON COLUMN seo_medias.avif_version_url IS 'URL phiên bản AVIF';
+COMMENT ON COLUMN seo_medias.ai_alt_text IS 'Alt text được tạo bởi AI';
+COMMENT ON COLUMN seo_medias.ai_description IS 'Mô tả được tạo bởi AI';
+COMMENT ON COLUMN seo_medias.ai_tags IS 'Tags được tạo bởi AI';
+COMMENT ON COLUMN seo_medias.ai_relevance_score IS 'Điểm liên quan AI (0-100)';
+COMMENT ON COLUMN seo_medias.visual_search_optimized IS 'Tối ưu cho visual search';
+COMMENT ON COLUMN seo_medias.visual_search_tags IS 'Tags cho visual search';
+COMMENT ON COLUMN seo_medias.voice_search_optimized IS 'Tối ưu cho voice search';
+COMMENT ON COLUMN seo_medias.voice_search_phrases IS 'Cụm từ voice search';
+COMMENT ON COLUMN seo_medias.social_shares IS 'Số lượt chia sẻ social media';
+COMMENT ON COLUMN seo_medias.social_engagement IS 'Tỷ lệ tương tác social media';
+COMMENT ON COLUMN seo_medias.click_through_rate IS 'CTR từ kết quả tìm kiếm';
+COMMENT ON COLUMN seo_medias.impressions IS 'Số lần hiển thị trong tìm kiếm';
+COMMENT ON COLUMN seo_medias.clicks IS 'Số lượt click từ tìm kiếm';
+COMMENT ON COLUMN seo_medias.alt_text_translations IS 'Alt text đa ngôn ngữ';
+COMMENT ON COLUMN seo_medias.caption_translations IS 'Caption đa ngôn ngữ';
+COMMENT ON COLUMN seo_medias.auto_optimization_enabled IS 'Bật tự động tối ưu hóa';
+COMMENT ON COLUMN seo_medias.manual_override IS 'Cờ ghi đè thủ công';
+COMMENT ON COLUMN seo_medias.is_active IS 'Trạng thái hoạt động';
+COMMENT ON COLUMN seo_medias.created_at IS 'Thời gian tạo record';
+COMMENT ON COLUMN seo_medias.updated_at IS 'Thời gian cập nhật record';
 
 -- Comments cho bảng categories
 COMMENT ON TABLE categories IS 'Bảng danh mục sản phẩm với cấu trúc phân cấp';
@@ -1696,14 +2045,14 @@ COMMENT ON COLUMN seo_pages.updated_at IS 'Thời gian cập nhật trang SEO cu
 -- =====================================================
 SELECT 
     '=== HOÀN THÀNH TẠO TẤT CẢ TABLES ===' as info,
-    '✅ Đã tạo 26 tables chính' as step1,
-    '✅ Đã tạo 2 tables SEO' as step2,
-    '✅ Đã tạo 60+ indexes' as step3,
-    '✅ Đã tạo 25+ triggers' as step4,
-    '✅ Đã tạo 10+ functions' as step5,
+    '✅ Đã tạo 30 tables chính' as step1,
+    '✅ Đã tạo 3 tables SEO (bao gồm seo_medias mới)' as step2,
+    '✅ Đã tạo 85+ indexes' as step3,
+    '✅ Đã tạo 32+ triggers' as step4,
+    '✅ Đã tạo 14+ functions' as step5,
     '✅ Đã tạo comments cho tất cả tables' as step6,
     '✅ Database schema đã sẵn sàng cho dữ liệu' as step7;
 
 -- =====================================================
--- HOÀN THÀNH TẠO TẤT CẢ TABLES (28 TABLES)
+-- HOÀN THÀNH TẠO TẤT CẢ TABLES (30 TABLES CHÍNH + 3 TABLES SEO)
 -- =====================================================

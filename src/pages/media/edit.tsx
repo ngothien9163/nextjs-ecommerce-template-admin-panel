@@ -11,12 +11,22 @@ import {
   message,
   Typography,
   Divider,
+  Select,
+  Tooltip,
 } from "antd";
 import {
   SaveOutlined,
   ScissorOutlined,
   RotateLeftOutlined,
   RotateRightOutlined,
+  InfoCircleOutlined,
+  UserOutlined,
+  CopyrightOutlined,
+  FileTextOutlined,
+  PictureOutlined,
+  TagsOutlined,
+  EditOutlined,
+  EyeOutlined,
 } from "@ant-design/icons";
 import ReactCrop, { Crop, PixelCrop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
@@ -24,6 +34,44 @@ import { supabaseAdmin } from "../../lib/supabase-admin";
 
 const { TextArea } = Input;
 const { Title, Text } = Typography;
+const { Option } = Select;
+
+// Preset data cho Credit và License
+const CREDIT_PRESETS = [
+  // Free Sources
+  "Unsplash",
+  "Pexels",
+  "Pixabay",
+  "Freepik",
+  "Wikimedia Commons",
+  "OpenClipart",
+  "Flaticon",
+  // Paid Sources
+  "Adobe Stock",
+  "Shutterstock",
+  "Getty Images",
+  "iStock",
+  "Depositphotos",
+  // Self Created
+  "Original Content",
+  "Self Created",
+  "Custom Design",
+  // Custom
+  "Custom",
+];
+
+const LICENSE_PRESETS = [
+  "CC0 (Public Domain) - Miền công cộng, tự do sử dụng",
+  "CC BY (Attribution) - Ghi công tác giả",
+  "CC BY-SA (Attribution-ShareAlike) - Ghi công và chia sẻ tương tự",
+  "CC BY-ND (Attribution-NoDerivs) - Ghi công, không chỉnh sửa",
+  "CC BY-NC (Attribution-NonCommercial) - Ghi công, không thương mại",
+  "CC BY-NC-SA (Attribution-NonCommercial-ShareAlike) - Ghi công, không thương mại, chia sẻ tương tự",
+  "CC BY-NC-ND (Attribution-NonCommercial-NoDerivs) - Ghi công, không thương mại, không chỉnh sửa",
+  "All Rights Reserved - Bảo lưu mọi quyền",
+  "Fair Use - Sử dụng hợp lý",
+  "Custom - Tùy chỉnh",
+];
 
 export const MediaEdit: React.FC = () => {
   const [crop, setCrop] = useState<Crop>({
@@ -178,39 +226,162 @@ export const MediaEdit: React.FC = () => {
           <Form {...formProps} layout="vertical">
             <Card title="Thông tin Media" style={{ marginBottom: "20px" }}>
               <Form.Item
-                label="Tên file"
+                label={
+                  <Space>
+                    <FileTextOutlined />
+                    Tên file
+                    <Tooltip title="Tên file gốc, sẽ được hiển thị trong admin panel">
+                      <InfoCircleOutlined style={{ color: "#1890ff" }} />
+                    </Tooltip>
+                  </Space>
+                }
                 name="file_name"
                 rules={[{ required: true, message: "Vui lòng nhập tên file!" }]}
               >
-                <Input />
+                <Input placeholder="Tên file gốc" />
               </Form.Item>
 
               <Form.Item
-                label="Alt Text"
+                label={
+                  <Space>
+                    <EyeOutlined />
+                    Alt Text
+                    <Tooltip title="Mô tả hình ảnh cho SEO và accessibility, rất quan trọng cho người dùng khuyết thị">
+                      <InfoCircleOutlined style={{ color: "#1890ff" }} />
+                    </Tooltip>
+                  </Space>
+                }
                 name="alt_text"
                 rules={[{ required: true, message: "Vui lòng nhập alt text!" }]}
               >
                 <Input placeholder="Mô tả hình ảnh cho SEO" />
               </Form.Item>
 
-              <Form.Item label="Title" name="title">
+              <Form.Item
+                label={
+                  <Space>
+                    <EditOutlined />
+                    Title
+                    <Tooltip title="Tiêu đề hiển thị khi hover chuột lên hình ảnh">
+                      <InfoCircleOutlined style={{ color: "#1890ff" }} />
+                    </Tooltip>
+                  </Space>
+                }
+                name="title"
+              >
                 <Input placeholder="Tiêu đề khi hover" />
               </Form.Item>
 
-              <Form.Item label="Caption" name="caption">
+              <Form.Item
+                label={
+                  <Space>
+                    <PictureOutlined />
+                    Caption
+                    <Tooltip title="Chú thích chi tiết về hình ảnh, có thể hiển thị dưới hình ảnh">
+                      <InfoCircleOutlined style={{ color: "#1890ff" }} />
+                    </Tooltip>
+                  </Space>
+                }
+                name="caption"
+              >
                 <TextArea rows={3} placeholder="Chú thích hình ảnh" />
               </Form.Item>
 
-              <Form.Item label="Meta Description" name="meta_description">
+              <Form.Item
+                label={
+                  <Space>
+                    <EditOutlined />
+                    Meta Description
+                    <Tooltip title="Mô tả chi tiết cho SEO, giúp tăng thứ hạng tìm kiếm">
+                      <InfoCircleOutlined style={{ color: "#1890ff" }} />
+                    </Tooltip>
+                  </Space>
+                }
+                name="meta_description"
+              >
                 <TextArea rows={2} placeholder="Mô tả chi tiết cho SEO" />
               </Form.Item>
 
               <Form.Item
-                label="Trạng thái"
+                label={
+                  <Space>
+                    <TagsOutlined />
+                    Meta Keywords
+                    <Tooltip title="Từ khóa SEO, phân cách bằng dấu phẩy. Ví dụ: laptop, asus, gaming">
+                      <InfoCircleOutlined style={{ color: "#1890ff" }} />
+                    </Tooltip>
+                  </Space>
+                }
+                name="meta_keywords"
+              >
+                <Input placeholder="Từ khóa SEO (phân cách bằng dấu phẩy)" />
+              </Form.Item>
+
+              <Form.Item
+                label={
+                  <Space>
+                    <UserOutlined />
+                    Credit
+                    <Tooltip title="Nguồn gốc hoặc người tạo ra hình ảnh">
+                      <InfoCircleOutlined style={{ color: "#1890ff" }} />
+                    </Tooltip>
+                  </Space>
+                }
+                name="credit"
+              >
+                <Select
+                  placeholder="Chọn hoặc nhập nguồn"
+                  allowClear
+                  showSearch
+                  optionFilterProp="children"
+                >
+                  {CREDIT_PRESETS.map((preset) => (
+                    <Option key={preset} value={preset}>
+                      {preset}
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+
+              <Form.Item
+                label={
+                  <Space>
+                    <CopyrightOutlined />
+                    License
+                    <Tooltip title="Giấy phép sử dụng hình ảnh này">
+                      <InfoCircleOutlined style={{ color: "#1890ff" }} />
+                    </Tooltip>
+                  </Space>
+                }
+                name="license"
+              >
+                <Select
+                  placeholder="Chọn loại giấy phép"
+                  allowClear
+                  showSearch
+                  optionFilterProp="children"
+                >
+                  {LICENSE_PRESETS.map((preset) => (
+                    <Option key={preset} value={preset}>
+                      {preset}
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+
+              <Form.Item
+                label={
+                  <Space>
+                    Trạng thái
+                    <Tooltip title="Bật/tắt hiển thị hình ảnh trên website">
+                      <InfoCircleOutlined style={{ color: "#1890ff" }} />
+                    </Tooltip>
+                  </Space>
+                }
                 name="is_active"
                 valuePropName="checked"
               >
-                <Switch />
+                <Switch checkedChildren="Hiển thị" unCheckedChildren="Ẩn" />
               </Form.Item>
             </Card>
 
@@ -228,11 +399,13 @@ export const MediaEdit: React.FC = () => {
                   <Text type="secondary">{mediaData?.mime_type}</Text>
                 </div>
                 <div>
-                  <Text strong>Kích thước:</Text>
+                  <Text strong>Kích thước file:</Text>
                   <br />
                   <Text type="secondary">
                     {mediaData?.file_size
                       ? `${(mediaData.file_size / 1024 / 1024).toFixed(2)} MB`
+                      : mediaData?.file_size_kb
+                      ? `${mediaData.file_size_kb} KB`
                       : "N/A"}
                   </Text>
                 </div>
@@ -240,10 +413,16 @@ export const MediaEdit: React.FC = () => {
                   <Text strong>Độ phân giải:</Text>
                   <br />
                   <Text type="secondary">
-                    {mediaData?.dimensions
+                    {mediaData?.image_dimensions ||
+                    (mediaData?.dimensions
                       ? `${mediaData.dimensions.width} x ${mediaData.dimensions.height}`
-                      : "N/A"}
+                      : "N/A")}
                   </Text>
+                </div>
+                <div>
+                  <Text strong>Định dạng:</Text>
+                  <br />
+                  <Text type="secondary">{mediaData?.image_format || "N/A"}</Text>
                 </div>
                 <div>
                   <Text strong>Ngày tạo:</Text>
@@ -256,7 +435,105 @@ export const MediaEdit: React.FC = () => {
                       : "N/A"}
                   </Text>
                 </div>
+                <div>
+                  <Text strong>Số lần sử dụng:</Text>
+                  <br />
+                  <Text type="secondary">{mediaData?.usage_count || 0}</Text>
+                </div>
+                <div>
+                  <Text strong>Phiên bản:</Text>
+                  <br />
+                  <Text type="secondary">{mediaData?.version || 1}</Text>
+                </div>
+                <div>
+                  <Text strong>URL:</Text>
+                  <br />
+                  <Text type="secondary" code copyable>
+                    {mediaData?.file_url || "N/A"}
+                  </Text>
+                </div>
               </div>
+            </Card>
+
+            {/* Card SEO Scores */}
+            <Card title="Điểm SEO & Performance" style={{ marginBottom: "20px" }}>
+              <Form.Item
+                label={
+                  <Space>
+                    <TagsOutlined />
+                    SEO Score
+                    <Tooltip title="Điểm SEO của media (0-100)">
+                      <InfoCircleOutlined style={{ color: "#1890ff" }} />
+                    </Tooltip>
+                  </Space>
+                }
+                name="seo_score"
+              >
+                <Input type="number" min={0} max={100} placeholder="0-100" />
+              </Form.Item>
+
+              <Form.Item
+                label={
+                  <Space>
+                    <TagsOutlined />
+                    Accessibility Score
+                    <Tooltip title="Điểm accessibility (0-100)">
+                      <InfoCircleOutlined style={{ color: "#1890ff" }} />
+                    </Tooltip>
+                  </Space>
+                }
+                name="accessibility_score"
+              >
+                <Input type="number" min={0} max={100} placeholder="0-100" />
+              </Form.Item>
+
+              <Form.Item
+                label={
+                  <Space>
+                    <TagsOutlined />
+                    Performance Score
+                    <Tooltip title="Điểm performance (0-100)">
+                      <InfoCircleOutlined style={{ color: "#1890ff" }} />
+                    </Tooltip>
+                  </Space>
+                }
+                name="performance_score"
+              >
+                <Input type="number" min={0} max={100} placeholder="0-100" />
+              </Form.Item>
+            </Card>
+
+            {/* Card Settings */}
+            <Card title="Cài đặt hiện thị" style={{ marginBottom: "20px" }}>
+              <Form.Item
+                label={
+                  <Space>
+                    Lazy Loading
+                    <Tooltip title="Bật/tắt lazy loading cho hình ảnh">
+                      <InfoCircleOutlined style={{ color: "#1890ff" }} />
+                    </Tooltip>
+                  </Space>
+                }
+                name="lazy_loading"
+                valuePropName="checked"
+              >
+                <Switch checkedChildren="Bật" unCheckedChildren="Tắt" />
+              </Form.Item>
+
+              <Form.Item
+                label={
+                  <Space>
+                    Priority Loading
+                    <Tooltip title="Ưu tiên tải hình ảnh quan trọng">
+                      <InfoCircleOutlined style={{ color: "#1890ff" }} />
+                    </Tooltip>
+                  </Space>
+                }
+                name="priority_loading"
+                valuePropName="checked"
+              >
+                <Switch checkedChildren="Cao" unCheckedChildren="Thường" />
+              </Form.Item>
             </Card>
           </Form>
         </div>

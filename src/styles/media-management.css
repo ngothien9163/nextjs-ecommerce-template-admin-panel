@@ -2,11 +2,43 @@
 
 .media-item {
   transition: all 0.3s ease;
+  position: relative;
 }
 
 .media-item:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Fix button click issues */
+.media-item .ant-card {
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+
+.media-item .ant-card-body {
+  padding: 12px;
+  position: relative;
+}
+
+.media-item .ant-btn {
+  pointer-events: auto !important;
+  z-index: 10 !important;
+  position: relative !important;
+}
+
+.media-item .ant-btn:hover {
+  transform: scale(1.1);
+  transition: all 0.2s ease;
+}
+
+/* Action buttons container */
+.media-item [style*="marginTop: 12px"] {
+  pointer-events: auto !important;
+  z-index: 10 !important;
+  position: relative !important;
 }
 
 /* Hover effect for image preview */
@@ -21,10 +53,13 @@
 .media-item .ant-card {
   border-radius: 8px;
   overflow: hidden;
+  position: relative !important;
+  z-index: 1;
 }
 
 .media-item .ant-card-body {
   padding: 12px;
+  position: relative;
 }
 
 .media-item .ant-image {
@@ -56,10 +91,16 @@
   background: #f5f5f5;
   border-radius: 8px;
   padding: 16px;
+  position: relative !important;
 }
 
 .react-grid-item {
   transition: all 0.3s ease;
+  pointer-events: auto !important;
+}
+
+.react-grid-item > * {
+  pointer-events: auto !important;
 }
 
 .react-grid-item.react-grid-placeholder {
@@ -70,6 +111,19 @@
 
 .react-grid-item.react-draggable-dragging {
   z-index: 1000;
+}
+
+/* Ensure buttons are always clickable */
+.react-grid-item .ant-btn,
+.react-grid-item button {
+  pointer-events: auto !important;
+  position: relative !important;
+  z-index: 100 !important;
+}
+
+.react-grid-item .ant-btn:hover,
+.react-grid-item button:hover {
+  z-index: 101 !important;
 }
 
 /* Upload Dropzone */

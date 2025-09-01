@@ -1,6 +1,8 @@
 import React from 'react';
 import { Card, Row, Col, Statistic, Typography } from 'antd';
 import { ShoppingCartOutlined, TagsOutlined, UserOutlined, DollarOutlined } from '@ant-design/icons';
+import { DebugConnection } from '../../components/debug-connection';
+import { ConnectionDebugger } from '../../components/connection-debugger';
 
 const { Title } = Typography;
 
@@ -68,6 +70,10 @@ export const Dashboard: React.FC = () => {
           </Card>
         </Col>
       </Row>
+
+      {/* Debug Connection Components */}
+      <ConnectionDebugger />
+      <DebugConnection />
     </div>
   );
 };

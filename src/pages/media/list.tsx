@@ -23,8 +23,11 @@ import {
   InfoCircleOutlined,
 } from "@ant-design/icons";
 import { useDropzone } from "react-dropzone";
-import GridLayout from "react-grid-layout";
-import "react-grid-layout/css/styles.css";
+// Disable GridLayout import for now
+// import GridLayout from "react-grid-layout";
+// import "react-grid-layout/css/styles.css";
+// import "react-resizable/css/styles.css";
+import "../../styles/media-management.css";
 import { supabase } from "../../lib/supabase";
 import { supabaseAdmin } from "../../lib/supabase-admin";
 import { CustomDeleteButton } from "../../components/custom-delete-button";
@@ -257,11 +260,11 @@ export const MediaList: React.FC = () => {
     });
   };
 
-  // Grid layout change
-  const onLayoutChange = (newLayout: any[]) => {
-    setLayout(newLayout);
-    // Here you can save the new order to database if needed
-  };
+  // Grid layout change - disabled for now
+  // const onLayoutChange = (newLayout: any[]) => {
+  //   setLayout(newLayout);
+  //   // Here you can save the new order to database if needed
+  // };
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return "0 Bytes";
@@ -288,52 +291,90 @@ export const MediaList: React.FC = () => {
         }
       >
         <div style={{ padding: "20px" }}>
-          <GridLayout
-            className="layout"
-            layout={layout}
-            cols={12}
-            rowHeight={120}
-            width={1200}
-            onLayoutChange={onLayoutChange}
-            isDraggable={true}
-            isResizable={true}
-          >
+          {/* Simple Grid Layout without react-grid-layout for debugging */}
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))",
+            gap: "16px",
+            width: "100%"
+          }}>
             {mediaItems.map((item, index) => (
               <div key={item.id} className="media-item">
-                <Card hoverable size="small" style={{ height: "100%" }}>
+                <Card 
+                  hoverable 
+                  size="small" 
+                  style={{ height: "100%" }}
+                  actions={[
+                    <EyeOutlined 
+                      key="view" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        console.log('View clicked:', item.id);
+                        handleView(item.id);
+                      }} 
+                      style={{ color: "#1890ff" }}
+                      title="Xem chi tiết"
+                    />,
+                    <EditOutlined 
+                      key="edit" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        console.log('Edit clicked:', item.id);
+                        handleEdit(item.id);
+                      }} 
+                      style={{ color: "#52c41a" }}
+                      title="Chỉnh sửa"
+                    />,
+                    <LinkOutlined 
+                      key="link" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        console.log('Link clicked:', item.file_url);
+                        openImageUrl(item.file_url);
+                      }} 
+                      style={{ color: "#722ed1" }}
+                      title="Mở link"
+                    />,
+                    <CopyOutlined 
+                      key="copy" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        console.log('Copy clicked:', item.file_url);
+                        copyToClipboard(item.file_url);
+                      }} 
+                      style={{ color: "#fa8c16" }}
+                      title="Copy URL"
+                    />,
+                    <InfoCircleOutlined 
+                      key="info" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        console.log('Info clicked:', item.id);
+                        showImageInfo(item);
+                      }} 
+                      style={{ color: "#13c2c2" }}
+                      title="Thông tin"
+                    />
+                  ]}
+                >
                   <div style={{ textAlign: "center" }}>
                     <div
                       style={{ position: "relative", cursor: "pointer" }}
-                      onClick={() => openLightbox(index)}
+                      onClick={(e) => {
+                        console.log('Image clicked:', item.id);
+                        openLightbox(index);
+                      }}
                     >
                       <Image
                         src={item.file_url}
                         alt={item.alt_text || item.file_name}
                         style={{
                           width: "100%",
-                          height: "80px",
+                          height: "150px",
                           objectFit: "cover",
                         }}
                         fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RnG4W+FgYxN"
                       />
-                      <div
-                        style={{
-                          position: "absolute",
-                          top: "50%",
-                          left: "50%",
-                          transform: "translate(-50%, -50%)",
-                          background: "rgba(0,0,0,0.7)",
-                          color: "white",
-                          padding: "4px 8px",
-                          borderRadius: "4px",
-                          fontSize: "12px",
-                          opacity: 0,
-                          transition: "opacity 0.2s",
-                        }}
-                        className="hover:opacity-100"
-                      >
-                        Click để xem
-                      </div>
                     </div>
                     <div style={{ marginTop: "8px" }}>
                       <Text strong style={{ fontSize: "12px" }}>
@@ -349,98 +390,12 @@ export const MediaList: React.FC = () => {
                       <Tag color={item.is_active ? "green" : "red"}>
                         {item.is_active ? "Active" : "Inactive"}
                       </Tag>
-                      <br />
-                      <Text
-                        type="secondary"
-                        style={{ fontSize: "10px", wordBreak: "break-all" }}
-                      >
-                        <strong>URL:</strong>{" "}
-                        {item.file_url
-                          ? item.file_url.substring(0, 50) + "..."
-                          : "Không có URL"}
-                      </Text>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div
-                      style={{
-                        marginTop: "12px",
-                        display: "flex",
-                        justifyContent: "center",
-                        gap: "8px",
-                        flexWrap: "wrap",
-                      }}
-                    >
-                      <Button
-                        type="text"
-                        size="small"
-                        icon={<EyeOutlined />}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleView(item.id);
-                        }}
-                        title="Xem chi tiết"
-                        style={{ color: "#1890ff" }}
-                      />
-                      <Button
-                        type="text"
-                        size="small"
-                        icon={<EditOutlined />}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleEdit(item.id);
-                        }}
-                        title="Chỉnh sửa"
-                        style={{ color: "#52c41a" }}
-                      />
-                      <Button
-                        type="text"
-                        size="small"
-                        icon={<LinkOutlined />}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          openImageUrl(item.file_url);
-                        }}
-                        title="Mở link hình ảnh"
-                        style={{ color: "#722ed1" }}
-                      />
-                      <Button
-                        type="text"
-                        size="small"
-                        icon={<CopyOutlined />}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          copyToClipboard(item.file_url);
-                        }}
-                        title="Copy URL"
-                        style={{ color: "#fa8c16" }}
-                      />
-                      <Button
-                        type="text"
-                        size="small"
-                        icon={<InfoCircleOutlined />}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          showImageInfo(item);
-                        }}
-                        title="Thông tin chi tiết"
-                        style={{ color: "#13c2c2" }}
-                      />
-                      <CustomDeleteButton
-                        resource="media"
-                        recordItemId={item.id}
-                      />
                     </div>
                   </div>
                 </Card>
               </div>
             ))}
-          </GridLayout>
+          </div>
         </div>
       </List>
 

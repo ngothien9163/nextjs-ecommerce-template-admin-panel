@@ -1,132 +1,158 @@
-# 📁 SQL Setup Files - Database Documentation
+# 📁 SQL Scripts - Hướng dẫn sử dụng
 
-Thư mục `sqls/` chứa tất cả các file SQL cần thiết để setup database cho project eCommerce.
+## 🎯 **Mục đích**
 
-## 📄 Các file chính:
+Thư mục này chứa các script SQL để setup và fix database cho dự án NextJS E-commerce Admin Panel.
 
-### 1. **`00-setup-complete-database.sql`** (Master script)
-- **Kích thước:** ~2KB
-- **Mục đích:** Script chính để setup toàn bộ database
-- **Chạy:** `\i sqls/00-setup-complete-database.sql`
-- **Thời gian:** ~2-3 phút
+## 📋 **Danh sách Scripts**
 
-### 2. **`01-create-all-tables.sql`** (Tạo tables)
-- **Kích thước:** ~45KB
-- **Mục đích:** Tạo tất cả 28 tables, indexes, triggers, functions (bao gồm SEO tables)
-- **Chạy:** `\i sqls/01-create-all-tables.sql`
-- **Nội dung:**
-  - 26 tables chính (profiles, products, categories, orders, etc.)
-  - 2 tables SEO (seo_page_types, seo_pages)
-  - 60+ indexes cho performance
-  - 25+ triggers cho auto-update
-  - 10+ functions cho business logic
+### **1. Scripts Setup Database**
 
-### 3. **`02-insert-all-data.sql`** (Insert dữ liệu mẫu)
-- **Kích thước:** ~25KB
-- **Mục đích:** Insert dữ liệu mẫu cho 28 tables (bao gồm SEO data)
-- **Chạy:** `\i sqls/02-insert-all-data.sql`
-- **Nội dung:**
-  - 5 profiles (admin, moderator, customers)
-  - 4 categories (laptops, smartphones, tablets, accessories)
-  - 16 products với variants
-  - 20 tags và product_tags
-  - 2 blog categories và posts
-  - 5 loại trang SEO và 12 trang SEO mẫu
-  - Dữ liệu orders, reviews, cart, wishlist
+| File | Mục đích | Khi nào chạy |
+|------|----------|--------------|
+| `00-setup-complete-database.sql` | Setup toàn bộ database (master script) | Lần đầu setup |
+| `02-create-all-tables.sql` | Tạo tất cả tables | Khi chưa có tables |
+| `03-insert-all-data.sql` | Insert dữ liệu mẫu | Sau khi tạo tables |
 
-### 4. **`03-create-materialized-views.sql`** (Materialized Views)
-- **Kích thước:** ~6KB
-- **Mục đích:** Tạo 3 Materialized Views cho performance
-- **Chạy:** `\i sqls/03-create-materialized-views.sql`
-- **Nội dung:**
-  - `categories_with_images`: Categories + image URLs
-  - `categories_with_stats`: Categories + detailed stats
-  - `categories_display`: Optimized view for UI display
+### **2. Scripts Fix Permissions**
 
-## 🚀 Cách sử dụng:
+| File | Mục đích | Khi nào chạy |
+|------|----------|--------------|
+| `01-fix-database-permissions.sql` | Fix lỗi "permission denied for schema public" | Khi gặp lỗi permissions |
+| `04-setup-rls-policies.sql` | Setup RLS policies cho tất cả tables | Sau khi fix permissions |
+| `05-check-permissions.sql` | Kiểm tra permissions và RLS status | Để debug lỗi |
 
-### Option 1: Setup toàn bộ (Khuyến nghị)
-```sql
-\i sqls/00-setup-complete-database.sql
+### **3. Scripts SEO (Tùy chọn)**
+
+| File | Mục đích | Khi nào chạy |
+|------|----------|--------------|
+| `04-create-seo-images-table.sql` | Tạo bảng SEO cho hình ảnh | Nếu cần SEO nâng cao |
+
+## 🚀 **Hướng dẫn sử dụng**
+
+### **Trường hợp 1: Setup lần đầu**
+
+```bash
+# Chạy script master (tự động chạy tất cả)
+Copy nội dung từ: sqls/00-setup-complete-database.sql
+Paste vào Supabase SQL Editor và chạy
 ```
 
-### Option 2: Setup từng bước
-```sql
--- Bước 1: Tạo tables
-\i sqls/01-create-all-tables.sql
+### **Trường hợp 2: Gặp lỗi "permission denied for schema public"**
 
--- Bước 2: Insert dữ liệu
-\i sqls/02-insert-all-data.sql
+```bash
+# Bước 1: Fix permissions
+Copy nội dung từ: sqls/01-fix-database-permissions.sql
+Paste vào Supabase SQL Editor và chạy
 
--- Bước 3: Tạo Materialized Views
-\i sqls/03-create-materialized-views.sql
+# Bước 2: Setup RLS policies
+Copy nội dung từ: sqls/04-setup-rls-policies.sql
+Paste vào Supabase SQL Editor và chạy
+
+# Bước 3: Test ứng dụng
+Truy cập: http://localhost:5173/categories
 ```
 
-## 📊 Database Schema:
+### **Trường hợp 3: Debug lỗi permissions**
 
-### Tables chính (26 tables):
-- **User Management:** profiles, user_addresses
-- **Products:** products, product_variants, product_tags, product_reviews
-- **Categories:** categories, tags
-- **Orders:** orders, order_items, cart_items, wishlist_items
-- **E-commerce:** discounts, coupons, shipping_zones, shipping_methods, payment_methods
-- **Blog:** blog_categories, blog_posts, blog_post_tags, blog_comments
-- **Media:** media, media_relations
-- **System:** notifications
+```bash
+# Kiểm tra permissions và RLS status
+Copy nội dung từ: sqls/05-check-permissions.sql
+Paste vào Supabase SQL Editor và chạy
 
-### SEO Tables (2 tables):
-- **seo_page_types:** Loại trang (page, product, category, user, system)
-- **seo_pages:** Thông tin SEO cho từng trang (50+ fields)
+# Xem kết quả để xác định vấn đề
+```
 
-### Materialized Views (3 views):
-- **categories_with_images:** Performance view cho category lists
-- **categories_with_stats:** Detailed statistics cho admin
-- **categories_display:** Optimized view cho UI
+## 🔧 **Cách chạy Scripts**
 
-## 🔧 Performance Features:
+### **Phương pháp 1: Supabase Dashboard (Khuyến nghị)**
 
-### Indexes:
-- B-tree indexes cho foreign keys
-- GIN indexes cho JSONB columns
-- Composite indexes cho common queries
-- Full-text search indexes
+1. **Truy cập Supabase Dashboard:**
+   - Vào https://supabase.com/dashboard
+   - Chọn project của bạn
 
-### Triggers:
-- Auto-update `updated_at` columns
-- Auto-calculate `product_count` in categories
-- Auto-refresh Materialized Views
+2. **Mở SQL Editor:**
+   - Vào tab "SQL Editor"
+   - Tạo new query
 
-### Materialized Views:
-- Pre-computed joins cho fast queries
-- Auto-refresh khi data thay đổi
-- Optimized cho category display
+3. **Copy và chạy:**
+   - Copy nội dung từ file SQL
+   - Paste vào SQL Editor
+   - Click "Run" để chạy
 
-## 📈 SEO Features:
+### **Phương pháp 2: Command Line (Nếu có psql)**
 
-### Comprehensive SEO System:
-- **Meta tags:** title, description, keywords
-- **Open Graph:** og:title, og:description, og:image
-- **Twitter Cards:** twitter:card, twitter:title
-- **Schema.org:** JSON-LD structured data
-- **Core Web Vitals:** LCP, FID, CLS, INP, TTFB
-- **AI/ML Metrics:** Relevance scores, ranking factors
-- **E-E-A-T:** Experience, Expertise, Authoritativeness, Trust
-- **Voice & Visual Search:** Optimization data
-- **Privacy & Compliance:** GDPR, CCPA signals
-- **Future-proof:** Quantum SEO, Neural networks
+```bash
+# Kết nối đến database
+psql "postgresql://postgres:password@db.project.supabase.co:5432/postgres"
 
-## 🎯 Next Steps:
+# Chạy script
+\i sqls/01-fix-database-permissions.sql
+```
 
-1. **Setup Database:** Chạy master script
-2. **API Integration:** Sử dụng Materialized Views trong API
-3. **SEO Management:** Quản lý SEO qua bảng `seo_pages`
-4. **Content Management:** Thêm products, blog posts
-5. **Performance Monitoring:** Theo dõi Materialized View performance
+## ⚠️ **Lưu ý quan trọng**
 
-## 📝 Notes:
+### **Thứ tự chạy scripts:**
 
-- Tất cả tables đều có `created_at` và `updated_at`
-- Foreign keys có `ON DELETE CASCADE/SET NULL` phù hợp
-- JSONB columns cho flexible data storage
-- UUID primary keys cho scalability
-- Comments đầy đủ cho documentation
+1. **`01-fix-database-permissions.sql`** - Fix permissions trước
+2. **`02-create-all-tables.sql`** - Tạo tables (nếu chưa có)
+3. **`03-insert-all-data.sql`** - Insert dữ liệu (nếu chưa có)
+4. **`04-setup-rls-policies.sql`** - Setup RLS policies
+5. **`05-check-permissions.sql`** - Kiểm tra (nếu cần debug)
+
+### **Backup trước khi chạy:**
+
+```sql
+-- Backup dữ liệu quan trọng trước khi chạy scripts
+-- Đặc biệt khi chạy scripts có DROP TABLE hoặc DROP POLICY
+```
+
+## 🐛 **Troubleshooting**
+
+### **Lỗi thường gặp:**
+
+1. **"permission denied for schema public"**
+   - **Giải pháp:** Chạy `01-fix-database-permissions.sql`
+
+2. **"relation does not exist"**
+   - **Giải pháp:** Chạy `02-create-all-tables.sql`
+
+3. **"RLS policy violation"**
+   - **Giải pháp:** Chạy `04-setup-rls-policies.sql`
+
+4. **"insufficient privilege"**
+   - **Giải pháp:** Kiểm tra Supabase URL và API Key
+
+### **Kiểm tra kết quả:**
+
+```sql
+-- Test cơ bản
+SELECT COUNT(*) FROM categories;
+SELECT COUNT(*) FROM products;
+SELECT COUNT(*) FROM media;
+
+-- Nếu trả về số > 0 thì database đã hoạt động
+```
+
+## 📞 **Hỗ trợ**
+
+Nếu gặp vấn đề:
+
+1. **Chạy script check:** `05-check-permissions.sql`
+2. **Xem logs:** Browser console và Supabase logs
+3. **Kiểm tra:** Supabase URL và API Key trong `.env`
+4. **Báo cáo:** Cung cấp error message cụ thể
+
+## ✅ **Checklist hoàn thành**
+
+- [ ] Schema public có quyền đúng
+- [ ] Tables đã được tạo
+- [ ] Dữ liệu mẫu đã được insert
+- [ ] RLS policies đã được setup
+- [ ] Test connection thành công
+- [ ] Ứng dụng chạy được
+- [ ] Tất cả trang hoạt động bình thường
+
+---
+
+**📝 Lưu ý:** Các script này đã được tối ưu và gom lại từ nhiều file trùng lặp để dễ sử dụng hơn.

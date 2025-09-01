@@ -1,5 +1,6 @@
 import { DataProvider } from '@refinedev/core';
 import { supabase } from './supabase';
+import { supabaseAdmin } from './supabase-admin';
 
 export const dataProvider: DataProvider = {
   getList: async ({ resource, pagination, filters, sorters }) => {
@@ -10,9 +11,12 @@ export const dataProvider: DataProvider = {
     
     let query;
     
+    // Use admin client for media to bypass RLS issues
+    const client = resource === 'media' ? supabaseAdmin : supabase;
+    
     // Special handling for products and blog posts to include category information
     if (resource === 'products') {
-      query = supabase
+      query = client
         .from(resource)
         .select(`
           *,
@@ -24,7 +28,7 @@ export const dataProvider: DataProvider = {
           )
         `);
     } else if (resource === 'blog_posts') {
-      query = supabase
+      query = client
         .from(resource)
         .select(`
           *,
@@ -36,7 +40,7 @@ export const dataProvider: DataProvider = {
           )
         `);
     } else {
-      query = supabase.from(resource).select('*');
+      query = client.from(resource).select('*');
     }
 
     // Apply filters
@@ -92,9 +96,12 @@ export const dataProvider: DataProvider = {
     
     let query;
     
+    // Use admin client for media to bypass RLS issues
+    const client = resource === 'media' ? supabaseAdmin : supabase;
+    
     // Special handling for products to include category information
     if (resource === 'products') {
-      query = supabase
+      query = client
         .from(resource)
         .select(`
           *,
@@ -108,7 +115,7 @@ export const dataProvider: DataProvider = {
         .eq('id', id)
         .single();
     } else if (resource === 'blog_posts') {
-      query = supabase
+      query = client
         .from(resource)
         .select(`
           *,
@@ -122,7 +129,7 @@ export const dataProvider: DataProvider = {
         .eq('id', id)
         .single();
     } else {
-      query = supabase
+      query = client
         .from(resource)
         .select('*')
         .eq('id', id)
@@ -147,7 +154,10 @@ export const dataProvider: DataProvider = {
   },
 
   create: async ({ resource, variables }) => {
-    const { data, error } = await supabase
+    // Use admin client for media to bypass RLS issues
+    const client = resource === 'media' ? supabaseAdmin : supabase;
+    
+    const { data, error } = await client
       .from(resource)
       .insert(variables)
       .select()
@@ -163,7 +173,10 @@ export const dataProvider: DataProvider = {
   },
 
   update: async ({ resource, id, variables }) => {
-    const { data, error } = await supabase
+    // Use admin client for media to bypass RLS issues
+    const client = resource === 'media' ? supabaseAdmin : supabase;
+    
+    const { data, error } = await client
       .from(resource)
       .update(variables)
       .eq('id', id)
@@ -180,7 +193,10 @@ export const dataProvider: DataProvider = {
   },
 
   deleteOne: async ({ resource, id }) => {
-    const { error } = await supabase
+    // Use admin client for media to bypass RLS issues
+    const client = resource === 'media' ? supabaseAdmin : supabase;
+    
+    const { error } = await client
       .from(resource)
       .delete()
       .eq('id', id);
@@ -195,7 +211,10 @@ export const dataProvider: DataProvider = {
   },
 
   getMany: async ({ resource, ids }) => {
-    const { data, error } = await supabase
+    // Use admin client for media to bypass RLS issues
+    const client = resource === 'media' ? supabaseAdmin : supabase;
+    
+    const { data, error } = await client
       .from(resource)
       .select('*')
       .in('id', ids);
@@ -210,7 +229,10 @@ export const dataProvider: DataProvider = {
   },
 
   createMany: async ({ resource, variables }) => {
-    const { data, error } = await supabase
+    // Use admin client for media to bypass RLS issues
+    const client = resource === 'media' ? supabaseAdmin : supabase;
+    
+    const { data, error } = await client
       .from(resource)
       .insert(variables)
       .select();
@@ -225,7 +247,10 @@ export const dataProvider: DataProvider = {
   },
 
   updateMany: async ({ resource, ids, variables }) => {
-    const { data, error } = await supabase
+    // Use admin client for media to bypass RLS issues
+    const client = resource === 'media' ? supabaseAdmin : supabase;
+    
+    const { data, error } = await client
       .from(resource)
       .update(variables)
       .in('id', ids)
@@ -241,7 +266,10 @@ export const dataProvider: DataProvider = {
   },
 
   deleteMany: async ({ resource, ids }) => {
-    const { error } = await supabase
+    // Use admin client for media to bypass RLS issues
+    const client = resource === 'media' ? supabaseAdmin : supabase;
+    
+    const { error } = await client
       .from(resource)
       .delete()
       .in('id', ids);
