@@ -1,6 +1,5 @@
 import { DataProvider } from '@refinedev/core';
 import { supabase } from './supabase';
-import { supabaseAdmin } from './supabase-admin';
 
 export const dataProvider: DataProvider = {
   getList: async ({ resource, pagination, filters, sorters }) => {
@@ -11,8 +10,8 @@ export const dataProvider: DataProvider = {
     
     let query;
     
-    // Use admin client for media to bypass RLS issues
-    const client = resource === 'media' ? supabaseAdmin : supabase;
+    // Use regular client for all resources
+    const client = supabase;
     
     // Special handling for products and blog posts to include category information
     if (resource === 'products') {
@@ -26,7 +25,7 @@ export const dataProvider: DataProvider = {
             slug,
             is_active
           )
-        `);
+        `, { count: 'exact' });
     } else if (resource === 'blog_posts') {
       query = client
         .from(resource)
@@ -38,9 +37,9 @@ export const dataProvider: DataProvider = {
             slug,
             is_active
           )
-        `);
+        `, { count: 'exact' });
     } else {
-      query = client.from(resource).select('*');
+      query = client.from(resource).select('*', { count: 'exact' });
     }
 
     // Apply filters
@@ -83,7 +82,9 @@ export const dataProvider: DataProvider = {
     }
 
     console.log(`✅ Successfully fetched ${data?.length || 0} ${resource}`);
+    console.log('📊 Total count:', count);
     console.log('📊 Data sample:', data?.slice(0, 2));
+    console.log('📊 Return object:', { data: data?.length || 0, total: count || 0 });
 
     return {
       data: data || [],
@@ -97,7 +98,7 @@ export const dataProvider: DataProvider = {
     let query;
     
     // Use admin client for media to bypass RLS issues
-    const client = resource === 'media' ? supabaseAdmin : supabase;
+    const client = supabase;
     
     // Special handling for products to include category information
     if (resource === 'products') {
@@ -155,11 +156,36 @@ export const dataProvider: DataProvider = {
 
   create: async ({ resource, variables }) => {
     // Use admin client for media to bypass RLS issues
-    const client = resource === 'media' ? supabaseAdmin : supabase;
+    const client = supabase;
+    
+    // Xử lý array fields cho media resource
+    let processedVariables = variables;
+    if (resource === 'media') {
+      const arrayFields = ['meta_keywords', 'backup_urls', 'ai_tags', 'visual_search_tags', 'voice_search_phrases'];
+      processedVariables = Object.keys(variables).reduce((acc, key) => {
+        const value = variables[key];
+        
+        // Xử lý các field có kiểu TEXT[] - chuyển từ string thành array
+        if (arrayFields.includes(key)) {
+          if (Array.isArray(value)) {
+            // Nếu đã là array (từ Select mode="tags"), giữ nguyên
+            acc[key] = value.filter(item => item && item.trim().length > 0);
+          } else if (typeof value === 'string') {
+            // Nếu là string, chuyển thành array
+            acc[key] = value.split(',').map(item => item.trim()).filter(item => item.length > 0);
+          } else {
+            acc[key] = value;
+          }
+        } else {
+          acc[key] = value;
+        }
+        return acc;
+      }, {} as any);
+    }
     
     const { data, error } = await client
       .from(resource)
-      .insert(variables)
+      .insert(processedVariables)
       .select()
       .single();
 
@@ -174,11 +200,36 @@ export const dataProvider: DataProvider = {
 
   update: async ({ resource, id, variables }) => {
     // Use admin client for media to bypass RLS issues
-    const client = resource === 'media' ? supabaseAdmin : supabase;
+    const client = supabase;
+    
+    // Xử lý array fields cho media resource
+    let processedVariables = variables;
+    if (resource === 'media') {
+      const arrayFields = ['meta_keywords', 'backup_urls', 'ai_tags', 'visual_search_tags', 'voice_search_phrases'];
+      processedVariables = Object.keys(variables).reduce((acc, key) => {
+        const value = variables[key];
+        
+        // Xử lý các field có kiểu TEXT[] - chuyển từ string thành array
+        if (arrayFields.includes(key)) {
+          if (Array.isArray(value)) {
+            // Nếu đã là array (từ Select mode="tags"), giữ nguyên
+            acc[key] = value.filter(item => item && item.trim().length > 0);
+          } else if (typeof value === 'string') {
+            // Nếu là string, chuyển thành array
+            acc[key] = value.split(',').map(item => item.trim()).filter(item => item.length > 0);
+          } else {
+            acc[key] = value;
+          }
+        } else {
+          acc[key] = value;
+        }
+        return acc;
+      }, {} as any);
+    }
     
     const { data, error } = await client
       .from(resource)
-      .update(variables)
+      .update(processedVariables)
       .eq('id', id)
       .select()
       .single();
@@ -194,7 +245,7 @@ export const dataProvider: DataProvider = {
 
   deleteOne: async ({ resource, id }) => {
     // Use admin client for media to bypass RLS issues
-    const client = resource === 'media' ? supabaseAdmin : supabase;
+    const client = supabase;
     
     const { error } = await client
       .from(resource)
@@ -212,7 +263,7 @@ export const dataProvider: DataProvider = {
 
   getMany: async ({ resource, ids }) => {
     // Use admin client for media to bypass RLS issues
-    const client = resource === 'media' ? supabaseAdmin : supabase;
+    const client = supabase;
     
     const { data, error } = await client
       .from(resource)
@@ -230,7 +281,7 @@ export const dataProvider: DataProvider = {
 
   createMany: async ({ resource, variables }) => {
     // Use admin client for media to bypass RLS issues
-    const client = resource === 'media' ? supabaseAdmin : supabase;
+    const client = supabase;
     
     const { data, error } = await client
       .from(resource)
@@ -248,7 +299,7 @@ export const dataProvider: DataProvider = {
 
   updateMany: async ({ resource, ids, variables }) => {
     // Use admin client for media to bypass RLS issues
-    const client = resource === 'media' ? supabaseAdmin : supabase;
+    const client = supabase;
     
     const { data, error } = await client
       .from(resource)
@@ -267,7 +318,7 @@ export const dataProvider: DataProvider = {
 
   deleteMany: async ({ resource, ids }) => {
     // Use admin client for media to bypass RLS issues
-    const client = resource === 'media' ? supabaseAdmin : supabase;
+    const client = supabase;
     
     const { error } = await client
       .from(resource)

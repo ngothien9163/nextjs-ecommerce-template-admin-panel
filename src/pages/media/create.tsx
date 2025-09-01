@@ -9,7 +9,6 @@ import {
   Space,
   message,
   Typography,
-  Upload,
   Image,
   Tooltip,
   Select,
@@ -17,7 +16,6 @@ import {
 } from "antd";
 import {
   UploadOutlined,
-  PlusOutlined,
   InfoCircleOutlined,
   UserOutlined,
   CopyrightOutlined,
@@ -28,35 +26,23 @@ import {
   EyeOutlined,
 } from "@ant-design/icons";
 import { useDropzone } from "react-dropzone";
-import { supabaseAdmin } from "../../lib/supabase-admin";
+import { supabase } from "../../lib/supabase";
+import { dataProvider } from "../../lib/dataProvider";
+import { KeywordsInput } from "../../components/keywords-input";
 
 const { TextArea } = Input;
-const { Title, Text } = Typography;
+const { Text } = Typography;
 const { Option } = Select;
 
-// Preset data cho Credit và License
-const CREDIT_PRESETS = [
-  // Free Sources
-  "Unsplash",
-  "Pexels",
-  "Pixabay",
-  "Freepik",
-  "Wikimedia Commons",
-  "OpenClipart",
-  "Flaticon",
-  // Paid Sources
-  "Adobe Stock",
-  "Shutterstock",
-  "Getty Images",
-  "iStock",
-  "Depositphotos",
-  // Self Created
-  "Original Content",
-  "Self Created",
-  "Custom Design",
-  // Custom
-  "Custom",
-];
+// Interface cho form values
+interface MediaFormValues {
+  file_name?: string;
+  file_url?: string;
+  file_path?: string;
+  [key: string]: unknown;
+}
+
+
 
 const LICENSE_PRESETS = [
   "CC0 (Public Domain) - Miền công cộng, tự do sử dụng",
@@ -81,6 +67,8 @@ export const MediaCreate: React.FC = () => {
       dimensions?: { width: number; height: number };
       fileSizeKB?: number;
       imageFormat?: string;
+      uploadedFileName?: string; // Tên file đã upload (có thể khác tên gốc)
+      uploadedFilePath?: string; // Đường dẫn file đã upload
     }>
   >([]);
   const [selectedFileIndex, setSelectedFileIndex] = useState<number>(0);
@@ -143,11 +131,11 @@ export const MediaCreate: React.FC = () => {
 
       // Tự động điền thông tin từ file đầu tiên nếu form chưa có dữ liệu
       if (newFiles.length > 0 && formProps.form) {
-        const currentValues = formProps.form.getFieldsValue() as any;
+        const currentValues = formProps.form.getFieldsValue();
         const firstFile = newFiles[0];
 
         // Chỉ điền nếu các field chưa có dữ liệu
-        if (!currentValues.file_name) {
+        if (!(currentValues as MediaFormValues).file_name) {
           const fileName = firstFile.file.name.replace(/\.[^/.]+$/, ''); // Bỏ extension
 
           // Tạo alt text và title thông minh hơn
@@ -163,6 +151,12 @@ export const MediaCreate: React.FC = () => {
             `Ảnh ${smartAltText.toLowerCase()} đẹp, rõ nét, tối ưu cho SEO và trải nghiệm người dùng.`,
             `${smartAltText} - Hình ảnh chuyên nghiệp, phù hợp cho các dự án thương mại và cá nhân.`,
             `Tải hình ảnh ${smartAltText.toLowerCase()} miễn phí, chất lượng cao, không có watermark.`,
+            `Khám phá ${smartAltText.toLowerCase()} với hình ảnh chất lượng 4K, tối ưu cho mọi thiết bị.`,
+            `${smartAltText} - Bộ sưu tập hình ảnh đa dạng, phù hợp cho thiết kế và nội dung sáng tạo.`,
+            `Hình ảnh ${smartAltText.toLowerCase()} chuyên nghiệp, hỗ trợ đa định dạng và tương thích mọi trình duyệt.`,
+            `Tải xuống ${smartAltText.toLowerCase()} miễn phí, độ phân giải cao, không giới hạn sử dụng.`,
+            `${smartAltText} - Tài nguyên hình ảnh chất lượng, tối ưu cho SEO và tốc độ tải trang.`,
+            `Khám phá bộ sưu tập ${smartAltText.toLowerCase()} đa dạng, phù hợp cho mọi nhu cầu thiết kế.`,
           ];
 
           // Tạo caption từ alt text
@@ -171,14 +165,22 @@ export const MediaCreate: React.FC = () => {
             `Ảnh ${smartAltText.toLowerCase()} đẹp và rõ nét`,
             `${smartAltText} - Tài liệu hình ảnh chuyên nghiệp`,
             `Hình ảnh ${smartAltText.toLowerCase()} phù hợp cho nhiều mục đích sử dụng`,
+            `${smartAltText} - Bức ảnh được chụp với độ phân giải cao`,
+            `Khám phá vẻ đẹp của ${smartAltText.toLowerCase()} qua góc nhìn chuyên nghiệp`,
+            `${smartAltText} - Hình ảnh tối ưu cho thiết kế và marketing`,
+            `Tài liệu hình ảnh ${smartAltText.toLowerCase()} chất lượng, sẵn sàng sử dụng`,
+            `${smartAltText} - Bộ sưu tập hình ảnh đa dạng và phong phú`,
+            `Hình ảnh ${smartAltText.toLowerCase()} chuyên nghiệp, phù hợp cho mọi dự án`,
           ];
 
-          // Tạo keywords từ tên file
-          const keywords = fileName
-            .replace(/[-_]/g, ' ')
-            .split(' ')
-            .filter((word) => word.length > 2)
-            .join(', ');
+          // Tạo keywords từ tên file (array format cho Select)
+          const keywords = [
+            fileName.replace(/[-_]/g, ' '), // Tên file gốc
+            ...fileName
+              .replace(/[-_]/g, ' ')
+              .split(' ')
+              .filter((word) => word.length > 2)
+          ];
 
           formProps.form.setFieldsValue({
             file_name: fileName,
@@ -210,6 +212,30 @@ export const MediaCreate: React.FC = () => {
     multiple: true,
   });
 
+  // Hàm tạo tên file unique (giữ tên gốc + thêm suffix nếu trùng)
+  const generateUniqueFileName = async (originalFileName: string): Promise<string> => {
+    const fileExt = originalFileName.split(".").pop();
+    const baseName = originalFileName.replace(/\.[^/.]+$/, "");
+    
+    // Thử tên file gốc trước
+    let fileName = originalFileName;
+    
+    // Kiểm tra xem file đã tồn tại chưa
+    const { data: existingFile } = await supabase.storage
+      .from("media")
+      .list("media", {
+        search: fileName
+      });
+    
+    // Nếu file đã tồn tại, thêm suffix random
+    if (existingFile && existingFile.length > 0) {
+      const randomSuffix = Math.random().toString(36).substring(2, 8);
+      fileName = `${baseName}_${randomSuffix}.${fileExt}`;
+    }
+    
+    return fileName;
+  };
+
   const handleUpload = async () => {
     if (uploadedFiles.length === 0) {
       message.warning("Vui lòng chọn files để upload!");
@@ -221,20 +247,19 @@ export const MediaCreate: React.FC = () => {
         if (fileData.uploaded) return fileData;
 
         const file = fileData.file;
-        const fileExt = file.name.split(".").pop();
-        const fileName = `${Date.now()}-${Math.random()
-          .toString(36)
-          .substring(2)}.${fileExt}`;
-        const filePath = `media/${fileName}`;
+        
+        // Tạo tên file unique (giữ tên gốc + thêm suffix nếu trùng)
+        const uniqueFileName = await generateUniqueFileName(file.name);
+        const filePath = `media/${uniqueFileName}`;
 
-        // Upload to Supabase Storage using admin client
-        const { data: uploadData, error: uploadError } =
-          await supabaseAdmin.storage.from("media").upload(filePath, file);
+        // Upload to Supabase Storage using regular client
+        const { error: uploadError } =
+          await supabase.storage.from("media").upload(filePath, file);
 
         if (uploadError) throw uploadError;
 
         // Get public URL
-        const { data: urlData } = supabaseAdmin.storage
+        const { data: urlData } = supabase.storage
           .from("media")
           .getPublicUrl(filePath);
 
@@ -242,6 +267,8 @@ export const MediaCreate: React.FC = () => {
           ...fileData,
           uploaded: true,
           url: urlData.publicUrl,
+          uploadedFileName: uniqueFileName, // Lưu tên file đã upload
+          uploadedFilePath: filePath, // Lưu đường dẫn đã upload
         };
       });
 
@@ -257,7 +284,7 @@ export const MediaCreate: React.FC = () => {
           const currentValues = formProps.form.getFieldsValue();
           formProps.form.setFieldsValue({
             ...currentValues,
-            file_path: `media/${uploadedFile.file.name}`,
+            file_path: uploadedFile.uploadedFilePath,
             file_url: uploadedFile.url,
           });
         }
@@ -309,6 +336,12 @@ export const MediaCreate: React.FC = () => {
         `Ảnh ${smartAltText.toLowerCase()} đẹp, rõ nét, tối ưu cho SEO và trải nghiệm người dùng.`,
         `${smartAltText} - Hình ảnh chuyên nghiệp, phù hợp cho các dự án thương mại và cá nhân.`,
         `Tải hình ảnh ${smartAltText.toLowerCase()} miễn phí, chất lượng cao, không có watermark.`,
+        `Khám phá ${smartAltText.toLowerCase()} với hình ảnh chất lượng 4K, tối ưu cho mọi thiết bị.`,
+        `${smartAltText} - Bộ sưu tập hình ảnh đa dạng, phù hợp cho thiết kế và nội dung sáng tạo.`,
+        `Hình ảnh ${smartAltText.toLowerCase()} chuyên nghiệp, hỗ trợ đa định dạng và tương thích mọi trình duyệt.`,
+        `Tải xuống ${smartAltText.toLowerCase()} miễn phí, độ phân giải cao, không giới hạn sử dụng.`,
+        `${smartAltText} - Tài nguyên hình ảnh chất lượng, tối ưu cho SEO và tốc độ tải trang.`,
+        `Khám phá bộ sưu tập ${smartAltText.toLowerCase()} đa dạng, phù hợp cho mọi nhu cầu thiết kế.`,
       ];
 
       // Tạo caption từ alt text
@@ -317,14 +350,22 @@ export const MediaCreate: React.FC = () => {
         `Ảnh ${smartAltText.toLowerCase()} đẹp và rõ nét`,
         `${smartAltText} - Tài liệu hình ảnh chuyên nghiệp`,
         `Hình ảnh ${smartAltText.toLowerCase()} phù hợp cho nhiều mục đích sử dụng`,
+        `${smartAltText} - Bức ảnh được chụp với độ phân giải cao`,
+        `Khám phá vẻ đẹp của ${smartAltText.toLowerCase()} qua góc nhìn chuyên nghiệp`,
+        `${smartAltText} - Hình ảnh tối ưu cho thiết kế và marketing`,
+        `Tài liệu hình ảnh ${smartAltText.toLowerCase()} chất lượng, sẵn sàng sử dụng`,
+        `${smartAltText} - Bộ sưu tập hình ảnh đa dạng và phong phú`,
+        `Hình ảnh ${smartAltText.toLowerCase()} chuyên nghiệp, phù hợp cho mọi dự án`,
       ];
 
-      // Tạo keywords từ tên file
-      const keywords = fileName
-        .replace(/[-_]/g, ' ')
-        .split(' ')
-        .filter((word) => word.length > 2)
-        .join(', ');
+      // Tạo keywords từ tên file (array format cho Select)
+      const keywords = [
+        fileName.replace(/[-_]/g, ' '), // Tên file gốc
+        ...fileName
+          .replace(/[-_]/g, ' ')
+          .split(' ')
+          .filter((word) => word.length > 2)
+      ];
 
       // Nếu chưa có thông tin dimensions, thử lấy lại
       let dimensions = fileData.dimensions;
@@ -374,28 +415,66 @@ export const MediaCreate: React.FC = () => {
     }
   };
 
-  const handleFormSubmit = async (values: any) => {
+  const handleFormSubmit = async (values: MediaFormValues) => {
     try {
-      // Đảm bảo tất cả values là string, không phải array
-      const cleanValues = Object.keys(values).reduce((acc, key) => {
-        const value = values[key];
-        // Nếu là array, chuyển thành string
-        if (Array.isArray(value)) {
-          acc[key] = value.join(', ');
-        } else {
-          acc[key] = value;
+      // Kiểm tra nếu có file nhưng chưa upload, tự động upload trước
+      if (uploadedFiles.length > 0 && !uploadedFiles[selectedFileIndex]?.uploaded) {
+        message.info('Đang upload file lên Supabase Storage...');
+        
+        // Upload file được chọn
+        const fileData = uploadedFiles[selectedFileIndex];
+        const file = fileData.file;
+        
+        // Tạo tên file unique (giữ tên gốc + thêm suffix nếu trùng)
+        const uniqueFileName = await generateUniqueFileName(file.name);
+        const filePath = `media/${uniqueFileName}`;
+
+        // Upload to Supabase Storage using regular client
+        const { error: uploadError } =
+          await supabase.storage.from("media").upload(filePath, file);
+
+        if (uploadError) {
+          console.error('Upload error:', uploadError);
+          message.error(`Lỗi upload file: ${uploadError.message}`);
+          return;
         }
-        return acc;
-      }, {} as any);
+
+        // Get public URL
+        const { data: urlData } = supabase.storage
+          .from("media")
+          .getPublicUrl(filePath);
+
+        // Cập nhật uploadedFiles với thông tin mới
+        const updatedFiles = [...uploadedFiles];
+        updatedFiles[selectedFileIndex] = {
+          ...fileData,
+          uploaded: true,
+          url: urlData.publicUrl,
+          uploadedFileName: uniqueFileName,
+          uploadedFilePath: filePath,
+        };
+        setUploadedFiles(updatedFiles);
+
+        message.success('Upload file thành công!');
+      }
+
+      // Data provider đã xử lý array fields, chỉ cần xử lý thông tin file
+      const cleanValues = { ...values };
 
       // Thêm file_url và thông tin chi tiết từ file được chọn
-      if (
-        uploadedFiles.length > 0 &&
-        uploadedFiles[selectedFileIndex]?.uploaded
-      ) {
+      if (uploadedFiles.length > 0) {
         const selectedFile = uploadedFiles[selectedFileIndex];
-        cleanValues.file_url = selectedFile.url;
-        cleanValues.file_path = `media/${selectedFile.file.name}`;
+        
+        // Nếu file đã upload, lấy URL từ Supabase
+        if (selectedFile.uploaded && selectedFile.url) {
+          cleanValues.file_url = selectedFile.url;
+          cleanValues.file_path = selectedFile.uploadedFilePath || `media/${selectedFile.uploadedFileName || selectedFile.file.name}`;
+        } else {
+          // Nếu chưa upload, sử dụng thông tin từ form
+          cleanValues.file_url = values.file_url || 'Chưa upload';
+          cleanValues.file_path = values.file_path || 'Chưa upload';
+        }
+        
         cleanValues.file_size = selectedFile.file.size;
         cleanValues.file_size_kb = selectedFile.fileSizeKB || Math.round(selectedFile.file.size / 1024);
         cleanValues.mime_type = selectedFile.file.type;
@@ -412,24 +491,18 @@ export const MediaCreate: React.FC = () => {
 
       console.log('Submitting values:', cleanValues);
 
-      // Sử dụng supabaseAdmin để tạo record
-      const { data, error } = await supabaseAdmin
-        .from('media')
-        .insert(cleanValues)
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Database error:', error);
-        throw error;
-      }
+      // Sử dụng data provider để tạo record (đã xử lý array fields)
+      await dataProvider.create({
+        resource: 'media',
+        variables: cleanValues
+      });
 
       message.success('Tạo media thành công!');
       formProps.form?.resetFields();
       setUploadedFiles([]);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Submit error:', error);
-      message.error(`Có lỗi xảy ra: ${error?.message || error}`);
+      message.error(`Có lỗi xảy ra: ${error instanceof Error ? error.message : String(error)}`);
     }
   };
 
@@ -485,6 +558,20 @@ export const MediaCreate: React.FC = () => {
             >
               Upload Files
             </Button>
+            
+            {uploadedFiles.length > 0 && (
+              <div style={{ 
+                marginTop: '12px', 
+                padding: '8px 12px', 
+                backgroundColor: '#fff7e6', 
+                border: '1px solid #ffd591', 
+                borderRadius: '6px',
+                fontSize: '12px',
+                color: '#d46b08'
+              }}>
+                <strong>💡 Lưu ý:</strong> Nhấn "Upload Files" trước khi Save, hoặc file sẽ được tự động upload khi Save.
+              </div>
+            )}
           </Card>
 
           {/* File Preview */}
@@ -496,7 +583,7 @@ export const MediaCreate: React.FC = () => {
                   {uploadedFiles.length > 1 && (
                     <Tag color="blue">
                       File đang chọn:{" "}
-                      {uploadedFiles[selectedFileIndex]?.file.name}
+                      {uploadedFiles[selectedFileIndex]?.uploadedFileName || uploadedFiles[selectedFileIndex]?.file.name}
                     </Tag>
                   )}
                 </Space>
@@ -540,9 +627,10 @@ export const MediaCreate: React.FC = () => {
                         strong
                         style={{ fontSize: "12px", display: "block" }}
                       >
-                        {fileData.file.name.length > 15
-                          ? fileData.file.name.substring(0, 15) + "..."
-                          : fileData.file.name}
+                        {fileData.uploadedFileName || fileData.file.name}
+                        {(fileData.uploadedFileName && fileData.uploadedFileName !== fileData.file.name) && (
+                          <span style={{ color: '#1890ff', fontSize: '10px' }}> (đã đổi tên)</span>
+                        )}
                       </Text>
                       <Text type="secondary" style={{ fontSize: "10px" }}>
                         {(fileData.file.size / 1024 / 1024).toFixed(2)} MB
@@ -645,8 +733,13 @@ export const MediaCreate: React.FC = () => {
                       style={{
                         display: "flex",
                         alignItems: "center",
-                        gap: "8px",
+                        gap: "12px",
                         flexWrap: "wrap",
+                        padding: "8px 12px",
+                        backgroundColor: "#f6ffed",
+                        border: "1px solid #b7eb8f",
+                        borderRadius: "6px",
+                        marginTop: "8px",
                       }}
                     >
                       <Tag
@@ -655,15 +748,27 @@ export const MediaCreate: React.FC = () => {
                           maxWidth: "100%",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
+                          margin: 0,
+                          padding: "4px 8px",
+                          fontSize: "13px",
                         }}
                       >
-                        File: {uploadedFiles[selectedFileIndex]?.file.name}
+                        File: {uploadedFiles[selectedFileIndex]?.uploadedFileName || uploadedFiles[selectedFileIndex]?.file.name}
+                        {(uploadedFiles[selectedFileIndex]?.uploadedFileName && uploadedFiles[selectedFileIndex]?.uploadedFileName !== uploadedFiles[selectedFileIndex]?.file.name) && (
+                          <span style={{ color: '#1890ff' }}> (đã đổi tên)</span>
+                        )}
                       </Tag>
                       <Button
                         size="small"
                         type="dashed"
                         onClick={() => selectFile(selectedFileIndex)}
                         title="Tự động điền lại thông tin từ file"
+                        style={{
+                          margin: 0,
+                          fontSize: "12px",
+                          height: "24px",
+                          padding: "0 8px",
+                        }}
                       >
                         🔄 Tự động điền
                       </Button>
@@ -706,7 +811,10 @@ export const MediaCreate: React.FC = () => {
                   {uploadedFiles[selectedFileIndex]?.uploaded && (
                     <div style={{ marginTop: '8px', color: '#52c41a' }}>
                       <strong>✓ Đã upload thành công!</strong> <br/>
-                      <Text code copyable style={{ fontSize: '11px' }}>{uploadedFiles[selectedFileIndex].url}</Text>
+                      <div style={{ fontSize: '11px', marginTop: '4px' }}>
+                        <strong>Tên file:</strong> {uploadedFiles[selectedFileIndex].uploadedFileName || uploadedFiles[selectedFileIndex].file.name} <br/>
+                        <strong>URL:</strong> <Text code copyable style={{ fontSize: '11px' }}>{uploadedFiles[selectedFileIndex].url}</Text>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -785,6 +893,12 @@ export const MediaCreate: React.FC = () => {
                               `Ảnh ${smartAltText.toLowerCase()} đẹp và rõ nét`,
                               `${smartAltText} - Tài liệu hình ảnh chuyên nghiệp`,
                               `Hình ảnh ${smartAltText.toLowerCase()} phù hợp cho nhiều mục đích sử dụng`,
+                              `${smartAltText} - Bức ảnh được chụp với độ phân giải cao`,
+                              `Khám phá vẻ đẹp của ${smartAltText.toLowerCase()} qua góc nhìn chuyên nghiệp`,
+                              `${smartAltText} - Hình ảnh tối ưu cho thiết kế và marketing`,
+                              `Tài liệu hình ảnh ${smartAltText.toLowerCase()} chất lượng, sẵn sàng sử dụng`,
+                              `${smartAltText} - Bộ sưu tập hình ảnh đa dạng và phong phú`,
+                              `Hình ảnh ${smartAltText.toLowerCase()} chuyên nghiệp, phù hợp cho mọi dự án`,
                             ];
 
                             const currentCaption =
@@ -837,6 +951,12 @@ export const MediaCreate: React.FC = () => {
                               `Ảnh ${smartAltText.toLowerCase()} đẹp, rõ nét, tối ưu cho SEO và trải nghiệm người dùng.`,
                               `${smartAltText} - Hình ảnh chuyên nghiệp, phù hợp cho các dự án thương mại và cá nhân.`,
                               `Tải hình ảnh ${smartAltText.toLowerCase()} miễn phí, chất lượng cao, không có watermark.`,
+                              `Khám phá ${smartAltText.toLowerCase()} với hình ảnh chất lượng 4K, tối ưu cho mọi thiết bị.`,
+                              `${smartAltText} - Bộ sưu tập hình ảnh đa dạng, phù hợp cho thiết kế và nội dung sáng tạo.`,
+                              `Hình ảnh ${smartAltText.toLowerCase()} chuyên nghiệp, hỗ trợ đa định dạng và tương thích mọi trình duyệt.`,
+                              `Tải xuống ${smartAltText.toLowerCase()} miễn phí, độ phân giải cao, không giới hạn sử dụng.`,
+                              `${smartAltText} - Tài nguyên hình ảnh chất lượng, tối ưu cho SEO và tốc độ tải trang.`,
+                              `Khám phá bộ sưu tập ${smartAltText.toLowerCase()} đa dạng, phù hợp cho mọi nhu cầu thiết kế.`,
                             ];
 
                             const currentDescription =
@@ -863,18 +983,15 @@ export const MediaCreate: React.FC = () => {
               </Form.Item>
 
               <Form.Item
-                label={
-                  <Space>
-                    <TagsOutlined />
-                    Meta Keywords
-                    <Tooltip title="Từ khóa SEO, phân cách bằng dấu phẩy. Ví dụ: laptop, asus, gaming">
-                      <InfoCircleOutlined style={{ color: "#1890ff" }} />
-                    </Tooltip>
-                  </Space>
-                }
                 name="meta_keywords"
               >
-                <Input placeholder="Từ khóa SEO (phân cách bằng dấu phẩy)" />
+                <KeywordsInput
+                  label="Meta Keywords"
+                  tooltip="Nhập từ khóa SEO, phân cách bằng dấu phẩy. Ví dụ: Laptop Asus ExpertBook B1, Gaming, Computer"
+                  placeholder="Nhập từ khóa, phân cách bằng dấu phẩy"
+                  maxTags={15}
+                  allowDuplicates={false}
+                />
               </Form.Item>
 
               <Form.Item
@@ -1002,6 +1119,11 @@ export const MediaCreate: React.FC = () => {
                     <Tooltip title="Đường dẫn file trong storage - Được tạo tự động">
                       <InfoCircleOutlined style={{ color: '#1890ff' }} />
                     </Tooltip>
+                    {uploadedFiles.length > 0 && uploadedFiles[selectedFileIndex]?.uploaded && (
+                      <Tag color="green">
+                        ✓ Đã upload: {uploadedFiles[selectedFileIndex].uploadedFilePath}
+                      </Tag>
+                    )}
                   </Space>
                 }
                 name="file_path"
@@ -1021,6 +1143,11 @@ export const MediaCreate: React.FC = () => {
                     <Tooltip title="URL công khai của file - Được tạo sau khi upload">
                       <InfoCircleOutlined style={{ color: '#1890ff' }} />
                     </Tooltip>
+                    {uploadedFiles.length > 0 && uploadedFiles[selectedFileIndex]?.uploaded && (
+                      <Tag color="green">
+                        ✓ Đã upload
+                      </Tag>
+                    )}
                   </Space>
                 }
                 name="file_url"
@@ -1175,13 +1302,47 @@ export const MediaCreate: React.FC = () => {
             </Card>
 
             {/* Card SEO nâng cao */}
-            <Card title="Thông tin SEO nâng cao" style={{ marginBottom: "20px" }}>
+            <Card 
+              title={
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <span>Thông tin SEO nâng cao</span>
+                  <Button
+                    size="small"
+                    type="dashed"
+                    onClick={() => {
+                      if (formProps.form) {
+                        // Tạo các giá trị SEO hợp lý
+                        const seoScores = [85, 92, 78, 95, 88, 90, 82, 94, 87, 91];
+                        const accessibilityScores = [90, 85, 88, 92, 86, 89, 84, 91, 87, 93];
+                        const performanceScores = [88, 92, 85, 94, 89, 91, 83, 95, 86, 90];
+                        const usageCounts = [0, 1, 3, 5, 2, 7, 4, 6, 8, 9];
+                        const versions = [1, 1, 2, 1, 3, 1, 2, 1, 4, 1];
+
+                        const randomIndex = Math.floor(Math.random() * 10);
+                        
+                        formProps.form.setFieldsValue({
+                          seo_score: seoScores[randomIndex],
+                          accessibility_score: accessibilityScores[randomIndex],
+                          performance_score: performanceScores[randomIndex],
+                          usage_count: usageCounts[randomIndex],
+                          version: versions[randomIndex],
+                        });
+                      }
+                    }}
+                    title="Điền các giá trị SEO hợp lý"
+                  >
+                    🔄 Gợi ý
+                  </Button>
+                </div>
+              } 
+              style={{ marginBottom: "20px" }}
+            >
               <Form.Item
                 label={
                   <Space>
                     <TagsOutlined />
                     SEO Score
-                    <Tooltip title="Điểm SEO của media (0-100) - Càng cao càng tốt">
+                    <Tooltip title="Điểm SEO của media (0-100) - Càng cao càng tốt. Giá trị hợp lý: 80-95">
                       <InfoCircleOutlined style={{ color: "#1890ff" }} />
                     </Tooltip>
                   </Space>
@@ -1197,7 +1358,7 @@ export const MediaCreate: React.FC = () => {
                   <Space>
                     <TagsOutlined />
                     Accessibility Score
-                    <Tooltip title="Điểm accessibility (0-100) - Hỗ trợ người khuyết tật">
+                    <Tooltip title="Điểm accessibility (0-100) - Hỗ trợ người khuyết tật. Giá trị hợp lý: 85-95">
                       <InfoCircleOutlined style={{ color: "#1890ff" }} />
                     </Tooltip>
                   </Space>
@@ -1213,7 +1374,7 @@ export const MediaCreate: React.FC = () => {
                   <Space>
                     <TagsOutlined />
                     Performance Score
-                    <Tooltip title="Điểm performance (0-100) - Tốc độ tải và hiệu năng">
+                    <Tooltip title="Điểm performance (0-100) - Tốc độ tải và hiệu năng. Giá trị hợp lý: 85-95">
                       <InfoCircleOutlined style={{ color: "#1890ff" }} />
                     </Tooltip>
                   </Space>
@@ -1229,7 +1390,7 @@ export const MediaCreate: React.FC = () => {
                   <Space>
                     <TagsOutlined />
                     Usage Count
-                    <Tooltip title="Số lần file được sử dụng trong hệ thống">
+                    <Tooltip title="Số lần file được sử dụng trong hệ thống. Giá trị hợp lý: 0-10">
                       <InfoCircleOutlined style={{ color: "#1890ff" }} />
                     </Tooltip>
                   </Space>
@@ -1245,7 +1406,7 @@ export const MediaCreate: React.FC = () => {
                   <Space>
                     <TagsOutlined />
                     Version
-                    <Tooltip title="Phiên bản của file, bắt đầu từ 1">
+                    <Tooltip title="Phiên bản của file, bắt đầu từ 1. Giá trị hợp lý: 1-4">
                       <InfoCircleOutlined style={{ color: "#1890ff" }} />
                     </Tooltip>
                   </Space>

@@ -1,9 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 
+// Service Role Key - có quyền bypass RLS
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://gyexgtobqvonkmyesqkl.supabase.co';
-const serviceRoleKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY || 'your_service_role_key_here';
+const serviceRoleKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY || 'your_service_role_key';
 
-// Supabase client với service role key (bypass RLS)
 export const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
   auth: {
     autoRefreshToken: false,
@@ -11,18 +11,26 @@ export const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
   }
 });
 
-// Test connection
-export const testAdminConnection = async () => {
+// Test function
+export const testSupabaseAdminConnection = async () => {
   try {
-    const { data, error } = await supabaseAdmin.storage.listBuckets();
+    console.log('🧪 Testing Supabase Admin connection...');
+    
+    // Test storage upload
+    const testFile = new File(['test'], 'test.txt', { type: 'text/plain' });
+    const { data, error } = await supabaseAdmin.storage
+      .from('media')
+      .upload('test-admin.txt', testFile);
+    
     if (error) {
-      console.error('Admin connection failed:', error);
-      return false;
+      console.error('❌ Admin connection test failed:', error);
+      return { success: false, error: error.message };
     }
-    console.log('Admin connection successful');
-    return true;
-  } catch (error) {
-    console.error('Admin connection error:', error);
-    return false;
+    
+    console.log('✅ Supabase Admin connection successful');
+    return { success: true, data };
+  } catch (err) {
+    console.error('❌ Admin connection test error:', err);
+    return { success: false, error: String(err) };
   }
 };

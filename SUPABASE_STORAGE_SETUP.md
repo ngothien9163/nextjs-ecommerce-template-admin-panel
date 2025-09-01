@@ -1,237 +1,122 @@
-# Supabase Storage Setup cho Media Management
+# 🗂️ Hướng dẫn thiết lập Supabase Storage
 
-## 1. Tạo Storage Bucket
+## 🚨 **Vấn đề hiện tại**
 
-### Bước 1: Vào Supabase Dashboard
-1. Đăng nhập vào [Supabase Dashboard](https://supabase.com/dashboard)
-2. Chọn project của bạn
-3. Vào tab "Storage"
+File không upload được lên Supabase Storage vì:
+1. **Bucket `media` chưa tồn tại**
+2. **RLS policies chưa được cấu hình**
 
-### Bước 2: Tạo Bucket mới
-1. Click "New Bucket"
-2. Điền thông tin:
+## 🔧 **Cách khắc phục**
+
+### **Bước 1: Tạo bucket `media`**
+
+1. **Truy cập Supabase Dashboard**: https://supabase.com/dashboard
+2. **Chọn project**: `gyexgtobqvonkmyesqkl`
+3. **Vào Storage**: Click vào "Storage" ở sidebar
+4. **Tạo bucket mới**:
+   - Click "New bucket"
    - **Name**: `media`
-   - **Public**: ✅ Checked (để có thể truy cập public)
-   - **File size limit**: `50MB` (hoặc tùy theo nhu cầu)
-3. Click "Create bucket"
+   - **Public**: ✅ Bật (để có thể truy cập public)
+   - **File size limit**: `10 MB`
+   - **Allowed MIME types**: 
+     ```
+     image/jpeg
+     image/png
+     image/gif
+     image/webp
+     image/svg+xml
+     ```
 
-## 2. Cấu hình Storage Policies
+### **Bước 2: Cấu hình RLS Policies**
 
-### Policy cho Public Access (Read)
+1. **Vào Authentication > Policies**
+2. **Tạo policy cho bucket `media`**:
+
 ```sql
--- Cho phép public đọc files
-CREATE POLICY "Public Access" ON storage.objects 
-FOR SELECT USING (bucket_id = 'media');
-```
-
-### Policy cho Authenticated Users (Upload)
-```sql
--- Cho phép authenticated users upload
-CREATE POLICY "Authenticated users can upload" ON storage.objects 
+-- Policy cho việc upload file
+CREATE POLICY "Allow authenticated users to upload files" ON storage.objects
 FOR INSERT WITH CHECK (
-  bucket_id = 'media' 
-  AND auth.role() = 'authenticated'
-);
-```
-
-### Policy cho Owner (Update/Delete)
-```sql
--- Cho phép owner update/delete files
-CREATE POLICY "Users can update own files" ON storage.objects 
-FOR UPDATE USING (
-  bucket_id = 'media' 
-  AND auth.uid()::text = (storage.foldername(name))[1]
+  bucket_id = 'media' AND 
+  auth.role() = 'authenticated'
 );
 
-CREATE POLICY "Users can delete own files" ON storage.objects 
+-- Policy cho việc xem file
+CREATE POLICY "Allow public to view files" ON storage.objects
+FOR SELECT USING (bucket_id = 'media');
+
+-- Policy cho việc xóa file (admin only)
+CREATE POLICY "Allow authenticated users to delete files" ON storage.objects
 FOR DELETE USING (
-  bucket_id = 'media' 
-  AND auth.uid()::text = (storage.foldername(name))[1]
+  bucket_id = 'media' AND 
+  auth.role() = 'authenticated'
 );
 ```
 
-## 3. Cấu hình RLS (Row Level Security)
+### **Bước 3: Test upload**
 
-### Enable RLS cho storage.objects
+Sau khi tạo bucket và policies, test lại:
+
+1. **Vào**: `http://localhost:5174/media/create`
+2. **Upload file** và nhấn "Upload Files"
+3. **Kiểm tra** trong Supabase Storage xem file đã upload chưa
+
+## 🔍 **Debug nếu vẫn lỗi**
+
+### **Kiểm tra Console**
+
+Mở Developer Tools (F12) và xem Console có lỗi gì không:
+
+```javascript
+// Test connection
+const { data, error } = await supabase.storage.listBuckets();
+console.log('Buckets:', data, error);
+```
+
+### **Kiểm tra Network**
+
+Trong Developer Tools > Network, xem request upload có thành công không.
+
+### **Kiểm tra Supabase Logs**
+
+1. Vào Supabase Dashboard
+2. Vào "Logs" 
+3. Xem có lỗi gì trong Storage logs
+
+## 📋 **Cấu hình hoàn chỉnh**
+
+### **Bucket Settings**
+- **Name**: `media`
+- **Public**: ✅ Yes
+- **File size limit**: `10485760` (10MB)
+- **Allowed MIME types**: `image/*`
+
+### **RLS Policies**
 ```sql
-ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+-- Cho phép upload
+CREATE POLICY "media_upload_policy" ON storage.objects
+FOR INSERT WITH CHECK (bucket_id = 'media');
+
+-- Cho phép xem
+CREATE POLICY "media_view_policy" ON storage.objects  
+FOR SELECT USING (bucket_id = 'media');
+
+-- Cho phép xóa
+CREATE POLICY "media_delete_policy" ON storage.objects
+FOR DELETE USING (bucket_id = 'media');
 ```
 
-## 4. Test Upload
+## ✅ **Kết quả mong đợi**
 
-### Test với Supabase Client
-```typescript
-import { supabase } from './lib/supabase';
+Sau khi thiết lập xong:
+- ✅ File upload thành công lên Supabase Storage
+- ✅ File có URL public có thể truy cập
+- ✅ Database lưu đúng `file_url` và `file_path`
+- ✅ Form submit thành công
 
-// Test upload
-const testUpload = async () => {
-  const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
-  
-  const { data, error } = await supabase.storage
-    .from('media')
-    .upload('test/test.jpg', file);
-    
-  if (error) {
-    console.error('Upload error:', error);
-  } else {
-    console.log('Upload success:', data);
-  }
-};
-```
+---
 
-## 5. Environment Variables
-
-### Cập nhật .env.local
-```env
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-```
-
-## 6. Troubleshooting
-
-### Lỗi thường gặp
-
-1. **"Bucket not found"**
-   - Kiểm tra tên bucket có đúng không
-   - Đảm bảo bucket đã được tạo
-
-2. **"Policy violation"**
-   - Kiểm tra RLS policies
-   - Verify user authentication
-
-3. **"File too large"**
-   - Tăng file size limit trong bucket settings
-   - Compress file trước khi upload
-
-4. **"CORS error"**
-   - Kiểm tra CORS settings trong Supabase
-   - Verify domain trong allowed origins
-
-### Debug Commands
-```sql
--- Kiểm tra bucket
-SELECT * FROM storage.buckets WHERE id = 'media';
-
--- Kiểm tra policies
-SELECT * FROM storage.policies WHERE bucket_id = 'media';
-
--- Kiểm tra files
-SELECT * FROM storage.objects WHERE bucket_id = 'media';
-```
-
-## 7. Performance Optimization
-
-### CDN Configuration
-```sql
--- Enable CDN cho bucket
-UPDATE storage.buckets 
-SET public = true, 
-    file_size_limit = 52428800, -- 50MB
-    allowed_mime_types = ARRAY['image/*', 'video/*', 'application/pdf']
-WHERE id = 'media';
-```
-
-### Image Transformations
-```typescript
-// Sử dụng Supabase Image Transformations
-const optimizedUrl = supabase.storage
-  .from('media')
-  .getPublicUrl('image.jpg', {
-    transform: {
-      width: 300,
-      height: 200,
-      quality: 80
-    }
-  });
-```
-
-## 8. Backup Strategy
-
-### Automated Backups
-```sql
--- Tạo function để backup media
-CREATE OR REPLACE FUNCTION backup_media_files()
-RETURNS void AS $$
-BEGIN
-  -- Backup logic here
-  INSERT INTO media_backup 
-  SELECT * FROM storage.objects 
-  WHERE bucket_id = 'media';
-END;
-$$ LANGUAGE plpgsql;
-```
-
-## 9. Monitoring
-
-### Storage Usage
-```sql
--- Kiểm tra storage usage
-SELECT 
-  bucket_id,
-  COUNT(*) as file_count,
-  SUM(metadata->>'size')::bigint as total_size
-FROM storage.objects 
-WHERE bucket_id = 'media'
-GROUP BY bucket_id;
-```
-
-### File Types Distribution
-```sql
--- Phân tích file types
-SELECT 
-  metadata->>'mimetype' as mime_type,
-  COUNT(*) as count
-FROM storage.objects 
-WHERE bucket_id = 'media'
-GROUP BY metadata->>'mimetype'
-ORDER BY count DESC;
-```
-
-## 10. Security Best Practices
-
-### File Validation
-```typescript
-// Validate file types
-const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-const maxSize = 50 * 1024 * 1024; // 50MB
-
-const validateFile = (file: File) => {
-  if (!allowedTypes.includes(file.type)) {
-    throw new Error('File type not allowed');
-  }
-  if (file.size > maxSize) {
-    throw new Error('File too large');
-  }
-};
-```
-
-### Virus Scanning
-```typescript
-// Integrate with virus scanning service
-const scanFile = async (file: File) => {
-  // Implement virus scanning logic
-  const isClean = await virusScanner.scan(file);
-  if (!isClean) {
-    throw new Error('File contains virus');
-  }
-};
-```
-
-## 11. Cost Optimization
-
-### Storage Classes
-```sql
--- Sử dụng different storage classes
--- Hot storage cho frequently accessed files
--- Cold storage cho archived files
-```
-
-### Lifecycle Policies
-```sql
--- Auto-delete old files
-CREATE POLICY "Auto delete old files" ON storage.objects
-FOR DELETE USING (
-  bucket_id = 'media' 
-  AND created_at < NOW() - INTERVAL '1 year'
-);
-```
+**🎯 Lưu ý**: Nếu vẫn gặp vấn đề, hãy kiểm tra lại:
+1. Bucket `media` đã được tạo chưa
+2. RLS policies đã được cấu hình chưa  
+3. User đã đăng nhập chưa (nếu cần)
+4. File size có vượt quá limit không

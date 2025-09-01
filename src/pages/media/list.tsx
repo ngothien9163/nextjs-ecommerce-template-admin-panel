@@ -1,5 +1,7 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { List, CreateButton, useTable } from "@refinedev/antd";
+import { useGo, useNavigation, useList } from "@refinedev/core";
+import { useSearchParams } from "react-router-dom";
 import {
   Card,
   Button,
@@ -11,6 +13,8 @@ import {
   Image,
   Typography,
   message,
+  Pagination,
+  Tooltip,
 } from "antd";
 import {
   PlusOutlined,
@@ -21,6 +25,7 @@ import {
   LinkOutlined,
   CopyOutlined,
   InfoCircleOutlined,
+  ReloadOutlined,
 } from "@ant-design/icons";
 import { useDropzone } from "react-dropzone";
 // Disable GridLayout import for now
@@ -53,19 +58,66 @@ interface MediaItem {
 
 export const MediaList: React.FC = () => {
   const navigate = useNavigate();
+  const go = useGo();
+  const { list } = useNavigation();
+  const [searchParams] = useSearchParams();
   const [isUploadModalVisible, setIsUploadModalVisible] = useState(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [layout, setLayout] = useState<any[]>([]);
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
+  
+  // Get current pagination from URL
+  const currentPage = parseInt(searchParams.get('current') || '1');
+  const pageSize = parseInt(searchParams.get('pageSize') || '10');
+  
+  console.log('🔄 MediaList component rendered with URL params:', { currentPage, pageSize });
 
-  const { tableProps } = useTable({
+  // Use only useList for complete control over data fetching
+  const { data, isLoading, refetch } = useList({
     resource: "media",
-    syncWithLocation: true,
+    pagination: {
+      current: currentPage,
+      pageSize: pageSize,
+    },
+    meta: {
+      count: true,
+    },
   });
+
+  // Create tableProps-like structure for compatibility
+  const tableProps = {
+    dataSource: data?.data || [],
+    loading: isLoading,
+    pagination: {
+      current: currentPage,
+      pageSize: pageSize,
+      total: data?.total || 0,
+    },
+  };
+
+  // Debug: Log all important values
+  console.log('🔍 Current debugging info:', {
+    currentPage,
+    pageSize,
+    'data?.data length': data?.data?.length,
+    'data?.total': data?.total,
+    'isLoading': isLoading,
+    'URL searchParams': searchParams.toString(),
+  });
+
+  // Force refresh when URL params change
+  useEffect(() => {
+    console.log('🔄 URL params changed, refetching data:', { currentPage, pageSize });
+    refetch();
+  }, [currentPage, pageSize, refetch]);
 
   // Generate grid layout
   React.useEffect(() => {
+    console.log("🔍 Table props:", tableProps);
+    console.log("🔍 Data source length:", tableProps.dataSource?.length);
+    console.log("🔍 Table props pagination:", tableProps.pagination);
+    
     if (tableProps.dataSource) {
       console.log("Media data:", tableProps.dataSource);
 
@@ -93,7 +145,7 @@ export const MediaList: React.FC = () => {
       setLayout(newLayout);
       setMediaItems(tableProps.dataSource as MediaItem[]);
     }
-  }, [tableProps.dataSource]);
+  }, [tableProps.dataSource, tableProps.pagination]);
 
   // Upload functionality
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
@@ -121,9 +173,9 @@ export const MediaList: React.FC = () => {
 
         console.log("File path:", filePath);
 
-        // Upload to Supabase Storage using admin client
+        // Upload to Supabase Storage using regular client
         const { data: uploadData, error: uploadError } =
-          await supabaseAdmin.storage.from("media").upload(filePath, file);
+          await supabase.storage.from("media").upload(filePath, file);
 
         if (uploadError) {
           console.error("Supabase upload error:", uploadError);
@@ -133,14 +185,14 @@ export const MediaList: React.FC = () => {
         console.log("Upload successful:", uploadData);
 
         // Get public URL
-        const { data: urlData } = supabaseAdmin.storage
+        const { data: urlData } = supabase.storage
           .from("media")
           .getPublicUrl(filePath);
 
         console.log("Public URL:", urlData.publicUrl);
 
         // Create media record
-        const { data: mediaData, error: mediaError } = await supabaseAdmin
+        const { data: mediaData, error: mediaError } = await supabase
           .from("media")
           .insert({
             file_name: file.name,
@@ -279,19 +331,129 @@ export const MediaList: React.FC = () => {
       <List
         headerButtons={
           <Space>
-            <Button
-              type="primary"
-              icon={<UploadOutlined />}
-              onClick={() => setIsUploadModalVisible(true)}
+            <Tooltip 
+              title="Upload hình ảnh/media files vào hệ thống. Hỗ trợ: JPG, PNG, GIF, WEBP, SVG. Có thể kéo thả nhiều files cùng lúc."
+              placement="bottom"
             >
-              Upload Media
-            </Button>
+              <Button
+                type="primary"
+                icon={<UploadOutlined />}
+                onClick={() => setIsUploadModalVisible(true)}
+              >
+                Upload Media
+              </Button>
+            </Tooltip>
+            <Tooltip title="Làm mới dữ liệu media từ database">
+              <Button
+                icon={<ReloadOutlined />}
+                onClick={() => {
+                  console.log('🔄 Manual refresh clicked');
+                  console.log('🔄 Calling refetch manually');
+                  refetch();
+                }}
+                title="Refresh data"
+              >
+                Refresh
+              </Button>
+            </Tooltip>
             <CreateButton />
           </Space>
         }
       >
         <div style={{ padding: "20px" }}>
+          {/* Media count info with debug */}
+          <div style={{ 
+            marginBottom: '16px', 
+            padding: '12px', 
+            backgroundColor: isLoading ? '#fff7e6' : '#f6ffed', 
+            border: `1px solid ${isLoading ? '#ffd591' : '#b7eb8f'}`, 
+            borderRadius: '6px' 
+          }}>
+            <Text strong style={{ color: isLoading ? '#fa8c16' : '#52c41a' }}>
+              {isLoading ? '🔄 Đang tải...' : '📊'} Hiển thị {mediaItems.length} / {tableProps.pagination.total || 'Loading...'} media files
+              {!isLoading && (
+                <span style={{ marginLeft: '8px', color: '#1890ff' }}>
+                  (Trang {tableProps.pagination.current}/{Math.ceil((tableProps.pagination.total || 0) / (tableProps.pagination.pageSize || 10))})
+                </span>
+              )}
+            </Text>
+            <br />
+            <Text type="secondary" style={{ fontSize: '12px' }}>
+              URL: {window.location.href} | Loading: {isLoading ? 'Yes' : 'No'} | Items: {mediaItems.length}
+            </Text>
+          </div>
+
+          {/* Top Pagination - Same as bottom */}
+          {!isLoading && mediaItems.length > 0 && (
+            <div style={{ 
+              marginBottom: '24px', 
+              textAlign: 'center',
+              padding: '16px 0',
+              borderBottom: '1px solid #f0f0f0',
+              backgroundColor: '#fafafa'
+            }}>
+              <Text strong style={{ marginBottom: '12px', display: 'block', color: '#1890ff' }}>
+                🔊 Pagination - Top
+              </Text>
+              <Pagination
+                current={currentPage}
+                total={tableProps.pagination.total}
+                pageSize={pageSize}
+                showSizeChanger
+                showQuickJumper
+                showTotal={(total, range) => 
+                  `Hiển thị ${range[0]}-${range[1]} của ${total} media files`
+                }
+                pageSizeOptions={['5', '10', '20', '50', '100']}
+                onChange={(page: number, pageSize?: number) => {
+                  console.log('🟢 Top Pagination onChange:', { page, pageSize });
+                  const newSearchParams = new URLSearchParams(searchParams);
+                  newSearchParams.set('current', page.toString());
+                  newSearchParams.set('pageSize', (pageSize || 10).toString());
+                  
+                  console.log('🔍 New URL will be:', `/media?${newSearchParams.toString()}`);
+                  
+                  go({
+                    to: `/media?${newSearchParams.toString()}`,
+                    type: "replace",
+                  });
+                  
+                  // Force immediate data refresh
+                  setTimeout(() => {
+                    console.log('🔄 Top Pagination: Force refetching after URL change');
+                    refetch();
+                  }, 100);
+                }}
+                onShowSizeChange={(current: number, size: number) => {
+                  console.log('🟢 Top Pagination onShowSizeChange:', { current, size });
+                  const newSearchParams = new URLSearchParams(searchParams);
+                  newSearchParams.set('current', '1'); // Reset to first page
+                  newSearchParams.set('pageSize', size.toString());
+                  
+                  console.log('🔍 New URL will be:', `/media?${newSearchParams.toString()}`);
+                  
+                  go({
+                    to: `/media?${newSearchParams.toString()}`,
+                    type: "replace",
+                  });
+                  
+                  // Force immediate data refresh
+                  setTimeout(() => {
+                    console.log('🔄 Top Pagination: Force refetching after page size change');
+                    refetch();
+                  }, 100);
+                }}
+                style={{ marginTop: '8px' }}
+              />
+            </div>
+          )}
+          
           {/* Simple Grid Layout without react-grid-layout for debugging */}
+          {isLoading ? (
+            <div style={{ textAlign: 'center', padding: '50px' }}>
+              <Text>🔄 Đang tải dữ liệu...</Text>
+            </div>
+          ) : (
           <div style={{
             display: "grid",
             gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))",
@@ -396,16 +558,122 @@ export const MediaList: React.FC = () => {
               </div>
             ))}
           </div>
+          )}
+          
+          {/* Bottom Pagination - Same as top */}
+          {!isLoading && mediaItems.length > 0 && (
+            <div style={{ 
+              marginTop: '24px', 
+              textAlign: 'center',
+              padding: '16px 0',
+              borderTop: '1px solid #f0f0f0',
+              backgroundColor: '#fafafa'
+            }}>
+              <Text strong style={{ marginBottom: '12px', display: 'block', color: '#52c41a' }}>
+                🔋 Pagination - Bottom
+              </Text>
+              <Pagination
+                current={currentPage}
+                total={tableProps.pagination.total}
+                pageSize={pageSize}
+                showSizeChanger
+                showQuickJumper
+                showTotal={(total, range) => 
+                  `Hiển thị ${range[0]}-${range[1]} của ${total} media files`
+                }
+                pageSizeOptions={['5', '10', '20', '50', '100']}
+                onChange={(page: number, pageSize?: number) => {
+                  console.log('🟢 Bottom Pagination onChange:', { page, pageSize });
+                  const newSearchParams = new URLSearchParams(searchParams);
+                  newSearchParams.set('current', page.toString());
+                  newSearchParams.set('pageSize', (pageSize || 10).toString());
+                  
+                  console.log('🔍 New URL will be:', `/media?${newSearchParams.toString()}`);
+                  
+                  go({
+                    to: `/media?${newSearchParams.toString()}`,
+                    type: "replace",
+                  });
+                  
+                  // Force immediate data refresh
+                  setTimeout(() => {
+                    console.log('🔄 Bottom Pagination: Force refetching after URL change');
+                    refetch();
+                  }, 100);
+                }}
+                onShowSizeChange={(current: number, size: number) => {
+                  console.log('🟢 Bottom Pagination onShowSizeChange:', { current, size });
+                  const newSearchParams = new URLSearchParams(searchParams);
+                  newSearchParams.set('current', '1'); // Reset to first page
+                  newSearchParams.set('pageSize', size.toString());
+                  
+                  console.log('🔍 New URL will be:', `/media?${newSearchParams.toString()}`);
+                  
+                  go({
+                    to: `/media?${newSearchParams.toString()}`,
+                    type: "replace",
+                  });
+                  
+                  // Force immediate data refresh
+                  setTimeout(() => {
+                    console.log('🔄 Bottom Pagination: Force refetching after page size change');
+                    refetch();
+                  }, 100);
+                }}
+                style={{ marginTop: '16px' }}
+              />
+            </div>
+          )}
         </div>
       </List>
 
       {/* Upload Modal */}
       <Modal
-        title="Upload Media Files"
+        title={
+          <div>
+            <UploadOutlined style={{ color: '#1890ff', marginRight: '8px' }} />
+            Upload Media Files
+          </div>
+        }
         open={isUploadModalVisible}
         onCancel={() => setIsUploadModalVisible(false)}
-        footer={null}
-        width={600}
+        footer={[
+          <Button key="cancel" onClick={() => setIsUploadModalVisible(false)}>
+            Hủy
+          </Button>,
+          <Button key="info" type="link" onClick={() => {
+            Modal.info({
+              title: '📚 Hướng dẫn Upload Media',
+              width: 600,
+              content: (
+                <div>
+                  <h4>📁 Các định dạng hỗ trợ:</h4>
+                  <ul>
+                    <li>🖼️ <strong>Hình ảnh:</strong> JPG, JPEG, PNG, GIF, WEBP, SVG</li>
+                    <li>📹 <strong>Video:</strong> MP4, WEBM, OGV (sắp có)</li>
+                    <li>📄 <strong>Tài liệu:</strong> PDF, DOC, DOCX (sắp có)</li>
+                  </ul>
+                  <h4>🚀 Cách sử dụng:</h4>
+                  <ol>
+                    <li>Kéo thả files vào vùng upload hoặc click để chọn</li>
+                    <li>Có thể chọn nhiều files cùng lúc</li>
+                    <li>Hệ thống sẽ tự động upload và tạo metadata</li>
+                    <li>Files sẽ được lưu trữ trong Supabase Storage</li>
+                  </ol>
+                  <h4>⚠️ Lưu ý:</h4>
+                  <ul>
+                    <li>Kích thước file tối đa: 10MB mỗi file</li>
+                    <li>Tên file sẽ được tự động đổi tên để tránh trùng lặp</li>
+                    <li>Metadata (alt text, title) sẽ được tạo tự động</li>
+                  </ul>
+                </div>
+              )
+            });
+          }}>
+            📚 Hướng dẫn
+          </Button>
+        ]}
+        width={700}
       >
         <div
           {...getRootProps()}
