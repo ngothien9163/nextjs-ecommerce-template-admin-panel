@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react';
-import { Form, Input, InputNumber, Select, Switch, Space, Row, Col, Card, Typography, Tooltip, Collapse } from 'antd';
+import { Form, Input, InputNumber, Select, Switch, Space, Row, Col, Card, Typography, Tooltip, Collapse, Button } from 'antd';
 import { InfoCircleOutlined, ShoppingOutlined, DollarOutlined, InboxOutlined, SafetyOutlined, FileTextOutlined, SettingOutlined } from '@ant-design/icons';
 import { SEOForm } from '../seo-form';
 import '../../styles/product-form-styles.css';
 import { CategoryImageSelector } from '../media-selector/CategoryImageSelector';
+import { JsonField } from '../JsonField';
 
 const { TextArea } = Input;
 const { Title } = Typography;
@@ -345,8 +346,14 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                     </Space>
                   }
                   name="dimensions"
+                  extra={
+                    <Button size="small" onClick={() => {
+                      const example = { length: 10, width: 5, height: 2, unit: 'cm' };
+                      (form as any)?.form?.setFieldsValue({ dimensions: example });
+                    }}>Tạo dữ liệu thông minh</Button>
+                  }
                 >
-                  <Input placeholder='{"length": 10, "width": 5, "height": 2}' size="large" style={{ width: '100%' }} />
+                  <JsonField height={220} />
                 </Form.Item>
               </Col>
             </Row>

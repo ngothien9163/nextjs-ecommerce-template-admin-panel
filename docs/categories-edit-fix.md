@@ -96,3 +96,4 @@ const handleFormFinish = (values: any) => {
 - SEO được quản lý trong bảng `SEOPage` riêng biệt
 - Interface `Category` chỉ có các field cơ bản
 - Cần đảm bảo dữ liệu được serialize đúng trước khi gửi
+

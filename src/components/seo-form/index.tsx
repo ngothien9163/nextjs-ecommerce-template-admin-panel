@@ -1,5 +1,6 @@
 import React from 'react';
 import { Form, Input, Switch, InputNumber, Select, Upload, Row, Col, Card, Typography, Divider, Space, Button, Collapse, Tooltip } from 'antd';
+import { JsonField } from '../JsonField';
 import { UploadOutlined, PlusOutlined, MinusCircleOutlined, InfoCircleOutlined, GlobalOutlined, ShareAltOutlined, TwitterOutlined, CodeOutlined, BarChartOutlined, TrophyOutlined, SettingOutlined } from '@ant-design/icons';
 import './seo-form.css';
 
@@ -239,16 +240,24 @@ export const SEOForm: React.FC<SEOFormProps> = ({ form, isEdit = false }) => {
               <Form.Item
                 label={
                   <Space>
-                    <span>Hreflang Tags</span>
+                    <span>Hreflang Tags (JSON)</span>
                     {renderInfoIcon('Thẻ hreflang cho đa ngôn ngữ, giúp Google hiểu mối quan hệ giữa các phiên bản ngôn ngữ khác nhau')}
                   </Space>
                 }
                 name={['seo_data', 'hreflang']}
+                extra={
+                  <Button size="small" onClick={() => {
+                    const canonical = form?.form?.getFieldValue(['seo_data','canonical_url']) || 'https://example.com/product';
+                    const base = canonical.replace(/\/$/, '');
+                    const example = [
+                      { lang: 'vi', url: `${base}/vi` },
+                      { lang: 'en', url: `${base}/en` },
+                    ];
+                    form?.form?.setFieldsValue({ seo_data: { hreflang: example } });
+                  }}>Tạo dữ liệu thông minh</Button>
+                }
               >
-                <Input 
-                  placeholder='[{"lang": "vi", "url": "https://example.com/vi"}]' 
-                  size="large"
-                />
+                <JsonField height={200} />
               </Form.Item>
             </Col>
           </Row>
@@ -537,25 +546,30 @@ export const SEOForm: React.FC<SEOFormProps> = ({ form, isEdit = false }) => {
               </Space>
             }
             name={['seo_data', 'schema_markup']}
-            extra="Nhập dữ liệu có cấu trúc Schema.org dạng JSON-LD để tối ưu hiển thị trên kết quả tìm kiếm"
+            extra={
+              <Space size={8}>
+                <span>Nhập dữ liệu có cấu trúc Schema.org dạng JSON-LD để tối ưu hiển thị trên kết quả tìm kiếm</span>
+                <Button size="small" onClick={() => {
+                  const example = {
+                    '@context': 'https://schema.org',
+                    '@type': 'Product',
+                    name: form?.form?.getFieldValue('name') || 'Tên sản phẩm',
+                    description: form?.form?.getFieldValue('short_description') || 'Mô tả sản phẩm',
+                    brand: form?.form?.getFieldValue('brand') || 'Thương hiệu',
+                    sku: form?.form?.getFieldValue('sku') || 'SKU-001',
+                    offers: {
+                      '@type': 'Offer',
+                      price: String(form?.form?.getFieldValue('price') || 1000000),
+                      priceCurrency: 'VND',
+                      availability: 'https://schema.org/InStock'
+                    }
+                  };
+                  form?.form?.setFieldsValue({ seo_data: { schema_markup: example } });
+                }}>Tạo dữ liệu thông minh</Button>
+              </Space>
+            }
           >
-            <TextArea 
-              rows={8} 
-              placeholder={`{
-  "@context": "https://schema.org",
-  "@type": "Product",
-  "name": "Tên sản phẩm",
-  "description": "Mô tả sản phẩm",
-  "brand": "Thương hiệu",
-  "offers": {
-    "@type": "Offer",
-    "price": "1000000",
-    "priceCurrency": "VND"
-  }
-}`}
-              size="large"
-              className="schema-textarea"
-            />
+            <JsonField height={300} />
           </Form.Item>
         </Panel>
 
@@ -770,20 +784,17 @@ export const SEOForm: React.FC<SEOFormProps> = ({ form, isEdit = false }) => {
                   </Space>
                 }
                 name={['seo_data', 'core_web_vitals']}
-                extra="LCP, FID, CLS, INP, TTFB metrics"
+                extra={
+                  <Space size={8}>
+                    <span>LCP, FID, CLS, INP, TTFB metrics</span>
+                    <Button size="small" onClick={() => {
+                      const example = { lcp: 2.4, fid: 80, cls: 0.08, inp: 180, ttfb: 750 };
+                      form?.form?.setFieldsValue({ seo_data: { core_web_vitals: example } });
+                    }}>Tạo dữ liệu thông minh</Button>
+                  </Space>
+                }
               >
-                <TextArea 
-                  rows={4} 
-                  placeholder={`{
-  "lcp": 2.5,
-  "fid": 100,
-  "cls": 0.1,
-  "inp": 200,
-  "ttfb": 800
-}`}
-                  size="large"
-                  className="json-textarea"
-                />
+                <JsonField height={200} />
               </Form.Item>
             </Col>
             <Col span={12}>
@@ -795,17 +806,17 @@ export const SEOForm: React.FC<SEOFormProps> = ({ form, isEdit = false }) => {
                   </Space>
                 }
                 name={['seo_data', 'ai_ml_metrics']}
-                extra="AI relevance score, ML ranking factors"
+                extra={
+                  <Space size={8}>
+                    <span>AI relevance score, ML ranking factors</span>
+                    <Button size="small" onClick={() => {
+                      const example = { ai_relevance_score: 88, ml_ranking_factors: ['content_quality', 'user_engagement', 'page_experience'] };
+                      form?.form?.setFieldsValue({ seo_data: { ai_ml_metrics: example } });
+                    }}>Tạo dữ liệu thông minh</Button>
+                  </Space>
+                }
               >
-                <TextArea 
-                  rows={4} 
-                  placeholder={`{
-  "ai_relevance_score": 85,
-  "ml_ranking_factors": ["content_quality", "user_engagement"]
-}`}
-                  size="large"
-                  className="json-textarea"
-                />
+                <JsonField height={200} />
               </Form.Item>
             </Col>
           </Row>
@@ -820,19 +831,17 @@ export const SEOForm: React.FC<SEOFormProps> = ({ form, isEdit = false }) => {
                   </Space>
                 }
                 name={['seo_data', 'eeat_metrics']}
-                extra="Experience, Expertise, Authoritativeness, Trust"
+                extra={
+                  <Space size={8}>
+                    <span>Experience, Expertise, Authoritativeness, Trust</span>
+                    <Button size="small" onClick={() => {
+                      const example = { experience: 90, expertise: 85, authoritativeness: 82, trust: 94 };
+                      form?.form?.setFieldsValue({ seo_data: { eeat_metrics: example } });
+                    }}>Tạo dữ liệu thông minh</Button>
+                  </Space>
+                }
               >
-                <TextArea 
-                  rows={4} 
-                  placeholder={`{
-  "experience": 90,
-  "expertise": 85,
-  "authoritativeness": 80,
-  "trust": 95
-}`}
-                  size="large"
-                  className="json-textarea"
-                />
+                <JsonField height={200} />
               </Form.Item>
             </Col>
             <Col span={12}>
@@ -844,18 +853,17 @@ export const SEOForm: React.FC<SEOFormProps> = ({ form, isEdit = false }) => {
                   </Space>
                 }
                 name={['seo_data', 'voice_visual_metrics']}
-                extra="Voice search optimization, visual search data"
+                extra={
+                  <Space size={8}>
+                    <span>Voice search optimization, visual search data</span>
+                    <Button size="small" onClick={() => {
+                      const example = { voice_optimization: 78, visual_search: 82, semantic_keywords: ['tìm kiếm giọng nói', 'tìm kiếm hình ảnh'] };
+                      form?.form?.setFieldsValue({ seo_data: { voice_visual_metrics: example } });
+                    }}>Tạo dữ liệu thông minh</Button>
+                  </Space>
+                }
               >
-                <TextArea 
-                  rows={4} 
-                  placeholder={`{
-  "voice_optimization": 75,
-  "visual_search": 80,
-  "semantic_keywords": ["từ khóa ngữ nghĩa"]
-}`}
-                  size="large"
-                  className="json-textarea"
-                />
+                <JsonField height={200} />
               </Form.Item>
             </Col>
           </Row>
@@ -870,18 +878,17 @@ export const SEOForm: React.FC<SEOFormProps> = ({ form, isEdit = false }) => {
                   </Space>
                 }
                 name={['seo_data', 'privacy_compliance']}
-                extra="GDPR, CCPA, privacy signals"
+                extra={
+                  <Space size={8}>
+                    <span>GDPR, CCPA, privacy signals</span>
+                    <Button size="small" onClick={() => {
+                      const example = { gdpr_compliant: true, ccpa_compliant: true, privacy_signals: ['https', 'privacy_policy', 'cookie_banner'] };
+                      form?.form?.setFieldsValue({ seo_data: { privacy_compliance: example } });
+                    }}>Tạo dữ liệu thông minh</Button>
+                  </Space>
+                }
               >
-                <TextArea 
-                  rows={4} 
-                  placeholder={`{
-  "gdpr_compliant": true,
-  "ccpa_compliant": false,
-  "privacy_signals": ["https", "privacy_policy"]
-}`}
-                  size="large"
-                  className="json-textarea"
-                />
+                <JsonField height={200} />
               </Form.Item>
             </Col>
             <Col span={12}>
@@ -893,19 +900,17 @@ export const SEOForm: React.FC<SEOFormProps> = ({ form, isEdit = false }) => {
                   </Space>
                 }
                 name={['seo_data', 'future_metrics']}
-                extra="Quantum SEO, Neural networks, BCI, Spatial computing"
+                extra={
+                  <Space size={8}>
+                    <span>Quantum SEO, Neural networks, BCI, Spatial computing</span>
+                    <Button size="small" onClick={() => {
+                      const example = { quantum_seo: 62, neural_networks: 71, bci_optimization: 54, spatial_computing: 66 };
+                      form?.form?.setFieldsValue({ seo_data: { future_metrics: example } });
+                    }}>Tạo dữ liệu thông minh</Button>
+                  </Space>
+                }
               >
-                <TextArea 
-                  rows={4} 
-                  placeholder={`{
-  "quantum_seo": 60,
-  "neural_networks": 70,
-  "bci_optimization": 50,
-  "spatial_computing": 65
-}`}
-                  size="large"
-                  className="json-textarea"
-                />
+                <JsonField height={200} />
               </Form.Item>
             </Col>
           </Row>

@@ -76,3 +76,4 @@ useEffect(() => {
 - Không cần manual transformation
 - Chỉ cần đảm bảo field names đúng
 - Kiểm tra database schema
+
