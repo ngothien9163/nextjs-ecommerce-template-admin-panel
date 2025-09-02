@@ -17,6 +17,7 @@ import { dataProvider as customDataProvider } from "./lib/dataProvider";
 
 // Import CSS chung
 import "./styles/media-management.css";
+import "./styles/media-gallery-selector.css";
 
 // Import our custom pages
 import { CategoryList } from "./pages/categories";
@@ -64,6 +65,8 @@ import { MediaList } from "./pages/media";
 import { MediaCreate } from "./pages/media/create";
 import { MediaEdit } from "./pages/media/edit";
 import { MediaShow } from "./pages/media/show";
+
+import { MediaGallerySelectorDemo } from "./pages/media-gallery-demo";
 
 import { Dashboard } from "./pages/dashboard";
 
@@ -247,6 +250,7 @@ function App() {
                   <Route path="create" element={<MediaCreate />} />
                   <Route path="edit/:id" element={<MediaEdit />} />
                   <Route path="show/:id" element={<MediaShow />} />
+                  <Route path="gallery-selector-demo" element={<MediaGallerySelectorDemo />} />
                 </Route>
               </Route>
             </Routes>

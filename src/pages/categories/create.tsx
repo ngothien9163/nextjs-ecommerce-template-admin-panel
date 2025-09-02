@@ -3,6 +3,7 @@ import { Create, useForm, useSelect } from '@refinedev/antd';
 import { Form, Input, Select, Switch, Card, Row, Col, Space, Tooltip } from 'antd';
 import { InfoCircleOutlined, FolderOutlined } from '@ant-design/icons';
 import { Category } from '../../lib/supabase';
+import { CategoryImageSelector } from '../../components/media-selector/CategoryImageSelector';
 
 const { TextArea } = Input;
 
@@ -123,13 +124,13 @@ export const CategoryCreate: React.FC = () => {
                   className="category-form-item"
                   label={
                     <Space>
-                      <span>ID ảnh đại diện</span>
-                      {renderInfoIcon('ID của ảnh từ bảng media, ảnh này sẽ hiển thị cho danh mục')}
+                      <span>Ảnh đại diện</span>
+                      {renderInfoIcon('Chọn ảnh đại diện cho danh mục từ thư viện media')}
                     </Space>
                   }
                   name="featured_image_id"
                 >
-                  <Input placeholder="Nhập ID ảnh từ media table" />
+                  <CategoryImageSelector placeholder="Chọn ảnh đại diện cho danh mục" />
                 </Form.Item>
               </Col>
               <Col xs={24} sm={24} md={12} lg={12}>

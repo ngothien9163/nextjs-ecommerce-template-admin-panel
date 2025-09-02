@@ -1,5 +1,7 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Edit, useForm } from "@refinedev/antd";
+import { useNavigate } from "react-router-dom";
+import { useUpdate } from "@refinedev/core";
 import {
   Form,
   Button,
@@ -15,6 +17,8 @@ import {
   ScissorOutlined,
   RotateLeftOutlined,
   RotateRightOutlined,
+  ArrowLeftOutlined,
+  EyeOutlined,
 } from "@ant-design/icons";
 import ReactCrop, { Crop, PixelCrop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
@@ -37,56 +41,125 @@ export const MediaEdit: React.FC = () => {
   const [croppedImageUrl, setCroppedImageUrl] = useState<string | null>(null);
   const [rotation, setRotation] = useState(0);
   const imageRef = useRef<HTMLImageElement>(null);
+  const navigate = useNavigate();
+
+  // Debug useEffect
+  useEffect(() => {
+    console.log("🔍 Debug state:", {
+      isCropping,
+      crop,
+      croppedImageUrl: !!croppedImageUrl,
+      imageRef: !!imageRef.current,
+      imageLoaded: imageRef.current?.complete
+    });
+  }, [isCropping, crop, croppedImageUrl]);
 
   const { formProps, saveButtonProps, queryResult } = useForm({
     resource: "media",
   });
 
   const mediaData = queryResult?.data?.data;
+  const { mutate: updateMedia } = useUpdate();
 
   // Crop functionality
   const onCropChange = (crop: Crop) => {
+    console.log("🔍 onCropChange called:", crop);
     setCrop(crop);
   };
 
   const onCropComplete = async (crop: any, pixelCrop: any) => {
-    if (!imageRef.current) return;
+    console.log("🔍 onCropComplete called:", { crop, pixelCrop });
+    
+    if (!imageRef.current) {
+      console.log("❌ imageRef.current is null");
+      return;
+    }
 
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
+    // Check if crop has valid dimensions
+    if (!pixelCrop || !pixelCrop.width || !pixelCrop.height) {
+      console.log("❌ Invalid pixelCrop:", pixelCrop);
+      return;
+    }
 
-    if (!ctx) return;
+    try {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
 
-    const scaleX = imageRef.current.naturalWidth / imageRef.current.width;
-    const scaleY = imageRef.current.naturalHeight / imageRef.current.height;
+      if (!ctx) {
+        console.log("❌ Canvas context is null");
+        return;
+      }
 
-    canvas.width = pixelCrop.width;
-    canvas.height = pixelCrop.height;
+      const scaleX = imageRef.current.naturalWidth / imageRef.current.width;
+      const scaleY = imageRef.current.naturalHeight / imageRef.current.height;
 
-    ctx.drawImage(
-      imageRef.current,
-      pixelCrop.x * scaleX,
-      pixelCrop.y * scaleY,
-      pixelCrop.width * scaleX,
-      pixelCrop.height * scaleY,
-      0,
-      0,
-      pixelCrop.width,
-      pixelCrop.height
-    );
+      console.log("🔍 Scale factors:", { scaleX, scaleY });
+      console.log("🔍 Pixel crop dimensions:", { width: pixelCrop.width, height: pixelCrop.height });
 
-    const croppedImageBlob = await new Promise<Blob>((resolve) => {
-      canvas.toBlob(
-        (blob) => {
-          if (blob) resolve(blob);
-        },
-        "image/jpeg",
-        0.9
+      canvas.width = pixelCrop.width;
+      canvas.height = pixelCrop.height;
+
+      ctx.drawImage(
+        imageRef.current,
+        pixelCrop.x * scaleX,
+        pixelCrop.y * scaleY,
+        pixelCrop.width * scaleX,
+        pixelCrop.height * scaleY,
+        0,
+        0,
+        pixelCrop.width,
+        pixelCrop.height
       );
-    });
 
-    const croppedImageUrl = URL.createObjectURL(croppedImageBlob);
-    setCroppedImageUrl(croppedImageUrl);
+      const croppedImageBlob = await new Promise<Blob>((resolve) => {
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              console.log("✅ Blob created successfully:", blob.size, "bytes");
+              resolve(blob);
+            } else {
+              console.log("❌ Failed to create blob");
+            }
+          },
+          "image/jpeg",
+          0.9
+        );
+      });
+
+      const croppedImageUrl = URL.createObjectURL(croppedImageBlob);
+      console.log("✅ Setting croppedImageUrl:", croppedImageUrl);
+      setCroppedImageUrl(croppedImageUrl);
+    } catch (error) {
+      console.error("❌ Error in onCropComplete:", error);
+    }
+  };
+
+  // Add a manual crop trigger function
+  const handleManualCrop = () => {
+    if (imageRef.current && crop.width && crop.height) {
+      console.log("🔍 Manual crop trigger");
+      console.log("🔍 Current crop:", crop);
+      
+      // Convert percentage crop to pixel crop
+      const scaleX = imageRef.current.naturalWidth / imageRef.current.width;
+      const scaleY = imageRef.current.naturalHeight / imageRef.current.height;
+      
+      const pixelCrop = {
+        x: Math.round((crop.x / 100) * imageRef.current.width),
+        y: Math.round((crop.y / 100) * imageRef.current.height),
+        width: Math.round((crop.width / 100) * imageRef.current.width),
+        height: Math.round((crop.height / 100) * imageRef.current.height)
+      };
+      
+      console.log("🔍 Calculated pixelCrop:", pixelCrop);
+      onCropComplete(crop, pixelCrop);
+    } else {
+      console.log("❌ Cannot trigger manual crop:", {
+        imageRef: !!imageRef.current,
+        cropWidth: crop.width,
+        cropHeight: crop.height
+      });
+    }
   };
 
   const handleCropSave = async () => {
@@ -101,6 +174,33 @@ export const MediaEdit: React.FC = () => {
         mediaData?.file_name || "cropped-image.jpg",
         { type: "image/jpeg" }
       );
+
+      // Calculate new technical specifications
+      const fileSizeKB = Math.round(file.size / 1024);
+      const imageFormat = file.type.split("/")[1]?.toUpperCase() || "JPEG";
+      
+      // Get image dimensions from the current crop
+      const currentCrop = crop;
+      let newDimensions = { width: 0, height: 0 };
+      
+      if (imageRef.current && currentCrop.width && currentCrop.height) {
+        // Calculate actual pixel dimensions from crop
+        const scaleX = imageRef.current.naturalWidth / imageRef.current.width;
+        const scaleY = imageRef.current.naturalHeight / imageRef.current.height;
+        
+        newDimensions = {
+          width: Math.round(currentCrop.width * scaleX),
+          height: Math.round(currentCrop.height * scaleY)
+        };
+      }
+
+      console.log("🔍 New technical specs:", {
+        fileSize: file.size,
+        fileSizeKB,
+        imageFormat,
+        dimensions: newDimensions,
+        mimeType: file.type
+      });
 
       // Upload cropped image
       const fileExt = file.name.split(".").pop();
@@ -119,14 +219,37 @@ export const MediaEdit: React.FC = () => {
         .from("media")
         .getPublicUrl(filePath);
 
-      // Update media record
+      // Update media record with all technical specifications
+      const updateData: any = {
+        file_path: filePath,
+        file_url: urlData.publicUrl,
+        file_size: file.size,
+        file_size_kb: fileSizeKB,
+        mime_type: file.type,
+        image_format: imageFormat,
+        image_dimensions: `${newDimensions.width}x${newDimensions.height}`,
+        dimensions: newDimensions,
+      };
+
+      // Update SEO scores if they exist
+      if (mediaData?.seo_score) {
+        updateData.seo_score = Math.max(mediaData.seo_score - 5, 70); // Slight decrease for crop
+      }
+      if (mediaData?.accessibility_score) {
+        updateData.accessibility_score = Math.max(mediaData.accessibility_score - 3, 75);
+      }
+      if (mediaData?.performance_score) {
+        updateData.performance_score = Math.max(mediaData.performance_score - 2, 80);
+      }
+
+      // Increment version number
+      updateData.version = (mediaData?.version || 1) + 1;
+
+      console.log("🔍 Updating database with:", updateData);
+
       const { error: updateError } = await supabaseAdmin
         .from("media")
-        .update({
-          file_path: filePath,
-          file_url: urlData.publicUrl,
-          file_size: file.size,
-        })
+        .update(updateData)
         .eq("id", mediaData?.id);
 
       if (updateError) throw updateError;
@@ -170,8 +293,73 @@ export const MediaEdit: React.FC = () => {
     });
   };
 
+  // Navigation functions
+  const handleBackToList = () => {
+    navigate("/media");
+  };
+
+  const handleViewMedia = () => {
+    if (mediaData?.id) {
+      navigate(`/media/show/${mediaData.id}`);
+    }
+  };
+
+  // Custom save handler to reload data after save
+  const handleSave = async () => {
+    try {
+      // Validate form
+      await formProps.form?.validateFields();
+      const values = formProps.form?.getFieldsValue();
+      
+      if (!mediaData?.id) {
+        message.error("Không tìm thấy ID của media!");
+        return;
+      }
+      
+      // Update using useUpdate hook
+      await updateMedia({
+        resource: "media",
+        id: mediaData.id,
+        values: values,
+      });
+      
+      // Show success message
+      message.success("Cập nhật thành công!");
+      
+      // Reload the data
+      queryResult?.refetch();
+      
+    } catch (error) {
+      console.error("Save error:", error);
+      message.error("Có lỗi xảy ra khi lưu!");
+    }
+  };
+
   return (
-    <Edit saveButtonProps={saveButtonProps}>
+    <Edit 
+      saveButtonProps={{
+        ...saveButtonProps,
+        onClick: handleSave,
+      }}
+      headerButtons={[
+        <Button
+          key="back"
+          icon={<ArrowLeftOutlined />}
+          onClick={handleBackToList}
+        >
+          Quay về danh sách
+        </Button>,
+        <Button
+          key="view"
+          type="primary"
+          icon={<EyeOutlined />}
+          onClick={handleViewMedia}
+          disabled={!mediaData?.id}
+        >
+          Xem dữ liệu
+        </Button>,
+      ]}
+    >
       <div style={{ display: "flex", gap: "20px" }}>
         {/* Form Section */}
         <div style={{ flex: 1 }}>
@@ -261,6 +449,15 @@ export const MediaEdit: React.FC = () => {
                 >
                   Xoay phải
                 </Button>
+                {isCropping && crop.width && crop.height && (
+                  <Button
+                    type="dashed"
+                    onClick={handleManualCrop}
+                    disabled={!imageRef.current}
+                  >
+                    Tạo Preview
+                  </Button>
+                )}
               </Space>
             </div>
 
@@ -285,8 +482,8 @@ export const MediaEdit: React.FC = () => {
                       }}
                     />
                   </ReactCrop>
-                  {croppedImageUrl && (
-                    <div style={{ marginTop: "16px" }}>
+                  <div style={{ marginTop: "16px" }}>
+                    {croppedImageUrl ? (
                       <Button
                         type="primary"
                         icon={<SaveOutlined />}
@@ -294,8 +491,12 @@ export const MediaEdit: React.FC = () => {
                       >
                         Lưu Crop
                       </Button>
-                    </div>
-                  )}
+                    ) : (
+                      <div style={{ color: "#666", fontSize: "14px" }}>
+                        💡 Kéo thả để chọn vùng cắt, sau đó nhấn "Tạo Preview" để xem trước
+                      </div>
+                    )}
+                  </div>
                 </div>
               ) : (
                 <Image

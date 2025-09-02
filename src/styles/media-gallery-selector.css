@@ -1,0 +1,256 @@
+/* =====================================================
+   MEDIA GALLERY SELECTOR STYLES
+   ===================================================== */
+
+.media-gallery-selector {
+  /* Container styles */
+}
+
+.media-gallery-selector .preview-area {
+  margin-bottom: 16px;
+}
+
+.media-gallery-selector .preview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 8px;
+}
+
+.media-gallery-selector .preview-item {
+  position: relative;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.media-gallery-selector .preview-item img {
+  width: 100%;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.media-gallery-selector .remove-button {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border-radius: 50%;
+  background-color: #ff4d4f;
+  color: white;
+  border: none;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.media-gallery-selector .remove-button:hover {
+  background-color: #ff7875;
+}
+
+.media-gallery-selector .empty-state {
+  border: 2px dashed #d9d9d9;
+  border-radius: 6px;
+  padding: 20px;
+  text-align: center;
+  background-color: #fafafa;
+}
+
+.media-gallery-selector .empty-state .anticon {
+  font-size: 24px;
+  color: #bfbfbf;
+  margin-bottom: 8px;
+}
+
+.media-gallery-selector .empty-state .text {
+  color: #bfbfbf;
+}
+
+/* Modal styles */
+.media-gallery-modal .ant-modal-body {
+  max-height: 70vh;
+  overflow: auto;
+}
+
+.media-gallery-modal .filters-row {
+  margin-bottom: 16px;
+}
+
+.media-gallery-modal .gallery-content {
+  min-height: 400px;
+}
+
+/* Grid Gallery styles */
+.react-grid-gallery {
+  margin: 0;
+}
+
+.react-grid-gallery .react-grid-item {
+  border-radius: 6px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.react-grid-gallery .react-grid-item:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.react-grid-gallery .react-grid-item.selected {
+  border: 2px solid #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+.react-grid-gallery .react-grid-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.react-grid-gallery .react-grid-item .caption {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+  color: white;
+  padding: 8px;
+  font-size: 12px;
+  text-align: center;
+}
+
+.react-grid-gallery .react-grid-item .tags {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.react-grid-gallery .react-grid-item .tag {
+  background-color: #1890ff;
+  color: white;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  margin: 0;
+}
+
+/* List view styles */
+.media-gallery-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.media-gallery-list .list-item {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  cursor: pointer;
+  background-color: white;
+  transition: all 0.2s;
+}
+
+.media-gallery-list .list-item:hover {
+  border-color: #1890ff;
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.1);
+}
+
+.media-gallery-list .list-item.selected {
+  border: 2px solid #1890ff;
+  background-color: #f0f8ff;
+}
+
+.media-gallery-list .list-item img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 4px;
+  margin-right: 12px;
+}
+
+.media-gallery-list .list-item .info {
+  flex: 1;
+}
+
+.media-gallery-list .list-item .info .title {
+  font-weight: 500;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.media-gallery-list .list-item .info .meta {
+  font-size: 12px;
+  color: #666;
+}
+
+.media-gallery-list .list-item .actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Loading and empty states */
+.media-gallery-loading {
+  text-align: center;
+  padding: 40px;
+}
+
+.media-gallery-empty {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .media-gallery-selector .preview-grid {
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+  }
+  
+  .media-gallery-selector .preview-item img {
+    height: 50px;
+  }
+  
+  .media-gallery-modal .filters-row .ant-col {
+    margin-bottom: 8px;
+  }
+  
+  .media-gallery-list .list-item {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .media-gallery-list .list-item img {
+    margin-right: 0;
+    margin-bottom: 8px;
+  }
+}
+
+/* Custom scrollbar for modal */
+.media-gallery-modal .ant-modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.media-gallery-modal .ant-modal-body::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.media-gallery-modal .ant-modal-body::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.media-gallery-modal .ant-modal-body::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}

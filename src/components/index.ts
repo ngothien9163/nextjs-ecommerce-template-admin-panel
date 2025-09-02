@@ -4,6 +4,8 @@ export { SEODisplay } from './seo-display';
 export { ProductForm } from './product-form';
 export { BlogPostForm } from './blog-post-form';
 export { MediaSelector } from './media-selector';
+export { CategoryImageSelector } from './media-selector/CategoryImageSelector';
+export { MediaGallerySelector } from './media-gallery-selector';
 export { DebugConnection } from './debug-connection';
 export { ConnectionDebugger } from './connection-debugger';
 export { KeywordsInput } from './keywords-input';

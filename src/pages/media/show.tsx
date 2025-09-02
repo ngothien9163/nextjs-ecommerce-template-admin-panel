@@ -124,13 +124,23 @@ export const MediaShow: React.FC = () => {
               <Descriptions.Item label="Meta Keywords">
                 <Text>
                   {record?.meta_keywords
-                    ? record.meta_keywords.map(
-                        (keyword: string, index: number) => (
-                          <Tag key={index} color="blue">
-                            {keyword}
-                          </Tag>
+                    ? Array.isArray(record.meta_keywords)
+                      ? record.meta_keywords.map(
+                          (keyword: string, index: number) => (
+                            <Tag key={index} color="blue">
+                              {keyword}
+                            </Tag>
+                          )
                         )
-                      )
+                      : typeof record.meta_keywords === 'string'
+                      ? record.meta_keywords.split(',').map(
+                          (keyword: string, index: number) => (
+                            <Tag key={index} color="blue">
+                              {keyword.trim()}
+                            </Tag>
+                          )
+                        )
+                      : record.meta_keywords
                     : "Không có"}
                 </Text>
               </Descriptions.Item>
@@ -141,12 +151,6 @@ export const MediaShow: React.FC = () => {
 
               <Descriptions.Item label="License">
                 <Text>{record?.license || "Không có"}</Text>
-              </Descriptions.Item>
-
-              <Descriptions.Item label="Trạng thái">
-                <Tag color={record?.is_active ? "green" : "red"}>
-                  {record?.is_active ? "Hoạt động" : "Không hoạt động"}
-                </Tag>
               </Descriptions.Item>
             </Descriptions>
           </Card>
@@ -161,6 +165,10 @@ export const MediaShow: React.FC = () => {
                 <Text>{formatFileSize(record?.file_size || 0)}</Text>
               </Descriptions.Item>
 
+              <Descriptions.Item label="Kích thước file (KB)">
+                <Text>{record?.file_size_kb ? `${record.file_size_kb} KB` : "Không có"}</Text>
+              </Descriptions.Item>
+
               <Descriptions.Item label="Độ phân giải">
                 <Text>
                   {record?.dimensions
@@ -169,8 +177,76 @@ export const MediaShow: React.FC = () => {
                 </Text>
               </Descriptions.Item>
 
+              <Descriptions.Item label="Kích thước hình ảnh">
+                <Text>{record?.image_dimensions || "Không có"}</Text>
+              </Descriptions.Item>
+
+              <Descriptions.Item label="Định dạng hình ảnh">
+                <Text>{record?.image_format || "Không có"}</Text>
+              </Descriptions.Item>
+
+              <Descriptions.Item label="Lazy Loading">
+                <Tag color={record?.lazy_loading ? "green" : "red"}>
+                  {record?.lazy_loading ? "Bật" : "Tắt"}
+                </Tag>
+              </Descriptions.Item>
+
+              <Descriptions.Item label="Priority Loading">
+                <Tag color={record?.priority_loading ? "green" : "red"}>
+                  {record?.priority_loading ? "Bật" : "Tắt"}
+                </Tag>
+              </Descriptions.Item>
+
               <Descriptions.Item label="Đường dẫn file">
                 <Text code>{record?.file_path}</Text>
+              </Descriptions.Item>
+            </Descriptions>
+          </Card>
+
+          <Card title="Thông tin SEO nâng cao" style={{ marginTop: "20px" }}>
+            <Descriptions column={1} bordered>
+              <Descriptions.Item label="SEO Score">
+                <Text strong style={{ color: record?.seo_score && record.seo_score >= 80 ? "#52c41a" : "#faad14" }}>
+                  {record?.seo_score ? `${record.seo_score}/100` : "Không có"}
+                </Text>
+              </Descriptions.Item>
+
+              <Descriptions.Item label="Accessibility Score">
+                <Text strong style={{ color: record?.accessibility_score && record.accessibility_score >= 80 ? "#52c41a" : "#faad14" }}>
+                  {record?.accessibility_score ? `${record.accessibility_score}/100` : "Không có"}
+                </Text>
+              </Descriptions.Item>
+
+              <Descriptions.Item label="Performance Score">
+                <Text strong style={{ color: record?.performance_score && record.performance_score >= 80 ? "#52c41a" : "#faad14" }}>
+                  {record?.performance_score ? `${record.performance_score}/100` : "Không có"}
+                </Text>
+              </Descriptions.Item>
+
+              <Descriptions.Item label="Usage Count">
+                <Text strong>{record?.usage_count || "0"}</Text>
+              </Descriptions.Item>
+
+              <Descriptions.Item label="Version">
+                <Text strong>{record?.version || "1"}</Text>
+              </Descriptions.Item>
+            </Descriptions>
+          </Card>
+
+          <Card title="Thông tin sử dụng" style={{ marginTop: "20px" }}>
+            <Descriptions column={1} bordered>
+              <Descriptions.Item label="Số lần sử dụng">
+                <Text strong>{record?.usage_count || "0"}</Text>
+              </Descriptions.Item>
+
+              <Descriptions.Item label="Phiên bản hiện tại">
+                <Text strong>{record?.version || "1"}</Text>
+              </Descriptions.Item>
+
+              <Descriptions.Item label="Trạng thái">
+                <Tag color={record?.is_active ? "green" : "red"}>
+                  {record?.is_active ? "Hoạt động" : "Không hoạt động"}
+                </Tag>
               </Descriptions.Item>
 
               <Descriptions.Item label="Ngày tạo">
