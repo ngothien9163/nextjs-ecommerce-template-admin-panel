@@ -197,3 +197,4 @@ const onCropChange = (crop: Crop) => {
 ```
 
 **Kết quả**: Nút "Tạo Preview" giờ đây hoạt động đúng cách với debug logs chi tiết! 🎯✅
+

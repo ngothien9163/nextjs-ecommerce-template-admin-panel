@@ -105,7 +105,7 @@ export const MediaGallerySelector: React.FC<MediaGallerySelectorProps> = ({
     if (multiple) {
       setSelectedImages(prev => {
         const isSelected = prev.includes(mediaItem.id);
-        console.log('Current selection:', prev, 'Is selected:', isSelected); // Debug log
+        console.log('Current selection:', prev, 'Is selected:', isSelected, 'Will toggle to:', !isSelected); // Debug log
         if (isSelected) {
           return prev.filter(id => id !== mediaItem.id);
         } else {
@@ -121,11 +121,7 @@ export const MediaGallerySelector: React.FC<MediaGallerySelectorProps> = ({
     }
   };
 
-  const handleCheckboxChange = (e: any, mediaItem: Media) => {
-    e.stopPropagation(); // Prevent event bubbling
-    console.log('Checkbox clicked:', mediaItem.id); // Debug log
-    handleImageSelect(mediaItem);
-  };
+
 
   const handleConfirmSelection = () => {
     if (selectedImages.length === 0) {
@@ -286,7 +282,7 @@ export const MediaGallerySelector: React.FC<MediaGallerySelectorProps> = ({
           </Space>
         }
         width={1200}
-        bodyStyle={{ maxHeight: '70vh', overflow: 'auto' }}
+                 styles={{ body: { maxHeight: '70vh', overflow: 'auto' } }}
       >
         {/* Filters and Search */}
         <Row gutter={[16, 16]} style={{ marginBottom: '16px' }}>
@@ -384,14 +380,25 @@ export const MediaGallerySelector: React.FC<MediaGallerySelectorProps> = ({
                       position: 'absolute',
                       top: '12px',
                       right: '12px',
-                      zIndex: 10,
-                      pointerEvents: 'auto'
+                      zIndex: 100,
+                      pointerEvents: 'auto',
+                      backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                      borderRadius: '4px',
+                      padding: '2px'
                     }}
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                    }}
                   >
                     <Checkbox
                       checked={isSelected}
-                      onChange={(e) => handleCheckboxChange(e, mediaItem)}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        handleImageSelect(mediaItem); // Call directly instead of handleCheckboxChange
+                      }}
+                      style={{ pointerEvents: 'auto' }}
                     />
                   </div>
 
@@ -475,11 +482,27 @@ export const MediaGallerySelector: React.FC<MediaGallerySelectorProps> = ({
                   }}
                   onClick={() => handleImageSelect(mediaItem)}
                 >
-                  <Checkbox
-                    checked={isSelected}
-                    onChange={(e) => handleCheckboxChange(e, mediaItem)}
-                    style={{ marginRight: '12px' }}
-                  />
+                  <div
+                    style={{
+                      pointerEvents: 'auto',
+                      marginRight: '12px',
+                      zIndex: 10
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                    }}
+                  >
+                    <Checkbox
+                      checked={isSelected}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        handleImageSelect(mediaItem); // Call directly instead of handleCheckboxChange
+                      }}
+                      style={{ pointerEvents: 'auto' }}
+                    />
+                  </div>
                   <img
                     src={mediaItem.file_url}
                     alt={mediaItem.file_name}

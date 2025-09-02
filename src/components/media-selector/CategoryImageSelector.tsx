@@ -146,7 +146,7 @@ export const CategoryImageSelector: React.FC<CategoryImageSelectorProps> = ({
           <Card
             size="small"
             style={{ border: '1px solid #d9d9d9', borderRadius: '6px' }}
-            bodyStyle={{ padding: '12px' }}
+            styles={{ body: { padding: '12px' } }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <Image
@@ -221,7 +221,7 @@ export const CategoryImageSelector: React.FC<CategoryImageSelectorProps> = ({
         onCancel={() => setIsModalVisible(false)}
         footer={null}
         width={1000}
-        bodyStyle={{ maxHeight: '70vh', overflow: 'auto' }}
+                 styles={{ body: { maxHeight: '70vh', overflow: 'auto' } }}
       >
         {/* Filters and Search */}
         <Row gutter={[16, 16]} style={{ marginBottom: '16px' }}>

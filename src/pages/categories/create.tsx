@@ -1,6 +1,6 @@
 import React from 'react';
 import { Create, useForm, useSelect } from '@refinedev/antd';
-import { Form, Input, Select, Switch, Card, Row, Col, Space, Tooltip } from 'antd';
+import { Form, Input, Select, Switch, Card, Row, Col, Space, Tooltip, InputNumber } from 'antd';
 import { InfoCircleOutlined, FolderOutlined } from '@ant-design/icons';
 import { Category } from '../../lib/supabase';
 import { CategoryImageSelector } from '../../components/media-selector/CategoryImageSelector';
@@ -8,7 +8,14 @@ import { CategoryImageSelector } from '../../components/media-selector/CategoryI
 const { TextArea } = Input;
 
 export const CategoryCreate: React.FC = () => {
-  const { formProps, saveButtonProps } = useForm<Category>();
+  const { formProps, saveButtonProps } = useForm<Category>({
+    onMutationSuccess: (data) => {
+      console.log('✅ Category created successfully:', data);
+    },
+    onMutationError: (error) => {
+      console.error('❌ Error creating category:', error);
+    },
+  });
   const { selectProps: parentCategorySelectProps } = useSelect<Category>({
     resource: 'categories',
     optionLabel: 'name',
@@ -21,10 +28,64 @@ export const CategoryCreate: React.FC = () => {
     </Tooltip>
   );
 
+  // Custom form handler để xử lý dữ liệu
+  const handleFormSubmit = (values: any) => {
+    console.log('🔄 Form submit values:', values);
+    
+    // Đảm bảo featured_image_id là string hoặc null
+    let featuredImageId = values.featured_image_id;
+    if (featuredImageId === '' || featuredImageId === undefined) {
+      featuredImageId = null;
+    }
+    
+    // Đảm bảo parent_id là string hoặc null
+    let parentId = values.parent_id;
+    if (parentId === '' || parentId === undefined) {
+      parentId = null;
+    }
+    
+    // Đảm bảo sort_order là number
+    let sortOrder = values.sort_order;
+    if (sortOrder === '' || sortOrder === undefined) {
+      sortOrder = 0;
+    } else {
+      sortOrder = Number(sortOrder);
+    }
+    
+    // Đảm bảo is_active là boolean
+    let isActive = values.is_active;
+    if (isActive === undefined) {
+      isActive = true;
+    }
+    
+    const cleanedValues = {
+      name: values.name,
+      slug: values.slug,
+      description: values.description || null,
+      parent_id: parentId,
+      featured_image_id: featuredImageId,
+      is_active: isActive,
+      sort_order: sortOrder,
+    };
+    
+    console.log('✅ Cleaned values:', cleanedValues);
+    
+    // Gọi formProps.onFinish với dữ liệu đã xử lý
+    if (formProps.onFinish) {
+      return formProps.onFinish(cleanedValues);
+    }
+    
+    return cleanedValues;
+  };
+
   return (
     <Create saveButtonProps={saveButtonProps}>
       <div className="form-wrapper">
-        <Form {...formProps} layout="vertical">
+        <Form 
+          {...formProps} 
+          layout="vertical"
+          onFinish={handleFormSubmit}
+        >
           <Card 
             className="form-card"
             title={
@@ -99,8 +160,11 @@ export const CategoryCreate: React.FC = () => {
                   }
                   name="sort_order"
                   initialValue={0}
+                  rules={[
+                    { type: 'number', min: 0, message: 'Thứ tự phải là số >= 0!' }
+                  ]}
                 >
-                  <Input placeholder="0" type="number" />
+                  <InputNumber min={0} style={{ width: '100%' }} />
                 </Form.Item>
               </Col>
             </Row>

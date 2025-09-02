@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Edit, useForm, useSelect } from '@refinedev/antd';
 import { Form, Input, Switch, InputNumber, Select, Card, Row, Col, Space, Tooltip } from 'antd';
 import { InfoCircleOutlined, FolderOutlined } from '@ant-design/icons';
@@ -8,7 +8,14 @@ import { CategoryImageSelector } from '../../components/media-selector/CategoryI
 const { TextArea } = Input;
 
 export const CategoryEdit: React.FC = () => {
-  const { formProps, saveButtonProps, queryResult } = useForm<Category>();
+  const { formProps, saveButtonProps, queryResult } = useForm<Category>({
+    onMutationSuccess: (data) => {
+      console.log('✅ Category updated successfully:', data);
+    },
+    onMutationError: (error) => {
+      console.error('❌ Error updating category:', error);
+    },
+  });
   const { selectProps: parentCategorySelectProps } = useSelect<Category>({
     resource: 'categories',
     optionLabel: 'name',
@@ -28,10 +35,71 @@ export const CategoryEdit: React.FC = () => {
     </Tooltip>
   );
 
+  // Custom form handler để xử lý dữ liệu
+  const handleFormSubmit = (values: any) => {
+    console.log('🔄 Form submit values:', values);
+    
+    // Đảm bảo featured_image_id là string hoặc null
+    let featuredImageId = values.featured_image_id;
+    if (featuredImageId === '' || featuredImageId === undefined) {
+      featuredImageId = null;
+    }
+    
+    // Đảm bảo parent_id là string hoặc null
+    let parentId = values.parent_id;
+    if (parentId === '' || parentId === undefined) {
+      parentId = null;
+    }
+    
+    // Đảm bảo sort_order là number
+    let sortOrder = values.sort_order;
+    if (sortOrder === '' || sortOrder === undefined) {
+      sortOrder = 0;
+    } else {
+      sortOrder = Number(sortOrder);
+    }
+    
+    // Đảm bảo is_active là boolean
+    let isActive = values.is_active;
+    if (isActive === undefined) {
+      isActive = true;
+    }
+    
+    const cleanedValues = {
+      name: values.name,
+      slug: values.slug,
+      description: values.description || null,
+      parent_id: parentId,
+      featured_image_id: featuredImageId,
+      is_active: isActive,
+      sort_order: sortOrder,
+    };
+    
+    console.log('✅ Cleaned values:', cleanedValues);
+    
+    // Gọi formProps.onFinish với dữ liệu đã xử lý
+    if (formProps.onFinish) {
+      return formProps.onFinish(cleanedValues);
+    }
+    
+    return cleanedValues;
+  };
+
+  // Debug form values
+  useEffect(() => {
+    console.log('🔍 Form props:', formProps);
+    console.log('🔍 Save button props:', saveButtonProps);
+    console.log('🔍 Query result:', queryResult?.data?.data);
+  }, [formProps, saveButtonProps, queryResult]);
+
   return (
     <Edit saveButtonProps={saveButtonProps}>
       <div className="category-form-wrapper">
-        <Form {...formProps} layout="vertical">
+        <Form 
+          {...formProps} 
+          layout="vertical"
+          onFinish={handleFormSubmit}
+        >
           <Card 
             className="category-form-card"
             title={
@@ -106,8 +174,11 @@ export const CategoryEdit: React.FC = () => {
                   }
                   name="sort_order"
                   initialValue={0}
+                  rules={[
+                    { type: 'number', min: 0, message: 'Thứ tự phải là số >= 0!' }
+                  ]}
                 >
-                  <InputNumber min={0} />
+                  <InputNumber min={0} style={{ width: '100%' }} />
                 </Form.Item>
               </Col>
             </Row>
@@ -154,37 +225,6 @@ export const CategoryEdit: React.FC = () => {
                   initialValue={true}
                 >
                   <Switch />
-                </Form.Item>
-              </Col>
-            </Row>
-
-            <Row gutter={[24, 16]}>
-              <Col xs={24} sm={24} md={12} lg={12}>
-                <Form.Item
-                  className="category-form-item"
-                  label={
-                    <Space>
-                      <span>Tiêu đề SEO</span>
-                      {renderInfoIcon('Tiêu đề hiển thị trên kết quả tìm kiếm, tối đa 60 ký tự')}
-                    </Space>
-                  }
-                  name="meta_title"
-                >
-                  <Input placeholder="Tiêu đề SEO cho danh mục" />
-                </Form.Item>
-              </Col>
-              <Col xs={24} sm={24} md={12} lg={12}>
-                <Form.Item
-                  className="category-form-item"
-                  label={
-                    <Space>
-                      <span>Mô tả SEO</span>
-                      {renderInfoIcon('Mô tả hiển thị trên kết quả tìm kiếm, tối đa 160 ký tự')}
-                    </Space>
-                  }
-                  name="meta_description"
-                >
-                  <TextArea rows={3} placeholder="Mô tả SEO cho danh mục" />
                 </Form.Item>
               </Col>
             </Row>

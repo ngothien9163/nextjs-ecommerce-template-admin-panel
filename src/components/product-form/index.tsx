@@ -3,6 +3,7 @@ import { Form, Input, InputNumber, Select, Switch, Space, Row, Col, Card, Typogr
 import { InfoCircleOutlined, ShoppingOutlined, DollarOutlined, InboxOutlined, SafetyOutlined, FileTextOutlined, SettingOutlined } from '@ant-design/icons';
 import { SEOForm } from '../seo-form';
 import '../../styles/product-form-styles.css';
+import { CategoryImageSelector } from '../media-selector/CategoryImageSelector';
 
 const { TextArea } = Input;
 const { Title } = Typography;
@@ -178,13 +179,13 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 <Form.Item
                   label={
                     <Space>
-                      <span>Ảnh đại diện ID</span>
-                      {renderInfoIcon('ID của ảnh chính từ bảng media, ảnh này sẽ hiển thị đầu tiên')}
+                      <span>Ảnh đại diện</span>
+                      {renderInfoIcon('Chọn ảnh chính từ thư viện media, ảnh này sẽ hiển thị đầu tiên')}
                     </Space>
                   }
                   name="featured_image_id"
                 >
-                  <Input placeholder="Nhập ID ảnh từ media table" size="large" style={{ width: '100%' }} />
+                  <CategoryImageSelector placeholder="Chọn ảnh đại diện cho sản phẩm" />
                 </Form.Item>
               </Col>
             </Row>
@@ -508,7 +509,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                       {renderInfoIcon('Cho phép Google và các công cụ tìm kiếm index trang sản phẩm')}
                     </Space>
                   }
-                  name={['seo_data', 'is_indexed']}
+                  name={["seo_data", "is_indexed"]}
                   valuePropName="checked"
                 >
                   <Switch />
