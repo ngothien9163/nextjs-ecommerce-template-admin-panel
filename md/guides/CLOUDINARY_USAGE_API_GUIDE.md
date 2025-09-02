@@ -368,3 +368,4 @@ const uploadMultipleImages = async (files, folder = 'media') => {
 5. ✅ **Alerts** - Automated warnings khi gần hết quota
 
 **Dashboard đã implement sẵn tất cả tính năng này** và có thể tích hợp ngay vào admin panel của bạn!
+

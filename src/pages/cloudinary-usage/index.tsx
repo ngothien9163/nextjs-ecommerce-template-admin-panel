@@ -10,3 +10,4 @@ export const CloudinaryUsagePage: React.FC = () => {
 };
 
 export default CloudinaryUsagePage;
+

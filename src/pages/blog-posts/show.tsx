@@ -1,6 +1,6 @@
 import React from 'react';
 import { Show } from '@refinedev/antd';
-import { useOne , useShow } from '@refinedev/core';
+import { useOne, useShow } from '@refinedev/core';
 import { Descriptions, Card, Tag, Switch, Row, Col, Typography, Space } from 'antd';
 import { BlogPost, BlogCategory, Profile } from '../../lib/supabase';
 import { SEODisplay } from '../../components/seo-display';
@@ -12,7 +12,7 @@ export const BlogPostShow: React.FC = () => {
     resource: 'blog_posts',
   });
 
-  const { data, isLoading } = queryResult;
+  const { data, isLoading, error } = queryResult;
   const blogPost = data?.data;
 
   const { data: categoryData, isLoading: categoryIsLoading } = useOne<BlogCategory>({
@@ -33,6 +33,10 @@ export const BlogPostShow: React.FC = () => {
 
   if (isLoading) {
     return <div>Đang tải...</div>;
+  }
+
+  if (error) {
+    return <div>Lỗi: {error.message}</div>;
   }
 
   if (!blogPost) {
@@ -137,11 +141,6 @@ export const BlogPostShow: React.FC = () => {
           </Descriptions.Item>
         </Descriptions>
       </Card>
-
-      {/* Thông tin SEO */}
-      {blogPost.seo_data && (
-        <SEODisplay seoData={blogPost.seo_data} showAdvanced={true} />
-      )}
 
       <Card title="Thông tin hệ thống">
         <Descriptions column={2} bordered>

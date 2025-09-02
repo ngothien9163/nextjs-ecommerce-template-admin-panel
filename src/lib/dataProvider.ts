@@ -244,18 +244,56 @@ export const dataProvider: DataProvider = {
   },
 
   deleteOne: async ({ resource, id }) => {
+    console.log('🔍 deleteOne called for resource:', resource, 'with ID:', id);
+    
     // Use admin client for media to bypass RLS issues
     const client = supabase;
     
+    // Special handling for media resource - delete file from bucket first
+    if (resource === 'media') {
+      try {
+        // Get media record to get file path
+        const { data: mediaData, error: getError } = await client
+          .from('media')
+          .select('file_path, file_name')
+          .eq('id', id)
+          .single();
+        
+        if (getError) {
+          console.error('❌ Error getting media data:', getError);
+        } else if (mediaData?.file_path) {
+          console.log('🗑️ Deleting file from bucket:', mediaData.file_path);
+          
+          // Delete file from Supabase Storage
+          const { error: storageError } = await client.storage
+            .from('media')
+            .remove([mediaData.file_path]);
+          
+          if (storageError) {
+            console.error('❌ Error deleting file from storage:', storageError);
+            // Continue with database deletion even if storage deletion fails
+          } else {
+            console.log('✅ File deleted from storage successfully');
+          }
+        }
+      } catch (error) {
+        console.error('❌ Error in media deletion process:', error);
+        // Continue with database deletion even if storage deletion fails
+      }
+    }
+    
+    // Delete from database
     const { error } = await client
       .from(resource)
       .delete()
       .eq('id', id);
 
     if (error) {
+      console.error('❌ Database deletion error:', error);
       throw new Error(error.message);
     }
 
+    console.log(`✅ Successfully deleted ${resource} with ID: ${id}`);
     return {
       data: {},
     };
@@ -317,18 +355,61 @@ export const dataProvider: DataProvider = {
   },
 
   deleteMany: async ({ resource, ids }) => {
+    console.log('🔍 deleteMany called for resource:', resource, 'with IDs:', ids);
+    
     // Use admin client for media to bypass RLS issues
     const client = supabase;
     
+    // Special handling for media resource - delete files from bucket first
+    if (resource === 'media') {
+      try {
+        // Get media records to get file paths
+        const { data: mediaData, error: getError } = await client
+          .from('media')
+          .select('file_path, file_name')
+          .in('id', ids);
+        
+        if (getError) {
+          console.error('❌ Error getting media data:', getError);
+        } else if (mediaData && mediaData.length > 0) {
+          const filePaths = mediaData
+            .map(item => item.file_path)
+            .filter(Boolean);
+          
+          if (filePaths.length > 0) {
+            console.log('🗑️ Deleting files from bucket:', filePaths);
+            
+            // Delete files from Supabase Storage
+            const { error: storageError } = await client.storage
+              .from('media')
+              .remove(filePaths);
+            
+            if (storageError) {
+              console.error('❌ Error deleting files from storage:', storageError);
+              // Continue with database deletion even if storage deletion fails
+            } else {
+              console.log('✅ Files deleted from storage successfully');
+            }
+          }
+        }
+      } catch (error) {
+        console.error('❌ Error in media deletion process:', error);
+        // Continue with database deletion even if storage deletion fails
+      }
+    }
+    
+    // Delete from database
     const { error } = await client
       .from(resource)
       .delete()
       .in('id', ids);
 
     if (error) {
+      console.error('❌ Database deletion error:', error);
       throw new Error(error.message);
     }
 
+    console.log(`✅ Successfully deleted ${ids.length} ${resource} records`);
     return {
       data: [],
     };

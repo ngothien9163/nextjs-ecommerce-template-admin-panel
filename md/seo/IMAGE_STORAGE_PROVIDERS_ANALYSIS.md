@@ -308,3 +308,4 @@ const trackImageLoad = (imageUrl, loadTime) => {
 
 **Frontend sẽ được cải thiện đáng kể** về performance, SEO, và user experience!
 
+

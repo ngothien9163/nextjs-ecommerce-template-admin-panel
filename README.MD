@@ -29,6 +29,19 @@ REACT_APP_SUPABASE_ANON_KEY=your_supabase_anon_key_here
 npm run dev
 ```
 
+## 📚 Tài liệu
+
+Tất cả tài liệu hướng dẫn và ghi chú đã được tổ chức trong thư mục `md/`:
+
+- **📁 `/md/seo/`** - SEO & Image Optimization
+- **📁 `/md/media/`** - Media Management  
+- **📁 `/md/setup/`** - Setup & Configuration
+- **📁 `/md/guides/`** - General Guides
+- **📁 `/md/fixes/`** - Bug Fixes & Troubleshooting
+- **📁 `/md/components/`** - Component Documentation
+
+Xem file `md/README.md` để biết chi tiết về cấu trúc tài liệu.
+
 ## 📁 Cấu trúc thư mục
 
 ```

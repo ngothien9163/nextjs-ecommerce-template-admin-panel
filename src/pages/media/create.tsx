@@ -89,8 +89,10 @@ export const MediaCreate: React.FC = () => {
     const seoScores = [85, 92, 78, 95, 88, 90, 82, 94, 87, 91];
     const accessibilityScores = [90, 85, 88, 92, 86, 89, 84, 91, 87, 93];
     const performanceScores = [88, 92, 85, 94, 89, 91, 83, 95, 86, 90];
-    const usageCounts = [0, 1, 3, 5, 2, 7, 4, 6, 8, 9];
-    const versions = [1, 1, 2, 1, 3, 1, 2, 1, 4, 1];
+    
+    // Khi upload file mới, usage_count = 1 và version = 1
+    const usageCount = 1;
+    const version = 1;
 
     const randomIndex = Math.floor(Math.random() * 10);
     
@@ -98,8 +100,8 @@ export const MediaCreate: React.FC = () => {
       seo_score: seoScores[randomIndex],
       accessibility_score: accessibilityScores[randomIndex],
       performance_score: performanceScores[randomIndex],
-      usage_count: usageCounts[randomIndex],
-      version: versions[randomIndex],
+      usage_count: usageCount,
+      version: version,
     };
     
     console.log('🔧 Auto-filling SEO scores:', seoValues);
