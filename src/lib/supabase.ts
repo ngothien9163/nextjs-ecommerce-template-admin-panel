@@ -131,6 +131,8 @@ export interface SEOPage {
   twitter_card?: string;
   twitter_title?: string;
   twitter_description?: string;
+  twitter_creator?: string;
+  twitter_site?: string;
   twitter_image?: string;
   schema_markup?: any;
   core_web_vitals?: any;

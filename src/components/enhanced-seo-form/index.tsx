@@ -429,7 +429,35 @@ export const EnhancedSEOForm: React.FC<EnhancedSEOFormProps> = ({
           </Row>
 
           <Row gutter={[24, 16]}>
-            <Col span={8}>
+            <Col span={6}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>Character Encoding</span>
+                    {renderInfoIcon('Bộ mã ký tự của trang, thường là UTF-8')}
+                  </Space>
+                }
+                name={['seo_data', 'charset']}
+                initialValue="UTF-8"
+              >
+                <Input size="large" />
+              </Form.Item>
+            </Col>
+            <Col span={6}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>Viewport</span>
+                    {renderInfoIcon('Cài đặt viewport cho responsive design')}
+                  </Space>
+                }
+                name={['seo_data', 'viewport']}
+                initialValue="width=device-width, initial-scale=1"
+              >
+                <Input size="large" />
+              </Form.Item>
+            </Col>
+            <Col span={6}>
               <Form.Item
                 label={
                   <Space>
@@ -448,7 +476,7 @@ export const EnhancedSEOForm: React.FC<EnhancedSEOFormProps> = ({
                 </Select>
               </Form.Item>
             </Col>
-            <Col span={8}>
+            <Col span={6}>
               <Form.Item
                 label={
                   <Space>
@@ -465,19 +493,31 @@ export const EnhancedSEOForm: React.FC<EnhancedSEOFormProps> = ({
                 </Select>
               </Form.Item>
             </Col>
-            <Col span={8}>
+          </Row>
+
+          <Row gutter={[24, 16]}>
+            <Col span={24}>
               <Form.Item
                 label={
                   <Space>
-                    <span>Được index</span>
-                    {renderInfoIcon('Cho phép Google index trang này')}
+                    <span>Hreflang Tags (JSON)</span>
+                    {renderInfoIcon('Thẻ hreflang cho đa ngôn ngữ, giúp Google hiểu mối quan hệ giữa các phiên bản ngôn ngữ')}
                   </Space>
                 }
-                name={['seo_data', 'is_indexed']}
-                valuePropName="checked"
-                initialValue={true}
+                name={['seo_data', 'hreflang']}
+                extra={
+                  <Button size="small" onClick={() => {
+                    const canonical = form?.form?.getFieldValue(['seo_data','canonical_url']) || 'https://example.com/blog/post';
+                    const base = canonical.replace(/\/$/, '');
+                    const example = [
+                      { lang: 'vi', url: `${base}/vi` },
+                      { lang: 'en', url: `${base}/en` },
+                    ];
+                    form?.form?.setFieldsValue({ seo_data: { hreflang: example } });
+                  }}>Tạo dữ liệu thông minh</Button>
+                }
               >
-                <Switch />
+                <JsonField height={200} />
               </Form.Item>
             </Col>
           </Row>
@@ -554,7 +594,7 @@ export const EnhancedSEOForm: React.FC<EnhancedSEOFormProps> = ({
             </Col>
           </Row>
           <Row gutter={[24, 16]}>
-            <Col span={24}>
+            <Col span={8}>
               <Form.Item
                 label={
                   <Space>
@@ -569,6 +609,37 @@ export const EnhancedSEOForm: React.FC<EnhancedSEOFormProps> = ({
                   <Select.Option value="article">Article (Blog Post)</Select.Option>
                   <Select.Option value="website">Website</Select.Option>
                   <Select.Option value="product">Product</Select.Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>OG Site Name</span>
+                    {renderInfoIcon('Tên website, hiển thị bên dưới tiêu đề khi chia sẻ')}
+                  </Space>
+                }
+                name={['seo_data', 'og_site_name']}
+              >
+                <Input placeholder="Tên website" size="large" />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>OG Locale</span>
+                    {renderInfoIcon('Ngôn ngữ và vùng miền của nội dung Open Graph')}
+                  </Space>
+                }
+                name={['seo_data', 'og_locale']}
+                initialValue="vi_VN"
+              >
+                <Select size="large">
+                  <Select.Option value="vi_VN">Tiếng Việt (Việt Nam)</Select.Option>
+                  <Select.Option value="en_US">English (US)</Select.Option>
+                  <Select.Option value="en_GB">English (UK)</Select.Option>
                 </Select>
               </Form.Item>
             </Col>
@@ -609,6 +680,71 @@ export const EnhancedSEOForm: React.FC<EnhancedSEOFormProps> = ({
                   placeholder="Tiêu đề cho Twitter"
                   maxLength={70}
                   showCount
+                  size="large"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={[24, 16]}>
+            <Col span={24}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>Twitter Description</span>
+                    {renderInfoIcon('Mô tả hiển thị khi chia sẻ trên Twitter')}
+                  </Space>
+                }
+                name={['seo_data', 'twitter_description']}
+              >
+                <TextArea
+                  rows={2}
+                  placeholder="Mô tả cho Twitter"
+                  maxLength={200}
+                  showCount
+                  size="large"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={[24, 16]}>
+            <Col span={8}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>Twitter Creator</span>
+                    {renderInfoIcon('Username Twitter của tác giả (@username)')}
+                  </Space>
+                }
+                name={['seo_data', 'twitter_creator']}
+              >
+                <Input placeholder="@username" size="large" />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>Twitter Site</span>
+                    {renderInfoIcon('Username Twitter của website (@sitename)')}
+                  </Space>
+                }
+                name={['seo_data', 'twitter_site']}
+              >
+                <Input placeholder="@sitename" size="large" />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                label={
+                  <Space>
+                    <span>Twitter Image</span>
+                    {renderInfoIcon('Hình ảnh hiển thị khi chia sẻ trên Twitter')}
+                  </Space>
+                }
+                name={['seo_data', 'twitter_image']}
+              >
+                <Input
+                  placeholder="URL hình ảnh Twitter"
                   size="large"
                 />
               </Form.Item>
