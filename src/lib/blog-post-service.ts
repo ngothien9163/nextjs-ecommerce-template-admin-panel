@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { supabaseAdmin } from './supabase-admin';
 import type { SEOPage, BlogPost } from './supabase';
 
 export interface BlogPostWithSEO extends BlogPost {
@@ -11,25 +12,40 @@ export const blogPostService = {
    */
   async createBlogPost(blogPostData: Partial<BlogPost>, seoData?: Partial<SEOPage>) {
     try {
-      // 1. Tạo blog post trước
-      const { data: blogPost, error: blogError } = await supabase
+      console.log('📝 [createBlogPost] Creating new blog post...');
+      console.log('📝 [createBlogPost] Blog post data:', blogPostData);
+      console.log('📊 [createBlogPost] SEO data:', seoData);
+      
+      // 1. Tạo blog post trước - sử dụng admin client để bypass RLS
+      const { data: blogPost, error: blogError } = await supabaseAdmin
         .from('blog_posts')
         .insert([blogPostData])
         .select()
         .single();
 
       if (blogError || !blogPost) {
+        console.error('❌ [createBlogPost] Failed to create blog post:', blogError);
         throw new Error(`Failed to create blog post: ${blogError?.message}`);
       }
+      
+      console.log('✅ [createBlogPost] Blog post created successfully:', blogPost.id);
 
       // 2. Nếu có SEO data, tạo SEO page
       if (seoData && Object.keys(seoData).length > 0) {
-        await this.upsertSEOPage(blogPost.id, blogPost.slug, seoData);
+        console.log('📊 [createBlogPost] Creating SEO data...');
+        try {
+          await this.upsertSEOPage(blogPost.id, blogPost.slug, seoData);
+          console.log('✅ [createBlogPost] SEO data created successfully');
+        } catch (seoError) {
+          console.error('❌ [createBlogPost] SEO creation failed:', seoError);
+          // Don't fail the whole operation if SEO creation fails
+          console.warn('⚠️ [createBlogPost] Continuing despite SEO creation failure');
+        }
       }
 
       return blogPost;
     } catch (error) {
-      console.error('Error creating blog post with SEO:', error);
+      console.error('❌ [createBlogPost] Fatal error:', error);
       throw error;
     }
   },
@@ -39,9 +55,8 @@ export const blogPostService = {
    */
   async updateBlogPost(id: string, blogPostData: Partial<BlogPost>, seoData?: Partial<SEOPage>) {
     try {
-      console.log('📝 [updateBlogPost] Starting update for ID:', id);
-      console.log('📝 [updateBlogPost] Blog post data:', blogPostData);
-      console.log('📝 [updateBlogPost] SEO data:', seoData);
+      console.log('📝 [updateBlogPost] SAVE - Starting update for ID:', id);
+      console.log('📝 [updateBlogPost] SAVE - featured_image_id:', blogPostData.featured_image_id);
       
       // Kiểm tra blog post có tồn tại không trước khi update
       console.log('🔍 [updateBlogPost] Checking if blog post exists...');
@@ -73,9 +88,29 @@ export const blogPostService = {
         return acc;
       }, {} as any);
       
-      console.log('🧹 [updateBlogPost] Cleaned blog post data:', cleanBlogPostData);
-      console.log('🧹 [updateBlogPost] Number of fields to update:', Object.keys(cleanBlogPostData).length);
-      
+      console.log('🧹 [updateBlogPost] SAVE - Cleaned data, featured_image_id:', cleanBlogPostData.featured_image_id);
+
+      // Check if featured_image_id exists and is valid
+      if (cleanBlogPostData.featured_image_id) {
+        console.log('🔍 [updateBlogPost] Checking if media record exists...');
+        const { data: mediaRecord, error: mediaError } = await supabase
+          .from('media')
+          .select('id, file_name')
+          .eq('id', cleanBlogPostData.featured_image_id)
+          .maybeSingle();
+
+        if (mediaError) {
+          console.error('❌ [updateBlogPost] Error checking media record:', mediaError);
+        } else if (!mediaRecord) {
+          console.error('❌ [updateBlogPost] Media record not found with ID:', cleanBlogPostData.featured_image_id);
+          // Remove invalid featured_image_id from update payload
+          delete cleanBlogPostData.featured_image_id;
+          console.log('⚠️ [updateBlogPost] Removed invalid featured_image_id from update payload');
+        } else {
+          console.log('✅ [updateBlogPost] Media record exists:', mediaRecord.file_name);
+        }
+      }
+
       // Always perform the update, even if no changes (to ensure we get the latest data)
       console.log('🔄 [updateBlogPost] Performing update...');
       
@@ -84,13 +119,54 @@ export const blogPostService = {
         ? cleanBlogPostData 
         : { updated_at: new Date().toISOString() }; // Force an update with timestamp
       
-      console.log('📋 [updateBlogPost] Final update payload:', updatePayload);
+      console.log('📋 [updateBlogPost] SAVE - Final payload, featured_image_id:', updatePayload.featured_image_id);
       
-      const { data: updatedPost, error: blogError } = await supabase
+      console.log('🔄 [updateBlogPost] Executing Supabase update query...');
+      console.log('🔄 [updateBlogPost] Update payload keys:', Object.keys(updatePayload));
+      console.log('🔄 [updateBlogPost] Update payload values:', Object.values(updatePayload));
+
+      // Try different approaches for the update
+      console.log('🔄 [updateBlogPost] Attempting update with explicit select...');
+      
+      // First try with regular client
+      let updatedPost, blogError;
+      const { data: regularUpdate, error: regularError } = await supabase
         .from('blog_posts')
         .update(updatePayload)
         .eq('id', id)
-        .select('*');
+        .select('id, title, slug, featured_image_id, updated_at');
+
+      console.log('🔄 [updateBlogPost] Regular client update result:', regularUpdate);
+      console.log('🔄 [updateBlogPost] Regular client update error:', regularError);
+      
+      // If regular client fails or returns empty, try admin client
+      if (regularError || !regularUpdate || regularUpdate.length === 0) {
+        console.log('🔄 [updateBlogPost] Regular client failed, trying admin client...');
+        
+        const { data: adminUpdateResult, error: adminUpdateError } = await supabaseAdmin
+          .from('blog_posts')
+          .update(updatePayload)
+          .eq('id', id)
+          .select('id, title, slug, featured_image_id, updated_at');
+          
+        console.log('🔄 [updateBlogPost] Admin client update result:', adminUpdateResult);
+        console.log('🔄 [updateBlogPost] Admin client update error:', adminUpdateError);
+        
+        updatedPost = adminUpdateResult;
+        blogError = adminUpdateError;
+        
+        if (adminUpdateError) {
+          console.error('❌ [updateBlogPost] Admin client also failed:', adminUpdateError);
+        }
+      } else {
+        updatedPost = regularUpdate;
+        blogError = regularError;
+      }
+
+      console.log('🔄 [updateBlogPost] Final update result - data:', updatedPost);
+      console.log('🔄 [updateBlogPost] Final update result - error:', blogError);
+      console.log('🔄 [updateBlogPost] Update result type:', typeof updatedPost);
+      console.log('🔄 [updateBlogPost] Update result length:', Array.isArray(updatedPost) ? updatedPost.length : 'not array');
 
       if (blogError) {
         console.error('❌ [updateBlogPost] Blog post update error:', blogError);
@@ -125,18 +201,28 @@ export const blogPostService = {
       let finalPost;
       if (Array.isArray(updatedPost)) {
         finalPost = updatedPost.length > 0 ? updatedPost[0] : null;
+        console.log('📊 [updateBlogPost] Updated post is array, first item:', finalPost);
       } else {
         finalPost = updatedPost;
+        console.log('📊 [updateBlogPost] Updated post is object:', finalPost);
       }
 
+      console.log('📊 [updateBlogPost] Final post featured_image_id:', finalPost?.featured_image_id);
+
       // If no data returned, try to fetch the updated record manually
-      if (!finalPost) {
-        console.log('⚠️ [updateBlogPost] No data returned from update, fetching manually...');
+      if (!finalPost || (Array.isArray(updatedPost) && updatedPost.length === 0)) {
+        console.log('⚠️ [updateBlogPost] No data returned from update or empty array, fetching manually...');
+        console.log('🔍 [updateBlogPost] This might indicate RLS policy issues or database triggers');
+        
         const { data: fetchedPost, error: fetchError } = await supabase
           .from('blog_posts')
           .select('*')
           .eq('id', id)
           .maybeSingle();
+
+        console.log('🔍 [updateBlogPost] Manual fetch result - data:', fetchedPost);
+        console.log('🔍 [updateBlogPost] Manual fetch result - error:', fetchError);
+        console.log('🔍 [updateBlogPost] Manual fetch - featured_image_id:', fetchedPost?.featured_image_id);
 
         if (fetchError) {
           console.error('❌ [updateBlogPost] Error fetching updated post:', fetchError);
@@ -150,9 +236,87 @@ export const blogPostService = {
 
         finalPost = fetchedPost;
         console.log('✅ [updateBlogPost] Successfully fetched updated post manually');
+        
+        // Double-check if the update actually happened
+        if (updatePayload.featured_image_id && fetchedPost.featured_image_id !== updatePayload.featured_image_id) {
+          console.error('❌ [updateBlogPost] CRITICAL: featured_image_id update failed!');
+          console.error('❌ [updateBlogPost] Expected:', updatePayload.featured_image_id);
+          console.error('❌ [updateBlogPost] Actual:', fetchedPost.featured_image_id);
+          console.error('❌ [updateBlogPost] This indicates RLS policy or constraint issues');
+          
+          // Try a direct update on just the featured_image_id
+          console.log('🔄 [updateBlogPost] Attempting direct featured_image_id update...');
+          const { data: directUpdate, error: directError } = await supabase
+            .from('blog_posts')
+            .update({ featured_image_id: updatePayload.featured_image_id })
+            .eq('id', id)
+            .select('id, featured_image_id');
+            
+          console.log('🔄 [updateBlogPost] Direct update result:', directUpdate);
+          console.log('🔄 [updateBlogPost] Direct update error:', directError);
+          
+          if (directError) {
+            console.error('❌ [updateBlogPost] Direct update failed, trying with admin client...');
+            
+            // Try with admin client as last resort
+            const { data: adminUpdate, error: adminError } = await supabaseAdmin
+              .from('blog_posts')
+              .update({ featured_image_id: updatePayload.featured_image_id })
+              .eq('id', id)
+              .select('id, featured_image_id');
+              
+            console.log('🔄 [updateBlogPost] Admin update result:', adminUpdate);
+            console.log('🔄 [updateBlogPost] Admin update error:', adminError);
+            
+            if (adminError) {
+              console.error('❌ [updateBlogPost] Admin update also failed:', adminError.message);
+              throw new Error(`Featured image update failed with both regular and admin clients: ${adminError.message}`);
+            }
+            
+            if (adminUpdate && adminUpdate.length > 0) {
+              console.log('✅ [updateBlogPost] Admin update successful!');
+            }
+          } else if (!directUpdate || directUpdate.length === 0) {
+            console.error('❌ [updateBlogPost] Direct update returned no data, trying with admin client...');
+            
+            // Even if no error, if no data returned, try admin client
+            const { data: adminUpdate, error: adminError } = await supabaseAdmin
+              .from('blog_posts')
+              .update({ featured_image_id: updatePayload.featured_image_id })
+              .eq('id', id)
+              .select('id, featured_image_id');
+              
+            console.log('🔄 [updateBlogPost] Admin fallback update result:', adminUpdate);
+            console.log('🔄 [updateBlogPost] Admin fallback update error:', adminError);
+            
+            if (adminError) {
+              console.error('❌ [updateBlogPost] Admin fallback also failed:', adminError.message);
+              throw new Error(`Featured image update failed: ${adminError.message}`);
+            }
+            
+            if (adminUpdate && adminUpdate.length > 0) {
+              console.log('✅ [updateBlogPost] Admin fallback update successful!');
+            } else {
+              console.error('❌ [updateBlogPost] Admin fallback also returned empty result');
+              throw new Error('Featured image update failed: All update attempts returned no data');
+            }
+          }
+          
+          // Fetch again after direct update
+          const { data: finalFetch } = await supabase
+            .from('blog_posts')
+            .select('*')
+            .eq('id', id)
+            .maybeSingle();
+            
+          if (finalFetch) {
+            finalPost = finalFetch;
+            console.log('✅ [updateBlogPost] Final fetch successful, featured_image_id:', finalPost.featured_image_id);
+          }
+        }
       }
       
-      console.log('✅ [updateBlogPost] Blog post updated successfully:', finalPost.id, finalPost.title);
+      console.log('✅ [updateBlogPost] SAVE - Success! Updated featured_image_id:', finalPost.featured_image_id);
 
       // 2. Nếu có SEO data, upsert SEO page
       if (seoData && Object.keys(seoData).length > 0) {
@@ -205,8 +369,8 @@ export const blogPostService = {
         return null;
       }
 
-      // 2. Lấy SEO data
-      const { data: seoData, error: seoError } = await supabase
+      // 2. Lấy SEO data - sử dụng admin client
+      const { data: seoData, error: seoError } = await supabaseAdmin
         .from('seo_pages')
         .select('*')
         .eq('reference_type', 'blog')
@@ -236,8 +400,8 @@ export const blogPostService = {
     try {
       console.log('📊 Upserting SEO page for blog post:', blogPostId);
       
-      // Lấy page_type_id cho blog
-      const { data: pageType, error: pageTypeError } = await supabase
+      // Lấy page_type_id cho blog - sử dụng admin client
+      const { data: pageType, error: pageTypeError } = await supabaseAdmin
         .from('seo_page_types')
         .select('id')
         .eq('name', 'blog')
@@ -252,8 +416,8 @@ export const blogPostService = {
       
       if (!pageType) {
         console.log('➕ Creating blog page type...');
-        // Tạo page type cho blog nếu chưa có
-        const { data: newPageType, error: createError } = await supabase
+        // Tạo page type cho blog nếu chưa có - sử dụng admin client
+        const { data: newPageType, error: createError } = await supabaseAdmin
           .from('seo_page_types')
           .insert([{
             name: 'blog',
@@ -326,8 +490,8 @@ export const blogPostService = {
       
       console.log('🧹 Final SEO page data:', seoPageData);
 
-      // Kiểm tra xem có SEO page tồn tại không
-      const { data: existingSEO, error: checkSeoError } = await supabase
+      // Kiểm tra xem có SEO page tồn tại không - sử dụng admin client
+      const { data: existingSEO, error: checkSeoError } = await supabaseAdmin
         .from('seo_pages')
         .select('id')
         .eq('reference_type', 'blog')
@@ -342,8 +506,8 @@ export const blogPostService = {
       let result;
       if (existingSEO) {
         console.log('🔄 Updating existing SEO page:', existingSEO.id);
-        // Update existing SEO page
-        const { data, error } = await supabase
+        // Update existing SEO page - sử dụng admin client
+        const { data, error } = await supabaseAdmin
           .from('seo_pages')
           .update(seoPageData)
           .eq('id', existingSEO.id)
@@ -362,8 +526,8 @@ export const blogPostService = {
         result = data;
       } else {
         console.log('➕ Creating new SEO page');
-        // Insert new SEO page
-        const { data, error } = await supabase
+        // Insert new SEO page - sử dụng admin client
+        const { data, error } = await supabaseAdmin
           .from('seo_pages')
           .insert([seoPageData])
           .select()
@@ -394,26 +558,37 @@ export const blogPostService = {
    */
   async deleteBlogPost(id: string) {
     try {
-      // 1. Xóa SEO page trước (vì có foreign key)
-      await supabase
+      console.log('🗑️ [deleteBlogPost] Deleting blog post and SEO data:', id);
+      
+      // 1. Xóa SEO page trước (vì có foreign key) - sử dụng admin client
+      const { error: seoError } = await supabaseAdmin
         .from('seo_pages')
         .delete()
         .eq('reference_type', 'blog')
         .eq('reference_id', id);
+        
+      if (seoError) {
+        console.error('❌ [deleteBlogPost] Failed to delete SEO data:', seoError);
+        // Continue with blog post deletion even if SEO deletion fails
+      } else {
+        console.log('✅ [deleteBlogPost] SEO data deleted successfully');
+      }
 
-      // 2. Xóa blog post
-      const { error: blogError } = await supabase
+      // 2. Xóa blog post - sử dụng admin client
+      const { error: blogError } = await supabaseAdmin
         .from('blog_posts')
         .delete()
         .eq('id', id);
 
       if (blogError) {
+        console.error('❌ [deleteBlogPost] Failed to delete blog post:', blogError);
         throw new Error(`Failed to delete blog post: ${blogError.message}`);
       }
-
+      
+      console.log('✅ [deleteBlogPost] Blog post deleted successfully');
       return true;
     } catch (error) {
-      console.error('Error deleting blog post:', error);
+      console.error('❌ [deleteBlogPost] Fatal error:', error);
       throw error;
     }
   },

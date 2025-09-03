@@ -158,15 +158,33 @@ export const dataProvider: DataProvider = {
   },
 
   create: async ({ resource, variables }) => {
+    console.log('📝 [dataProvider] CREATE called for resource:', resource);
+    console.log('📝 [dataProvider] Variables to create:', variables);
+    
     // Special handling for blog posts with SEO data
     if (resource === 'blog_posts') {
       try {
         const { seo_data, ...blogPostData } = variables;
+        console.log('📝 [dataProvider] CREATE - Blog post data:', blogPostData);
+        console.log('📊 [dataProvider] CREATE - SEO data:', seo_data);
+        
         const data = await blogPostService.createBlogPost(blogPostData, seo_data);
+        console.log('✅ [dataProvider] Blog post created successfully:', data);
         return { data };
       } catch (error) {
-        console.error('❌ Error creating blog post with SEO:', error);
-        throw new Error(error.message);
+        console.error('❌ [dataProvider] Error creating blog post with SEO:', error);
+        
+        // Provide more specific error messages
+        let errorMessage = 'Failed to create blog post';
+        if (error.message.includes('row-level security policy')) {
+          errorMessage = 'Permission denied - RLS policy blocking creation. Please check Supabase configuration.';
+        } else if (error.message.includes('violates')) {
+          errorMessage = 'Data validation failed - please check required fields';
+        } else {
+          errorMessage = error.message || 'Unknown error occurred';
+        }
+        
+        throw new Error(errorMessage);
       }
     }
 
@@ -221,7 +239,8 @@ export const dataProvider: DataProvider = {
     if (resource === 'blog_posts') {
       try {
         const { seo_data, ...blogPostData } = variables;
-        console.log('📝 [dataProvider] Blog post data:', blogPostData);
+        console.log('📝 [dataProvider] SAVE - Blog post data:', blogPostData);
+        console.log('📝 [dataProvider] SAVE - featured_image_id:', blogPostData.featured_image_id);
         console.log('📊 [dataProvider] SEO data:', seo_data);
         
         // Validate that we have an ID

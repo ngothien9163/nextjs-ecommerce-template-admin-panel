@@ -103,33 +103,53 @@ export const EnhancedSEOForm: React.FC<EnhancedSEOFormProps> = ({
     const excerpt = formValues?.excerpt || '';
     const slug = formValues?.slug || '';
     
-    // Generate smart meta keywords from title and content (minimum 3-5 keywords)
+    // Generate smart meta keywords from title and content (3-4 words or more per keyword)
     const titleWords = title.toLowerCase()
       .split(' ')
-      .filter((word: string) => word.length > 3)
-      .slice(0, 3);
-    
-    const contentWords = content.toLowerCase()
+      .filter((word: string) => word.length > 2)
+      .slice(0, 2);
+
+    // Extract meaningful phrases from content (3-4 words each)
+    const contentText = content.toLowerCase()
       .replace(/<[^>]*>/g, '') // Remove HTML tags
-      .split(/\s+/)
-      .filter((word: string) => word.length > 4)
-      .filter((word: string) => !titleWords.includes(word))
-      .slice(0, 4);
-    
-    // Additional smart keywords based on context
+      .replace(/[^\w\s]/g, ' ') // Remove punctuation
+      .replace(/\s+/g, ' ') // Normalize spaces
+      .trim();
+
+    // Create multi-word keywords from content
+    const contentPhrases: string[] = [];
+    const sentences = contentText.split(/[.!?]+/).filter((s: string) => s.trim().length > 10);
+
+    for (const sentence of sentences.slice(0, 3)) {
+      const words = sentence.trim().split(' ').filter((w: string) => w.length > 2);
+      if (words.length >= 3) {
+        // Create 3-4 word phrases
+        const phrase = words.slice(0, 4).join(' ');
+        if (phrase.length > 10) {
+          contentPhrases.push(phrase);
+        }
+      }
+    }
+
+    // Additional smart keywords based on context (multi-word)
     const contextKeywords = [
-      'blog', 'bài viết', 'tin tức', 'thông tin', 'hướng dẫn', 'kinh nghiệm'
-    ].filter(keyword => !titleWords.includes(keyword) && !contentWords.includes(keyword))
-    .slice(0, 2);
-    
-    // Combine and create keyword array - ensure comma separation
-    const allKeywords = [...titleWords, ...contentWords, ...contextKeywords]
-      .filter(word => word.length > 2)
+      'blog bài viết',
+      'tin tức công nghệ',
+      'thông tin hữu ích',
+      'hướng dẫn chi tiết',
+      'kinh nghiệm thực tế',
+      'website chất lượng'
+    ].filter((keyword: string) => !contentPhrases.some((phrase: string) => phrase.includes(keyword.split(' ')[0])))
+    .slice(0, 3);
+
+    // Combine and create keyword array
+    const allKeywords = [...titleWords, ...contentPhrases, ...contextKeywords]
+      .filter(keyword => keyword.length > 5) // Ensure meaningful length
       .slice(0, 6); // Maximum 6 keywords
-    
-    // Ensure minimum 4 keywords
-    const smartKeywords = allKeywords.length >= 4 ? allKeywords : 
-      [...allKeywords, 'blog', 'bài viết', 'website', 'nội dung'].slice(0, 6);
+
+    // Ensure minimum 4 keywords with meaningful multi-word terms
+    const smartKeywords = allKeywords.length >= 4 ? allKeywords :
+      [...allKeywords, 'blog bài viết', 'thông tin hữu ích', 'nội dung chất lượng', 'website uy tín'].slice(0, 6);
     
     // Generate URLs
     const baseUrl = window.location.origin;
@@ -248,7 +268,7 @@ export const EnhancedSEOForm: React.FC<EnhancedSEOFormProps> = ({
     }
     
     // Show success message
-    message.success(`Đã tạo thông tin SEO thông minh với ${smartKeywords.length} keywords!`);
+    message.success(`Đã tạo thông tin SEO thông minh với ${smartKeywords.length} keywords đa từ (3-4 từ mỗi keyword)!`);
   };
 
   const renderInfoIcon = (tooltip: string) => (
@@ -270,10 +290,9 @@ export const EnhancedSEOForm: React.FC<EnhancedSEOFormProps> = ({
         <Space>
           <GlobalOutlined style={{ color: '#1890ff' }} />
           <span>SEO Optimization cho {referenceType}</span>
-          <Button 
-            size="small" 
-            type="primary" 
-            ghost 
+          <Button
+            size="small"
+            type="primary"
             onClick={generateSmartSEOData}
             icon={<CheckCircleOutlined />}
           >
@@ -321,7 +340,7 @@ export const EnhancedSEOForm: React.FC<EnhancedSEOFormProps> = ({
           </Row>
 
           <Row gutter={[24, 16]}>
-            <Col span={12}>
+            <Col span={24}>
               <Form.Item
                 label={
                   <Space>
@@ -332,15 +351,17 @@ export const EnhancedSEOForm: React.FC<EnhancedSEOFormProps> = ({
                 name={['seo_data', 'page_title']}
                 rules={[{ required: true, message: 'Vui lòng nhập Meta Title!' }]}
               >
-                <Input 
-                  placeholder="Tiêu đề trang cho SEO (50-60 ký tự)" 
-                  maxLength={60} 
-                  showCount 
+                <Input
+                  placeholder="Tiêu đề trang cho SEO (50-60 ký tự)"
+                  maxLength={60}
+                  showCount
                   size="large"
                 />
               </Form.Item>
             </Col>
-            <Col span={12}>
+          </Row>
+          <Row gutter={[24, 16]}>
+            <Col span={24}>
               <Form.Item
                 label={
                   <Space>
@@ -351,11 +372,11 @@ export const EnhancedSEOForm: React.FC<EnhancedSEOFormProps> = ({
                 name={['seo_data', 'meta_description']}
                 rules={[{ required: true, message: 'Vui lòng nhập Meta Description!' }]}
               >
-                <TextArea 
-                  rows={3} 
-                  placeholder="Mô tả meta cho SEO (120-160 ký tự)" 
-                  maxLength={160} 
-                  showCount 
+                <TextArea
+                  rows={3}
+                  placeholder="Mô tả meta cho SEO (120-160 ký tự)"
+                  maxLength={160}
+                  showCount
                   size="large"
                 />
               </Form.Item>
@@ -363,31 +384,33 @@ export const EnhancedSEOForm: React.FC<EnhancedSEOFormProps> = ({
           </Row>
 
           <Row gutter={[24, 16]}>
-            <Col span={12}>
+            <Col span={24}>
               <Form.Item
                 label={
                   <Space>
                     <span>Meta Keywords</span>
-                    {renderInfoIcon('Từ khóa chính của bài viết (3-6 keywords), phân tách bằng dấu phẩy. Nhập và nhấn Enter để thêm keyword mới.')}
+                    {renderInfoIcon('Từ khóa chính của bài viết (3-6 keywords đa từ), phân tách bằng dấu phẩy. Mỗi keyword nên có 3-4 từ trở lên.')}
                   </Space>
                 }
                 name={['seo_data', 'meta_keywords']}
-                extra="Nhập từ khóa và nhấn Enter hoặc dấu phẩy để tạo tag mới"
+                extra="Nhập từ khóa đa từ (3-4 từ mỗi keyword) và nhấn dấu phẩy để tạo tag mới"
               >
                 <Select
                   mode="tags"
-                  placeholder="Nhập từ khóa SEO, nghăn cách bằng dấu phẩy hoặc Enter"
+                  placeholder="Nhập từ khóa SEO (3-4 từ mỗi keyword), ngăn cách bằng dấu phẩy"
                   style={{ width: '100%' }}
                   maxTagCount={6}
                   size="large"
-                  tokenSeparators={[',', ' ']} // Allow comma and space separation
+                  tokenSeparators={[',']} // Only comma separation for multi-word keywords
                   showSearch
                   filterOption={false}
                   notFoundContent={null}
                 />
               </Form.Item>
             </Col>
-            <Col span={12}>
+          </Row>
+          <Row gutter={[24, 16]}>
+            <Col span={24}>
               <Form.Item
                 label={
                   <Space>
@@ -397,8 +420,8 @@ export const EnhancedSEOForm: React.FC<EnhancedSEOFormProps> = ({
                 }
                 name={['seo_data', 'canonical_url']}
               >
-                <Input 
-                  placeholder="https://example.com/blog/bai-viet" 
+                <Input
+                  placeholder="https://example.com/blog/bai-viet"
                   size="large"
                 />
               </Form.Item>
@@ -471,7 +494,7 @@ export const EnhancedSEOForm: React.FC<EnhancedSEOFormProps> = ({
           key="social"
         >
           <Row gutter={[24, 16]}>
-            <Col span={12}>
+            <Col span={24}>
               <Form.Item
                 label={
                   <Space>
@@ -481,15 +504,17 @@ export const EnhancedSEOForm: React.FC<EnhancedSEOFormProps> = ({
                 }
                 name={['seo_data', 'og_title']}
               >
-                <Input 
-                  placeholder="Tiêu đề cho Open Graph" 
-                  maxLength={95} 
-                  showCount 
+                <Input
+                  placeholder="Tiêu đề cho Open Graph"
+                  maxLength={95}
+                  showCount
                   size="large"
                 />
               </Form.Item>
             </Col>
-            <Col span={12}>
+          </Row>
+          <Row gutter={[24, 16]}>
+            <Col span={24}>
               <Form.Item
                 label={
                   <Space>
@@ -499,11 +524,11 @@ export const EnhancedSEOForm: React.FC<EnhancedSEOFormProps> = ({
                 }
                 name={['seo_data', 'og_description']}
               >
-                <TextArea 
-                  rows={2} 
-                  placeholder="Mô tả cho Open Graph" 
-                  maxLength={300} 
-                  showCount 
+                <TextArea
+                  rows={2}
+                  placeholder="Mô tả cho Open Graph"
+                  maxLength={300}
+                  showCount
                   size="large"
                 />
               </Form.Item>
@@ -511,7 +536,7 @@ export const EnhancedSEOForm: React.FC<EnhancedSEOFormProps> = ({
           </Row>
 
           <Row gutter={[24, 16]}>
-            <Col span={12}>
+            <Col span={24}>
               <Form.Item
                 label={
                   <Space>
@@ -521,13 +546,15 @@ export const EnhancedSEOForm: React.FC<EnhancedSEOFormProps> = ({
                 }
                 name={['seo_data', 'og_image']}
               >
-                <Input 
-                  placeholder="https://example.com/image.jpg" 
+                <Input
+                  placeholder="https://example.com/image.jpg"
                   size="large"
                 />
               </Form.Item>
             </Col>
-            <Col span={12}>
+          </Row>
+          <Row gutter={[24, 16]}>
+            <Col span={24}>
               <Form.Item
                 label={
                   <Space>
@@ -548,7 +575,7 @@ export const EnhancedSEOForm: React.FC<EnhancedSEOFormProps> = ({
           </Row>
 
           <Row gutter={[24, 16]}>
-            <Col span={12}>
+            <Col span={24}>
               <Form.Item
                 label={
                   <Space>
@@ -566,7 +593,9 @@ export const EnhancedSEOForm: React.FC<EnhancedSEOFormProps> = ({
                 </Select>
               </Form.Item>
             </Col>
-            <Col span={12}>
+          </Row>
+          <Row gutter={[24, 16]}>
+            <Col span={24}>
               <Form.Item
                 label={
                   <Space>
@@ -576,10 +605,10 @@ export const EnhancedSEOForm: React.FC<EnhancedSEOFormProps> = ({
                 }
                 name={['seo_data', 'twitter_title']}
               >
-                <Input 
-                  placeholder="Tiêu đề cho Twitter" 
-                  maxLength={70} 
-                  showCount 
+                <Input
+                  placeholder="Tiêu đề cho Twitter"
+                  maxLength={70}
+                  showCount
                   size="large"
                 />
               </Form.Item>
