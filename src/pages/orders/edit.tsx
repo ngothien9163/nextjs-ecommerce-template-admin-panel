@@ -2,6 +2,15 @@ import React from "react";
 import { Edit, useForm } from "@refinedev/antd";
 import { Form, Input, Select, InputNumber, DatePicker, Space } from "antd";
 import { useSelect } from "@refinedev/antd";
+import dayjs from 'dayjs';
+import 'dayjs/locale/vi';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+// Configure dayjs
+dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.locale('vi');
 
 const { TextArea } = Input;
 
@@ -161,6 +170,14 @@ export const OrderEdit: React.FC = () => {
             style={{ width: "100%" }}
             placeholder="Chọn ngày đặt hàng"
             showTime
+            getValueFromEvent={(value) => {
+              return value ? dayjs(value).toISOString() : null;
+            }}
+            getValueProps={(value) => {
+              return {
+                value: value ? dayjs(value) : null
+              };
+            }}
           />
         </Form.Item>
 
@@ -172,6 +189,14 @@ export const OrderEdit: React.FC = () => {
             style={{ width: "100%" }}
             placeholder="Chọn ngày giao hàng dự kiến"
             showTime
+            getValueFromEvent={(value) => {
+              return value ? dayjs(value).toISOString() : null;
+            }}
+            getValueProps={(value) => {
+              return {
+                value: value ? dayjs(value) : null
+              };
+            }}
           />
         </Form.Item>
       </Form>

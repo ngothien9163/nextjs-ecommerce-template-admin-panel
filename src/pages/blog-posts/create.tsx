@@ -2,9 +2,18 @@ import React from 'react';
 import { Create, useForm, useSelect } from '@refinedev/antd';
 import { BlogPost, BlogCategory, Profile } from '../../lib/supabase';
 import { BlogPostForm } from '../../components/blog-post-form';
+import { blogPostService } from '../../lib/blog-post-service';
+import { message } from 'antd';
 
 export const BlogPostCreate: React.FC = () => {
-  const { formProps, saveButtonProps } = useForm<BlogPost>();
+  const { formProps, saveButtonProps } = useForm<BlogPost>({
+    onMutationSuccess: (data) => {
+      message.success('Tạo bài viết thành công!');
+    },
+    onMutationError: (error) => {
+      message.error(`Lỗi tạo bài viết: ${error.message}`);
+    }
+  });
   const { selectProps: categorySelectProps } = useSelect<BlogCategory>({
     resource: 'blog_categories',
     optionLabel: 'name',

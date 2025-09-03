@@ -114,7 +114,7 @@ function App() {
                 },
               },
               {
-                name: "blog-posts",
+                name: "blog_posts",
                 list: "/blog-posts",
                 create: "/blog-posts/create",
                 edit: "/blog-posts/edit/:id",
@@ -125,7 +125,7 @@ function App() {
                 },
               },
               {
-                name: "blog-categories",
+                name: "blog_categories",
                 list: "/blog-categories",
                 create: "/blog-categories/create",
                 edit: "/blog-categories/edit/:id",
@@ -158,7 +158,7 @@ function App() {
                 },
               },
               {
-                name: "product-variants",
+                name: "product_variants",
                 list: "/product-variants",
                 create: "/product-variants/create",
                 edit: "/product-variants/edit/:id",

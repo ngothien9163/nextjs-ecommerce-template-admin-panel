@@ -39,6 +39,15 @@ import {
   type CloudinaryUsage,
   type CloudinaryResource,
 } from '../../lib/cloudinary-usage';
+import dayjs from 'dayjs';
+import 'dayjs/locale/vi';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+// Configure dayjs
+dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.locale('vi');
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;

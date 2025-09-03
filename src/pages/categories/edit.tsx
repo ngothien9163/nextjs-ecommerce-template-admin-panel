@@ -14,6 +14,10 @@ export const CategoryEdit: React.FC = () => {
     },
     onMutationError: (error) => {
       console.error('❌ Error updating category:', error);
+      // Show user-friendly error message
+      if (error.message.includes('PGRST116')) {
+        console.error('❌ PGRST116 Error: Record not found or permission denied');
+      }
     },
   });
   const { selectProps: parentCategorySelectProps } = useSelect<Category>({
@@ -38,6 +42,7 @@ export const CategoryEdit: React.FC = () => {
   // Custom form handler để xử lý dữ liệu
   const handleFormSubmit = (values: any) => {
     console.log('🔄 Form submit values:', values);
+    console.log('🔄 Current record ID:', queryResult?.data?.data?.id);
     
     // Đảm bảo featured_image_id là string hoặc null
     let featuredImageId = values.featured_image_id;
@@ -76,6 +81,7 @@ export const CategoryEdit: React.FC = () => {
     };
     
     console.log('✅ Cleaned values:', cleanedValues);
+    console.log('🔄 Will update record with ID:', queryResult?.data?.data?.id);
     
     // Gọi formProps.onFinish với dữ liệu đã xử lý
     if (formProps.onFinish) {

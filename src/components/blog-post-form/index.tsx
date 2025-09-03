@@ -1,8 +1,21 @@
-import React, { useEffect } from 'react';
-import { Form, Input, Select, Switch, InputNumber, Card, Row, Col, Typography, Space, Tooltip, Collapse, DatePicker } from 'antd';
-import { InfoCircleOutlined, FileTextOutlined, EditOutlined, UserOutlined, PictureOutlined, SettingOutlined, CalendarOutlined } from '@ant-design/icons';
+import React, { useEffect, useState } from 'react';
+import { Form, Input, Select, Switch, InputNumber, Card, Row, Col, Typography, Space, Tooltip, Collapse, DatePicker, Button, Image, Dropdown, Upload, message } from 'antd';
+import { InfoCircleOutlined, FileTextOutlined, EditOutlined, UserOutlined, PictureOutlined, SettingOutlined, CalendarOutlined, EyeOutlined, SwapOutlined, DeleteOutlined, UploadOutlined, MoreOutlined } from '@ant-design/icons';
 import MDEditor from '@uiw/react-md-editor';
-import { SEOForm } from '../seo-form';
+import { EnhancedSEOForm } from '../enhanced-seo-form';
+import { EnhancedImageSelector } from '../enhanced-image-selector';
+import { supabase, supabaseUrl } from '../../lib/supabase';
+import type { MediaItem } from '../../lib/supabase';
+import dayjs from 'dayjs';
+import 'dayjs/locale/vi';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+import '../../styles/blog-posts-enhanced.css';
+
+// Configure dayjs
+dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.locale('vi');
 
 const { TextArea } = Input;
 const { Title } = Typography;
@@ -13,14 +26,98 @@ interface BlogPostFormProps {
   isEdit?: boolean;
   categorySelectProps?: any;
   authorSelectProps?: any;
+  initialData?: any;
 }
 
 export const BlogPostForm: React.FC<BlogPostFormProps> = ({ 
   form, 
   isEdit = false, 
   categorySelectProps,
-  authorSelectProps
+  authorSelectProps,
+  initialData
 }) => {
+  const [featuredImage, setFeaturedImage] = useState<MediaItem | null>(null);
+  const [imageModalVisible, setImageModalVisible] = useState(false);
+  const [pageUrl, setPageUrl] = useState('');
+
+  // Load featured image data
+  useEffect(() => {
+    const imageId = form?.form?.getFieldValue('featured_image_id') || initialData?.featured_image_id;
+    if (imageId) {
+      loadFeaturedImage(imageId);
+    }
+  }, [initialData]);
+
+  // Generate slug and page URL from title
+  const generateSlugFromTitle = (title: string) => {
+    return title
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
+      .replace(/đ/g, 'd')
+      .replace(/[^a-z0-9\s-]/g, '') // Remove special characters except spaces and hyphens
+      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
+      .trim()
+      .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
+  };
+
+  // Update slug and page URL when title changes
+  const handleTitleChange = (e: any) => {
+    const title = e.target.value;
+    if (title) { // Generate for both new and edit
+      const generatedSlug = generateSlugFromTitle(title);
+      // Only auto-set if slug is empty or matches old title pattern
+      const currentSlug = form?.form?.getFieldValue('slug');
+      if (!currentSlug || !isEdit) {
+        form?.form?.setFieldsValue({ slug: generatedSlug });
+        setPageUrl(`/blog/${generatedSlug}`);
+      }
+    }
+  };
+
+  // Update page URL when slug changes
+  const handleSlugChange = (e: any) => {
+    const slug = e.target.value;
+    setPageUrl(`/blog/${slug}`);
+  };
+
+  // Generate page URL from initial slug
+  useEffect(() => {
+    const slug = form?.form?.getFieldValue('slug') || initialData?.slug;
+    if (slug) {
+      setPageUrl(`/blog/${slug}`);
+    }
+  }, [initialData]);
+  const loadFeaturedImage = async (imageId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('media')
+        .select('*')
+        .eq('id', imageId)
+        .single();
+      
+      if (data) {
+        setFeaturedImage(data);
+      }
+    } catch (error) {
+      console.error('Error loading featured image:', error);
+    }
+  };
+
+  const handleImageSelect = (imageId: string, imageData: MediaItem) => {
+    setFeaturedImage(imageData);
+    form?.form?.setFieldsValue({ featured_image_id: imageId });
+    setImageModalVisible(false);
+  };
+
+  const getImageUrl = (image: MediaItem) => {
+    if (image.file_path) {
+      return `${supabaseUrl}/storage/v1/object/public/media/${image.file_path}`;
+    }
+    return image.file_url || '/placeholder-image.jpg';
+  };
+
   // Force all input fields to be full width
   useEffect(() => {
     const forceFullWidth = () => {
@@ -51,7 +148,8 @@ export const BlogPostForm: React.FC<BlogPostFormProps> = ({
   );
 
   return (
-    <Form {...form}>
+    <div className="blog-post-form">
+      <Form {...form}>
       <Collapse 
         defaultActiveKey={['basic', 'content', 'category', 'media', 'settings', 'schedule']} 
         ghost
@@ -82,7 +180,12 @@ export const BlogPostForm: React.FC<BlogPostFormProps> = ({
                   name="title"
                   rules={[{ required: true, message: 'Vui lòng nhập tiêu đề bài viết!' }]}
                 >
-                  <Input placeholder="Nhập tiêu đề bài viết" size="large" style={{ width: '100%' }} />
+                  <Input 
+                    placeholder="Nhập tiêu đề bài viết" 
+                    size="large" 
+                    style={{ width: '100%' }} 
+                    onChange={handleTitleChange}
+                  />
                 </Form.Item>
               </Col>
               <Col span={12}>
@@ -90,13 +193,37 @@ export const BlogPostForm: React.FC<BlogPostFormProps> = ({
                   label={
                     <Space>
                       <span>Slug</span>
-                      {renderInfoIcon('URL thân thiện SEO, tự động tạo từ tiêu đề bài viết')}
+                      {renderInfoIcon('URL thân thiện SEO, tự động tạo từ tiêu đề bài viết. Bạn có thể chỉnh sửa nếu cần.')}
+                      <Button 
+                        size="small" 
+                        type="link" 
+                        onClick={() => {
+                          const title = form?.form?.getFieldValue('title');
+                          if (title) {
+                            const generatedSlug = generateSlugFromTitle(title);
+                            form?.form?.setFieldsValue({ slug: generatedSlug });
+                            setPageUrl(`/blog/${generatedSlug}`);
+                          }
+                        }}
+                      >
+                        Tạo lại từ tiêu đề
+                      </Button>
                     </Space>
                   }
                   name="slug"
                   rules={[{ required: true, message: 'Vui lòng nhập slug!' }]}
+                  extra={pageUrl && (
+                    <span style={{ color: '#666', fontSize: '12px' }}>
+                      URL trang: <code>{window.location.origin}{pageUrl}</code>
+                    </span>
+                  )}
                 >
-                  <Input placeholder="tieu-de-bai-viet" size="large" style={{ width: '100%' }} />
+                  <Input 
+                    placeholder="tieu-de-bai-viet" 
+                    size="large" 
+                    style={{ width: '100%' }} 
+                    onChange={handleSlugChange}
+                  />
                 </Form.Item>
               </Col>
             </Row>
@@ -201,12 +328,12 @@ export const BlogPostForm: React.FC<BlogPostFormProps> = ({
           </Card>
         </Panel>
 
-        {/* Hình ảnh & Cài đặt */}
+        {/* Hình ảnh & Media */}
         <Panel 
           header={
             <Space>
               <PictureOutlined style={{ color: '#fa8c16' }} />
-              <span>Hình ảnh & Cài đặt</span>
+              <span>Hình ảnh & Media</span>
             </Space>
           } 
           key="media"
@@ -218,13 +345,238 @@ export const BlogPostForm: React.FC<BlogPostFormProps> = ({
                 <Form.Item
                   label={
                     <Space>
-                      <span>Ảnh đại diện ID</span>
-                      {renderInfoIcon('ID của ảnh chính từ bảng media, ảnh này sẽ hiển thị đầu tiên')}
+                      <span>Ảnh đại diện</span>
+                      {renderInfoIcon('Ảnh chính hiển thị cho bài viết trên danh sách và trang chi tiết')}
                     </Space>
                   }
                   name="featured_image_id"
                 >
-                  <Input placeholder="Nhập ID ảnh từ media table" size="large" style={{ width: '100%' }} />
+                  <div className="featured-image-selector">
+                    {featuredImage ? (
+                      <div className="selected-image-preview">
+                        <div className="image-container" style={{ position: 'relative' }}>
+                          <Image
+                            src={getImageUrl(featuredImage)}
+                            alt={featuredImage.alt_text || featuredImage.file_name}
+                            style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '6px' }}
+                          />
+                          
+                          {/* Overlay với các action buttons */}
+                          <div className="image-overlay" style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            background: 'rgba(0,0,0,0.3)',
+                            borderRadius: '6px',
+                            opacity: 0,
+                            transition: 'opacity 0.3s ease',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }} 
+                          onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+                          onMouseLeave={(e) => e.currentTarget.style.opacity = '0'}
+                          >
+                            <Space size="middle">
+                              <Button 
+                                type="primary"
+                                icon={<SwapOutlined />}
+                                onClick={() => setImageModalVisible(true)}
+                                style={{ background: 'rgba(255,255,255,0.9)', border: 'none', color: '#1890ff' }}
+                              >
+                                Đổi ảnh
+                              </Button>
+                              <Button 
+                                icon={<EyeOutlined />}
+                                onClick={() => {
+                                  Image.PreviewGroup.previewInstance.close();
+                                  setTimeout(() => {
+                                    const preview = new Image();
+                                    preview.src = getImageUrl(featuredImage);
+                                    preview.style.display = 'none';
+                                    document.body.appendChild(preview);
+                                    preview.click();
+                                    document.body.removeChild(preview);
+                                  }, 100);
+                                }}
+                                style={{ background: 'rgba(255,255,255,0.9)', border: 'none' }}
+                              >
+                                Xem
+                              </Button>
+                              <Button 
+                                danger
+                                icon={<DeleteOutlined />}
+                                onClick={() => {
+                                  setFeaturedImage(null);
+                                  form?.form?.setFieldsValue({ featured_image_id: undefined });
+                                  message.success('Đã xóa ảnh đại diện');
+                                }}
+                                style={{ background: 'rgba(255,255,255,0.9)', border: 'none', color: '#ff4d4f' }}
+                              >
+                                Xóa
+                              </Button>
+                            </Space>
+                          </div>
+                        </div>
+                        
+                        {/* Action buttons bên dưới */}
+                        <div className="image-actions" style={{ marginTop: '12px' }}>
+                          <Row gutter={8}>
+                            <Col span={12}>
+                              <Button 
+                                block
+                                icon={<SwapOutlined />} 
+                                onClick={() => setImageModalVisible(true)}
+                                type="default"
+                              >
+                                Thay đổi ảnh
+                              </Button>
+                            </Col>
+                            <Col span={6}>
+                              <Button 
+                                block
+                                icon={<EyeOutlined />}
+                                onClick={() => {
+                                  // Mở preview ảnh
+                                  const img = new Image();
+                                  img.src = getImageUrl(featuredImage);
+                                  img.onload = () => {
+                                    const newWindow = window.open('', '_blank');
+                                    newWindow?.document.write(`
+                                      <html>
+                                        <head><title>Preview: ${featuredImage.file_name}</title></head>
+                                        <body style="margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#000;">
+                                          <img src="${getImageUrl(featuredImage)}" style="max-width:100%;max-height:100vh;object-fit:contain;" />
+                                        </body>
+                                      </html>
+                                    `);
+                                  };
+                                }}
+                              >
+                                Xem
+                              </Button>
+                            </Col>
+                            <Col span={6}>
+                              <Dropdown
+                                menu={{
+                                  items: [
+                                    {
+                                      key: 'info',
+                                      label: 'Thông tin ảnh',
+                                      icon: <InfoCircleOutlined />,
+                                      onClick: () => {
+                                        message.info(`
+                                          Tên file: ${featuredImage.file_name}\n
+                                          Kích thước: ${featuredImage.width}x${featuredImage.height}px\n
+                                          Dung lượng: ${featuredImage.file_size ? Math.round(featuredImage.file_size / 1024) + ' KB' : 'N/A'}
+                                        `);
+                                      }
+                                    },
+                                    {
+                                      key: 'upload',
+                                      label: 'Tải ảnh mới',
+                                      icon: <UploadOutlined />,
+                                      onClick: () => window.open('/media/create', '_blank')
+                                    },
+                                    {
+                                      type: 'divider'
+                                    },
+                                    {
+                                      key: 'remove',
+                                      label: 'Xóa ảnh đại diện',
+                                      icon: <DeleteOutlined />,
+                                      danger: true,
+                                      onClick: () => {
+                                        setFeaturedImage(null);
+                                        form?.form?.setFieldsValue({ featured_image_id: undefined });
+                                        message.success('Đã xóa ảnh đại diện');
+                                      }
+                                    }
+                                  ]
+                                }}
+                                placement="bottomRight"
+                              >
+                                <Button 
+                                  block
+                                  icon={<MoreOutlined />}
+                                >
+                                  Khác
+                                </Button>
+                              </Dropdown>
+                            </Col>
+                          </Row>
+                        </div>
+                        
+                        {/* Thông tin ảnh */}
+                        <div style={{ marginTop: '8px', padding: '8px', background: '#f5f5f5', borderRadius: '4px' }}>
+                          <Typography.Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>
+                            📁 {featuredImage.file_name}
+                          </Typography.Text>
+                          <Typography.Text type="secondary" style={{ fontSize: '11px', display: 'block' }}>
+                            📐 {featuredImage.width}x{featuredImage.height}px
+                            {featuredImage.file_size && ` • 💾 ${Math.round(featuredImage.file_size / 1024)} KB`}
+                          </Typography.Text>
+                          {featuredImage.alt_text && (
+                            <Typography.Text type="secondary" style={{ fontSize: '11px', display: 'block' }}>
+                              🏷️ {featuredImage.alt_text}
+                            </Typography.Text>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="image-placeholder-selector">
+                        <Card 
+                          hoverable
+                          style={{ 
+                            height: '160px', 
+                            display: 'flex', 
+                            flexDirection: 'column',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            border: '2px dashed #d9d9d9',
+                            background: '#fafafa'
+                          }}
+                          bodyStyle={{ 
+                            display: 'flex', 
+                            flexDirection: 'column', 
+                            justifyContent: 'center', 
+                            alignItems: 'center',
+                            height: '100%',
+                            padding: '20px'
+                          }}
+                          onClick={() => setImageModalVisible(true)}
+                        >
+                          <PictureOutlined style={{ fontSize: '48px', color: '#d9d9d9', marginBottom: '16px' }} />
+                          <Typography.Text type="secondary" style={{ textAlign: 'center', marginBottom: '12px' }}>
+                            Chọn ảnh đại diện cho bài viết
+                          </Typography.Text>
+                          <Space>
+                            <Button 
+                              type="primary"
+                              icon={<PictureOutlined />}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setImageModalVisible(true);
+                              }}
+                            >
+                              Chọn từ thư viện
+                            </Button>
+                            <Button 
+                              icon={<UploadOutlined />}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.open('/media/create', '_blank');
+                              }}
+                            >
+                              Tải lên mới
+                            </Button>
+                          </Space>
+                        </Card>
+                      </div>
+                    )}
+                  </div>
                 </Form.Item>
               </Col>
               <Col span={12}>
@@ -242,6 +594,24 @@ export const BlogPostForm: React.FC<BlogPostFormProps> = ({
                     placeholder="5" 
                     min={1} 
                     size="large" 
+                  />
+                </Form.Item>
+                
+                <Form.Item
+                  label={
+                    <Space>
+                      <span>Lượt xem</span>
+                      {renderInfoIcon('Số lượt xem bài viết, được cập nhật tự động')}
+                    </Space>
+                  }
+                  name="view_count"
+                >
+                  <InputNumber 
+                    style={{ width: '100%' }} 
+                    placeholder="0" 
+                    min={0} 
+                    size="large"
+                    disabled={!isEdit}
                   />
                 </Form.Item>
               </Col>
@@ -308,20 +678,6 @@ export const BlogPostForm: React.FC<BlogPostFormProps> = ({
                   <Switch />
                 </Form.Item>
               </Col>
-              <Col span={6}>
-                <Form.Item
-                  label={
-                    <Space>
-                      <span>Được index</span>
-                      {renderInfoIcon('Cho phép Google và các công cụ tìm kiếm index trang bài viết')}
-                    </Space>
-                  }
-                  name={['seo_data', 'is_indexed']}
-                  valuePropName="checked"
-                >
-                  <Switch />
-                </Form.Item>
-              </Col>
             </Row>
           </Card>
         </Panel>
@@ -346,21 +702,60 @@ export const BlogPostForm: React.FC<BlogPostFormProps> = ({
                 </Space>
               }
               name="published_at"
+              getValueFromEvent={(value) => {
+                // Convert dayjs object to ISO string for database
+                return value ? dayjs(value).toISOString() : null;
+              }}
+              getValueProps={(value) => {
+                // Convert ISO string from database to dayjs object for DatePicker
+                return {
+                  value: value ? dayjs(value) : null
+                };
+              }}
             >
               <DatePicker 
                 showTime 
                 placeholder="Chọn thời gian xuất bản" 
                 style={{ width: '100%' }} 
                 size="large"
+                format="DD/MM/YYYY HH:mm:ss"
               />
             </Form.Item>
           </Card>
         </Panel>
       </Collapse>
 
-      {/* Thông tin SEO */}
-      <SEOForm form={form} isEdit={isEdit} />
-    </Form>
+      {/* Enhanced SEO Form */}
+      <EnhancedSEOForm
+        form={form}
+        isEdit={isEdit}
+        referenceType="blog"
+        referenceId={initialData?.id}
+        pageUrl={pageUrl}
+        onSEODataChange={(seoData) => {
+          // Auto-sync page URL to SEO form
+          if (pageUrl && seoData) {
+            form?.form?.setFieldsValue({
+              seo_data: {
+                ...seoData,
+                page_url: pageUrl
+              }
+            });
+          }
+        }}
+      />
+
+      {/* Enhanced Image Selector Modal */}
+      <EnhancedImageSelector
+        visible={imageModalVisible}
+        onClose={() => setImageModalVisible(false)}
+        onSelect={handleImageSelect}
+        selectedImageId={featuredImage?.id}
+        title="Chọn ảnh đại diện cho bài viết"
+        contextType="blog"
+      />
+      </Form>
+    </div>
   );
 };
 

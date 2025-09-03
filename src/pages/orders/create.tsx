@@ -1,6 +1,14 @@
-import { Create, useForm } from "@refinedev/antd";
 import { Form, Input, Select, InputNumber, DatePicker, Space } from "antd";
-import { useSelect } from "@refinedev/antd";
+import { Create, useForm, useSelect } from "@refinedev/antd";
+import dayjs from 'dayjs';
+import 'dayjs/locale/vi';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+// Configure dayjs
+dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.locale('vi');
 
 export const OrderCreate = () => {
   const { formProps, saveButtonProps } = useForm();
@@ -65,7 +73,17 @@ export const OrderCreate = () => {
             name="order_date"
             rules={[{ required: true, message: "Vui lòng chọn ngày đặt hàng!" }]}
           >
-            <DatePicker style={{ width: "100%" }} />
+            <DatePicker 
+              style={{ width: "100%" }}
+              getValueFromEvent={(value) => {
+                return value ? dayjs(value).toISOString() : null;
+              }}
+              getValueProps={(value) => {
+                return {
+                  value: value ? dayjs(value) : null
+                };
+              }}
+            />
           </Form.Item>
 
           <Form.Item
@@ -134,7 +152,17 @@ export const OrderCreate = () => {
           </Form.Item>
 
           <Form.Item label="Ngày dự kiến giao hàng" name="estimated_delivery">
-            <DatePicker style={{ width: "100%" }} />
+            <DatePicker 
+              style={{ width: "100%" }}
+              getValueFromEvent={(value) => {
+                return value ? dayjs(value).toISOString() : null;
+              }}
+              getValueProps={(value) => {
+                return {
+                  value: value ? dayjs(value) : null
+                };
+              }}
+            />
           </Form.Item>
 
           <Form.Item label="Ghi chú" name="notes">

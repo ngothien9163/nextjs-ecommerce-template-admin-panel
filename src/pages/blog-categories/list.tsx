@@ -27,7 +27,21 @@ export const BlogCategoryList: React.FC = () => {
       dataIndex: 'description',
       key: 'description',
       width: 300,
-      render: (value: string) => value || '-',
+      render: (value: string) => (
+        value ? (
+          <span style={{ 
+            display: 'block',
+            maxWidth: '200px',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}>
+            {value}
+          </span>
+        ) : (
+          <span style={{ color: '#ccc', fontStyle: 'italic' }}>Không có mô tả</span>
+        )
+      ),
     },
     {
       title: 'Màu sắc',
@@ -54,19 +68,20 @@ export const BlogCategoryList: React.FC = () => {
       dataIndex: 'sort_order',
       key: 'sort_order',
       width: 80,
-      render: (value: number) => value || 0,
+      render: (value: number) => (
+        <Tag color="purple">{value || 0}</Tag>
+      ),
+      sorter: (a: any, b: any) => a.sort_order - b.sort_order,
     },
     {
       title: 'Trạng thái',
       dataIndex: 'is_active',
       key: 'is_active',
-      width: 100,
+      width: 120,
       render: (value: boolean) => (
-        <Switch
-          checked={value}
-          size="small"
-          disabled
-        />
+        <Tag color={value ? 'green' : 'red'}>
+          {value ? '🟢 Hoạt động' : '🔴 Không hoạt động'}
+        </Tag>
       ),
     },
     {
@@ -79,7 +94,7 @@ export const BlogCategoryList: React.FC = () => {
           <EditButton hideText size="small" recordItemId={record.id} />
           <CustomDeleteButton 
             recordItemId={record.id} 
-            resource="blog-categories"
+            resource="blog_categories"
             size="small"
             hideText
           />

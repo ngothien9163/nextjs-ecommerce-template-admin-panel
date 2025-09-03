@@ -1,5 +1,8 @@
 import { DataProvider } from '@refinedev/core';
+import { DataProvider } from '@refinedev/core';
 import { supabase } from './supabase';
+import { supabaseAdmin } from './supabase-admin';
+import { blogPostService } from './blog-post-service';
 
 export const dataProvider: DataProvider = {
   getList: async ({ resource, pagination, filters, sorters }) => {
@@ -97,8 +100,8 @@ export const dataProvider: DataProvider = {
     
     let query;
     
-    // Use admin client for media to bypass RLS issues
-    const client = supabase;
+    // Use admin client for categories and media to bypass RLS issues
+    const client = (resource === 'categories' || resource === 'media') ? supabaseAdmin : supabase;
     
     // Special handling for products to include category information
     if (resource === 'products') {
@@ -116,19 +119,19 @@ export const dataProvider: DataProvider = {
         .eq('id', id)
         .single();
     } else if (resource === 'blog_posts') {
-      query = client
-        .from(resource)
-        .select(`
-          *,
-          blog_categories (
-            id,
-            name,
-            slug,
-            is_active
-          )
-        `)
-        .eq('id', id)
-        .single();
+      // Use blog service to get blog post with SEO data
+      try {
+        const data = await blogPostService.getBlogPostWithSEO(id);
+        if (!data) {
+          throw new Error('Blog post not found');
+        }
+        console.log(`✅ Successfully fetched blog post with SEO data for ID: ${id}`);
+        console.log('📅 Data:', data);
+        return { data };
+      } catch (error) {
+        console.error('❌ Error fetching blog post with SEO:', error);
+        throw new Error(error.message);
+      }
     } else {
       query = client
         .from(resource)
@@ -155,6 +158,18 @@ export const dataProvider: DataProvider = {
   },
 
   create: async ({ resource, variables }) => {
+    // Special handling for blog posts with SEO data
+    if (resource === 'blog_posts') {
+      try {
+        const { seo_data, ...blogPostData } = variables;
+        const data = await blogPostService.createBlogPost(blogPostData, seo_data);
+        return { data };
+      } catch (error) {
+        console.error('❌ Error creating blog post with SEO:', error);
+        throw new Error(error.message);
+      }
+    }
+
     // Use admin client for media to bypass RLS issues
     const client = supabase;
     
@@ -199,8 +214,47 @@ export const dataProvider: DataProvider = {
   },
 
   update: async ({ resource, id, variables }) => {
-    // Use admin client for media to bypass RLS issues
-    const client = supabase;
+    console.log('🔄 [dataProvider] UPDATE called for resource:', resource, 'with ID:', id);
+    console.log('📝 [dataProvider] Variables to update:', variables);
+    
+    // Special handling for blog posts with SEO data
+    if (resource === 'blog_posts') {
+      try {
+        const { seo_data, ...blogPostData } = variables;
+        console.log('📝 [dataProvider] Blog post data:', blogPostData);
+        console.log('📊 [dataProvider] SEO data:', seo_data);
+        
+        // Validate that we have an ID
+        if (!id || id === 'undefined' || id === 'null') {
+          console.error('❌ [dataProvider] Invalid blog post ID:', id);
+          throw new Error('Invalid blog post ID provided');
+        }
+        
+        console.log('🚀 [dataProvider] Calling blogPostService.updateBlogPost...');
+        const data = await blogPostService.updateBlogPost(id, blogPostData, seo_data);
+        console.log('✅ [dataProvider] Blog post updated successfully:', data);
+        return { data };
+      } catch (error) {
+        console.error('❌ [dataProvider] Error updating blog post with SEO:', error);
+        
+        // Provide more specific error messages
+        let errorMessage = 'Failed to update blog post';
+        if (error.message.includes('not found')) {
+          errorMessage = 'Blog post not found - it may have been deleted';
+        } else if (error.message.includes('RLS')) {
+          errorMessage = 'Permission denied - insufficient access rights';
+        } else if (error.message.includes('PGRST116')) {
+          errorMessage = 'Update failed - no changes detected or record not found';
+        } else {
+          errorMessage = error.message || 'Unknown error occurred';
+        }
+        
+        throw new Error(errorMessage);
+      }
+    }
+    
+    // Use admin client for categories and media to bypass RLS issues
+    const client = (resource === 'categories' || resource === 'media') ? supabaseAdmin : supabase;
     
     // Xử lý array fields cho media resource
     let processedVariables = variables;
@@ -227,17 +281,45 @@ export const dataProvider: DataProvider = {
       }, {} as any);
     }
     
+    console.log('✅ Processed variables:', processedVariables);
+    
+    // First check if record exists
+    const { data: existingRecord, error: checkError } = await client
+      .from(resource)
+      .select('id')
+      .eq('id', id)
+      .maybeSingle(); // Use maybeSingle to avoid PGRST116 error
+    
+    if (checkError) {
+      console.error('❌ Error checking record existence:', checkError);
+      throw new Error(`Error checking record existence: ${checkError.message}`);
+    }
+    
+    if (!existingRecord) {
+      console.error('❌ Record not found with ID:', id);
+      throw new Error(`Không tìm thấy record với ID: ${id}`);
+    }
+    
+    console.log('✅ Record exists, proceeding with update');
+    
     const { data, error } = await client
       .from(resource)
       .update(processedVariables)
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle(); // Use maybeSingle to handle potential 0 rows
 
     if (error) {
-      throw new Error(error.message);
+      console.error('❌ Update error:', error);
+      throw new Error(`Lỗi cập nhật ${resource}: ${error.message}`);
+    }
+    
+    if (!data) {
+      console.error('❌ No data returned after update - record may not exist or no changes made');
+      throw new Error(`Cập nhật thất bại - không tìm thấy record hoặc không có thay đổi nào`);
     }
 
+    console.log('✅ Update successful:', data);
     return {
       data,
     };

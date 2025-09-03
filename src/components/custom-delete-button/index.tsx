@@ -43,13 +43,13 @@ export const CustomDeleteButton: React.FC<CustomDeleteButtonProps> = ({
       'categories': 'danh mục',
       'products': 'sản phẩm',
       'profiles': 'người dùng',
-      'blog-posts': 'bài viết',
-      'blog-categories': 'danh mục blog',
-      'blog-comments': 'bình luận',
-      'blog-post-tags': 'tag bài viết',
+      'blog_posts': 'bài viết',
+      'blog_categories': 'danh mục blog',
+      'blog_comments': 'bình luận',
+      'blog_post_tags': 'tag bài viết',
       'tags': 'tag',
       'orders': 'đơn hàng',
-      'product-variants': 'biến thể sản phẩm',
+      'product_variants': 'biến thể sản phẩm',
       'media': 'hình ảnh',
     };
 

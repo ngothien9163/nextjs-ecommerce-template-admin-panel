@@ -2,6 +2,15 @@ import { Create, useForm } from "@refinedev/antd";
 import { Form, Input, Select, Switch, DatePicker, Space } from "antd";
 import { Upload } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
+import dayjs from 'dayjs';
+import 'dayjs/locale/vi';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+// Configure dayjs
+dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.locale('vi');
 
 export const ProfileCreate = () => {
   const { formProps, saveButtonProps } = useForm();
@@ -37,8 +46,22 @@ export const ProfileCreate = () => {
           <Form.Item
             label="Ngày sinh"
             name="date_of_birth"
+            getValueFromEvent={(value) => {
+              // Convert dayjs object to ISO string for database
+              return value ? dayjs(value).toISOString() : null;
+            }}
+            getValueProps={(value) => {
+              // Convert ISO string from database to dayjs object for DatePicker
+              return {
+                value: value ? dayjs(value) : null
+              };
+            }}
           >
-            <DatePicker style={{ width: "100%" }} />
+            <DatePicker 
+              style={{ width: "100%" }} 
+              format="DD/MM/YYYY"
+              placeholder="Chọn ngày sinh"
+            />
           </Form.Item>
 
           <Form.Item

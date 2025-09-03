@@ -5,6 +5,9 @@ const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your_supabase_ano
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
+// Export supabaseUrl for public use
+export { supabaseUrl };
+
 // Test connection function
 export const testSupabaseConnection = async () => {
   try {
@@ -78,6 +81,34 @@ export interface ProductImage {
   image_url: string;
   alt_text?: string;
   is_primary: boolean;
+  sort_order: number;
+  created_at: string;
+}
+
+// Media item interface for image selector
+export interface MediaItem {
+  id: string;
+  file_name: string;
+  title?: string;
+  file_path?: string;
+  file_url?: string;
+  alt_text?: string;
+  width?: number;
+  height?: number;
+  file_size?: number;
+  file_size_kb?: number;
+  mime_type?: string;
+  image_format?: string;
+  seo_score?: number;
+  created_at: string;
+}
+
+export interface SEOPageType {
+  id: number;
+  name: string;
+  display_name: string;
+  description?: string;
+  is_active: boolean;
   sort_order: number;
   created_at: string;
 }
@@ -169,6 +200,8 @@ export interface BlogPost {
   published_at?: string;
   created_at: string;
   updated_at: string;
+  // Joined data from blog_categories (when using join query)
+  blog_categories?: BlogCategory;
 }
 
 export interface BlogPostTag {

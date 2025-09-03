@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button, Image, Card, Input, Space, Tag, Typography, message, Empty, Spin, Select, Row, Col } from 'antd';
-import { PictureOutlined, SearchOutlined, EyeOutlined, DeleteOutlined, PlusOutlined, SortAscendingOutlined, ReloadOutlined, UploadOutlined } from '@ant-design/icons';
+import { PictureOutlined, SearchOutlined, EyeOutlined, DeleteOutlined, PlusOutlined, ReloadOutlined, UploadOutlined } from '@ant-design/icons';
 import { useTable } from '@refinedev/antd';
 import { BaseRecord } from '@refinedev/core';
 
@@ -20,7 +20,7 @@ interface Media extends BaseRecord {
   created_at?: string;
 }
 
-interface CategoryImageSelectorProps {
+interface BlogCategoryImageSelectorProps {
   value?: string;
   onChange?: (value: string) => void;
   placeholder?: string;
@@ -28,7 +28,7 @@ interface CategoryImageSelectorProps {
   onSelect?: (media: Media) => void;
 }
 
-export const CategoryImageSelector: React.FC<CategoryImageSelectorProps> = ({
+export const BlogCategoryImageSelector: React.FC<BlogCategoryImageSelectorProps> = ({
   value,
   onChange,
   placeholder = "Chọn ảnh đại diện",
@@ -143,12 +143,6 @@ export const CategoryImageSelector: React.FC<CategoryImageSelectorProps> = ({
     return new Date(dateString).toLocaleDateString('vi-VN');
   };
 
-  const getFileTypeIcon = (fileType: string) => {
-    if (fileType?.startsWith('image/')) return '🖼️';
-    if (fileType?.startsWith('video/')) return '🎥';
-    return '📄';
-  };
-
   return (
     <div>
       {/* Preview Area */}
@@ -232,7 +226,7 @@ export const CategoryImageSelector: React.FC<CategoryImageSelectorProps> = ({
         onCancel={() => setIsModalVisible(false)}
         footer={null}
         width={1000}
-                 styles={{ body: { maxHeight: '70vh', overflow: 'auto' } }}
+        styles={{ body: { maxHeight: '70vh', overflow: 'auto' } }}
       >
         {/* Filters and Search */}
         <Row gutter={[16, 16]} style={{ marginBottom: '16px' }}>
@@ -370,7 +364,7 @@ export const CategoryImageSelector: React.FC<CategoryImageSelectorProps> = ({
             src={tableProps.dataSource?.[currentImageIndex]?.file_url}
             alt={tableProps.dataSource?.[currentImageIndex]?.alt_text || tableProps.dataSource?.[currentImageIndex]?.file_name}
             style={{ maxWidth: '100%', maxHeight: '70vh' }}
-            fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RnG4W+FgYxN"
+            fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RnG4W+FgYzN"
           />
         </div>
       </Modal>

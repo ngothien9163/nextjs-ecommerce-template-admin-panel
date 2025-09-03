@@ -1,0 +1,194 @@
+/* Enhanced SEO Form Styles */
+.enhanced-seo-form-card {
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e8f4f8;
+}
+
+.enhanced-seo-form-card .ant-card-head {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px 12px 0 0;
+  border-bottom: none;
+}
+
+.enhanced-seo-form-card .ant-card-head-title {
+  color: white;
+  font-weight: 600;
+}
+
+.enhanced-seo-form-card .ant-card-body {
+  padding: 24px;
+}
+
+/* Collapse panels */
+.enhanced-seo-form-card .ant-collapse {
+  background: transparent;
+  border: none;
+}
+
+.enhanced-seo-form-card .ant-collapse > .ant-collapse-item {
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+.enhanced-seo-form-card .ant-collapse-header {
+  background: #fafafa;
+  padding: 16px 20px !important;
+  font-weight: 600;
+  border-radius: 8px 8px 0 0;
+}
+
+.enhanced-seo-form-card .ant-collapse-content-box {
+  padding: 24px 20px;
+  background: white;
+}
+
+/* Form items */
+.enhanced-seo-form-card .ant-form-item-label > label {
+  font-weight: 600;
+  color: #262626;
+}
+
+.enhanced-seo-form-card .ant-input,
+.enhanced-seo-form-card .ant-input-number,
+.enhanced-seo-form-card .ant-select-selector {
+  border-radius: 6px;
+  border: 1px solid #d9d9d9;
+  transition: all 0.3s ease;
+}
+
+.enhanced-seo-form-card .ant-input:focus,
+.enhanced-seo-form-card .ant-input-number:focus,
+.enhanced-seo-form-card .ant-select-focused .ant-select-selector {
+  border-color: #40a9ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+/* Score displays */
+.seo-score-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f6ffed;
+  border: 1px solid #b7eb8f;
+  border-radius: 6px;
+}
+
+.seo-score-high {
+  background: #f6ffed;
+  border-color: #b7eb8f;
+  color: #52c41a;
+}
+
+.seo-score-medium {
+  background: #fffbe6;
+  border-color: #ffe58f;
+  color: #faad14;
+}
+
+.seo-score-low {
+  background: #fff2f0;
+  border-color: #ffccc7;
+  color: #f5222d;
+}
+
+/* Action buttons */
+.enhanced-seo-form-card .ant-btn-primary {
+  background: #1890ff;
+  border-color: #1890ff;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.enhanced-seo-form-card .ant-btn-primary:hover {
+  background: #40a9ff;
+  border-color: #40a9ff;
+}
+
+/* Status indicators */
+.seo-status-active {
+  color: #52c41a;
+}
+
+.seo-status-inactive {
+  color: #f5222d;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .enhanced-seo-form-card .ant-card-body {
+    padding: 16px;
+  }
+  
+  .enhanced-seo-form-card .ant-collapse-content-box {
+    padding: 16px 12px;
+  }
+  
+  .enhanced-seo-form-card .ant-collapse-header {
+    padding: 12px 16px !important;
+  }
+}
+
+/* JSON Field styling */
+.enhanced-seo-form-card .json-field-container {
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.enhanced-seo-form-card .json-field-container .CodeMirror {
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+/* Tag inputs */
+.enhanced-seo-form-card .ant-select-selection-item {
+  background: #e6f7ff;
+  border: 1px solid #91d5ff;
+  border-radius: 4px;
+  color: #0050b3;
+}
+
+/* Switch components */
+.enhanced-seo-form-card .ant-switch-checked {
+  background-color: #52c41a;
+}
+
+/* Tooltips */
+.enhanced-seo-form-card .anticon-info-circle {
+  color: #1890ff;
+  cursor: help;
+  transition: color 0.3s ease;
+}
+
+.enhanced-seo-form-card .anticon-info-circle:hover {
+  color: #40a9ff;
+}
+
+/* Rate component */
+.enhanced-seo-form-card .ant-rate {
+  color: #faad14;
+}
+
+/* Count displays */
+.ant-input-show-count-suffix,
+.ant-textarea-show-count {
+  color: #8c8c8c;
+  font-size: 12px;
+}
+
+/* Warning states */
+.enhanced-seo-form-card .ant-form-item-has-warning .ant-input,
+.enhanced-seo-form-card .ant-form-item-has-warning .ant-input-number,
+.enhanced-seo-form-card .ant-form-item-has-warning .ant-select-selector {
+  border-color: #faad14;
+}
+
+.enhanced-seo-form-card .ant-form-item-has-error .ant-input,
+.enhanced-seo-form-card .ant-form-item-has-error .ant-input-number,
+.enhanced-seo-form-card .ant-form-item-has-error .ant-select-selector {
+  border-color: #f5222d;
+}

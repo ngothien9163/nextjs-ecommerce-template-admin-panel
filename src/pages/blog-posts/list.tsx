@@ -1,15 +1,53 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { List, useTable, EditButton, ShowButton } from '@refinedev/antd';
-import { Table, Space, Tag, Typography, Image, Switch, Progress } from 'antd';
+import { Table, Space, Tag, Typography, Image, Switch, Progress, Tooltip } from 'antd';
 import { BlogPost, BlogCategory, Profile } from '../../lib/supabase';
 import { CustomDeleteButton } from '../../components/custom-delete-button';
+import { SEOStatusDisplay } from '../../components/seo-status-display';
 import { useMany } from '@refinedev/core';
+import { supabase } from '../../lib/supabase';
+import { CheckCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import '../../styles/blog-posts-enhanced.css';
 
 export const BlogPostList: React.FC = () => {
+  const [seoData, setSeoData] = useState<{[key: string]: any}>({});
+  const [loadingSEO, setLoadingSEO] = useState(false);
+  
   const { tableProps } = useTable<BlogPost>({
     resource: 'blog_posts',
     syncWithLocation: true,
   });
+
+  // Load SEO data for all blog posts
+  useEffect(() => {
+    const loadSEOData = async () => {
+      if (!tableProps.dataSource || tableProps.dataSource.length === 0) return;
+      
+      setLoadingSEO(true);
+      try {
+        const blogPostIds = tableProps.dataSource.map((post: any) => post.id);
+        const { data } = await supabase
+          .from('seo_pages')
+          .select('*')
+          .eq('reference_type', 'blog')
+          .in('reference_id', blogPostIds);
+        
+        if (data) {
+          const seoMap = data.reduce((acc, item) => {
+            acc[item.reference_id] = item;
+            return acc;
+          }, {} as {[key: string]: any});
+          setSeoData(seoMap);
+        }
+      } catch (error) {
+        console.error('Error loading SEO data:', error);
+      } finally {
+        setLoadingSEO(false);
+      }
+    };
+
+    loadSEOData();
+  }, [tableProps.dataSource]);
 
   const { data: authorData, isLoading: authorIsLoading } = useMany<Profile>({
     resource: 'profiles',
@@ -26,9 +64,9 @@ export const BlogPostList: React.FC = () => {
       key: 'title',
       width: 250,
       render: (value: string, record: any) => (
-        <div>
-          <div style={{ fontWeight: 'bold' }}>{value}</div>
-          <div style={{ fontSize: '12px', color: '#666' }}>/{record.slug}</div>
+        <div className="blog-post-title-container">
+          <div className="blog-post-title">{value}</div>
+          <div className="blog-post-slug">/{record.slug}</div>
         </div>
       ),
     },
@@ -47,9 +85,9 @@ export const BlogPostList: React.FC = () => {
       render: (value: string, record: any) => {
         if (record.blog_categories) {
           return (
-            <div>
-              <Tag color="blue">{record.blog_categories.name}</Tag>
-              <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+            <div className="blog-category-display">
+              <Tag color="blue" className="blog-category-name">{record.blog_categories.name}</Tag>
+              <div className="blog-category-slug">
                 {record.blog_categories.slug}
               </div>
             </div>
@@ -81,7 +119,7 @@ export const BlogPostList: React.FC = () => {
           archived: { color: 'warning', text: 'Đã lưu trữ' },
         };
         const config = statusConfig[value as keyof typeof statusConfig] || statusConfig.draft;
-        return <Tag color={config.color}>{config.text}</Tag>;
+        return <Tag color={config.color} className="blog-status-tag">{config.text}</Tag>;
       },
     },
     {
@@ -89,18 +127,33 @@ export const BlogPostList: React.FC = () => {
       key: 'features',
       width: 120,
       render: (_: any, record: any) => (
-        <Space direction="vertical" size="small">
+        <Space direction="vertical" size="small" className="blog-feature-tags">
           {record.is_featured && <Tag color="gold">Nổi bật</Tag>}
           {record.is_pinned && <Tag color="red">Ghim</Tag>}
         </Space>
       ),
     },
     {
+      title: 'SEO Status',
+      key: 'seo_status',
+      width: 200,
+      render: (_: any, record: any) => {
+        const recordSEOData = seoData[record.id];
+        return (
+          <SEOStatusDisplay 
+            seoData={recordSEOData} 
+            showDetails={false}
+            size="small"
+          />
+        );
+      },
+    },
+    {
       title: 'Thống kê',
       key: 'stats',
       width: 150,
       render: (_: any, record: any) => (
-        <div>
+        <div className="blog-stats">
           <div>👁️ {record.view_count} lượt xem</div>
           {record.read_time && <div>⏱️ {record.read_time} phút</div>}
         </div>
@@ -112,7 +165,7 @@ export const BlogPostList: React.FC = () => {
       width: 150,
       fixed: 'right',
       render: (_: any, record: any) => (
-        <Space>
+        <Space className="blog-actions">
           <ShowButton hideText size="small" recordItemId={record.id} />
           <EditButton hideText size="small" recordItemId={record.id} />
           <CustomDeleteButton 
@@ -132,7 +185,9 @@ export const BlogPostList: React.FC = () => {
         {...tableProps}
         columns={columns}
         rowKey="id"
-        scroll={{ x: 1430 }}
+        scroll={{ x: 1630 }}
+        loading={tableProps.loading || loadingSEO}
+        className="blog-list-table"
       />
     </List>
   );
