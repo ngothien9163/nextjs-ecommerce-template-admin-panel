@@ -1,6 +1,6 @@
 import React from "react";
-import { Form, Input, Select, Space, Tooltip, Tag, Switch } from "antd";
-import { EditOutlined, InfoCircleOutlined } from "@ant-design/icons";
+import { Form, Input, Select, Space, Tooltip, Tag, Switch, Button, Typography } from "antd";
+import { EditOutlined, InfoCircleOutlined, CopyOutlined, LinkOutlined } from "@ant-design/icons";
 
 const { Option } = Select;
 
@@ -18,21 +18,23 @@ interface MediaTechnicalInfoProps {
     uploadedFilePath?: string;
   }>;
   selectedFileIndex?: number;
+  existingRecord?: any; // For edit mode - existing record data
 }
 
-export const MediaTechnicalInfo: React.FC<MediaTechnicalInfoProps> = ({ 
+export const MediaTechnicalInfo: React.FC<MediaTechnicalInfoProps> = ({
   mode = 'create',
   uploadedFiles = [],
-  selectedFileIndex = 0
+  selectedFileIndex = 0,
+  existingRecord
 }) => {
   const isAutoFilled = mode === 'create' && uploadedFiles.length > 0 && uploadedFiles[selectedFileIndex]?.dimensions;
   const isEditMode = mode === 'edit';
   const selectedFile = uploadedFiles[selectedFileIndex];
 
   return (
-    <>
-      <Form.Item
-        label={
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <div>
+        <div style={{ marginBottom: '8px', fontWeight: 'bold', color: '#262626' }}>
           <Space>
             <EditOutlined />
             Image Dimensions
@@ -45,20 +47,20 @@ export const MediaTechnicalInfo: React.FC<MediaTechnicalInfoProps> = ({
               </Tag>
             )}
           </Space>
-        }
-        name="image_dimensions"
-      >
-        <Input 
-          placeholder="Ví dụ: 1920x1080" 
-          readOnly={!!(isAutoFilled || isEditMode)}
-          style={{
-            backgroundColor: (isAutoFilled || isEditMode) ? '#f6ffed' : 'white'
-          }}
-        />
-      </Form.Item>
+        </div>
+        <Form.Item name="image_dimensions" style={{ marginBottom: 0 }}>
+          <Input
+            placeholder="Ví dụ: 1920x1080"
+            readOnly={!!(isAutoFilled || isEditMode)}
+            style={{
+              backgroundColor: (isAutoFilled || isEditMode) ? '#f6ffed' : 'white'
+            }}
+          />
+        </Form.Item>
+      </div>
 
-      <Form.Item
-        label={
+      <div>
+        <div style={{ marginBottom: '8px', fontWeight: 'bold', color: '#262626' }}>
           <Space>
             <EditOutlined />
             File Size (KB)
@@ -71,20 +73,20 @@ export const MediaTechnicalInfo: React.FC<MediaTechnicalInfoProps> = ({
               </Tag>
             )}
           </Space>
-        }
-        name="file_size_kb"
-      >
-        <Input 
-          placeholder="Ví dụ: 245" 
-          readOnly={!!(isAutoFilled || isEditMode)}
-          style={{
-            backgroundColor: (isAutoFilled || isEditMode) ? '#f6ffed' : 'white'
-          }}
-        />
-      </Form.Item>
+        </div>
+        <Form.Item name="file_size_kb" style={{ marginBottom: 0 }}>
+          <Input
+            placeholder="Ví dụ: 245"
+            readOnly={!!(isAutoFilled || isEditMode)}
+            style={{
+              backgroundColor: (isAutoFilled || isEditMode) ? '#f6ffed' : 'white'
+            }}
+          />
+        </Form.Item>
+      </div>
 
-      <Form.Item
-        label={
+      <div>
+        <div style={{ marginBottom: '8px', fontWeight: 'bold', color: '#262626' }}>
           <Space>
             <EditOutlined />
             Image Format
@@ -97,27 +99,27 @@ export const MediaTechnicalInfo: React.FC<MediaTechnicalInfoProps> = ({
               </Tag>
             )}
           </Space>
-        }
-        name="image_format"
-      >
-        <Select 
-          placeholder="Chọn định dạng hình ảnh"
-          disabled={!!(isAutoFilled || isEditMode)}
-          style={{
-            backgroundColor: (isAutoFilled || isEditMode) ? '#f6ffed' : 'white'
-          }}
-        >
-          <Option value="JPEG">JPEG - Phù hợp cho ảnh thực tế</Option>
-          <Option value="PNG">PNG - Phù hợp cho ảnh có trong suốt</Option>
-          <Option value="WebP">WebP - Định dạng hiện đại, nén tốt</Option>
-          <Option value="AVIF">AVIF - Định dạng mới nhất, nén tốt nhất</Option>
-          <Option value="SVG">SVG - Vector, phù hợp cho icon</Option>
-          <Option value="GIF">GIF - Animation</Option>
-        </Select>
-      </Form.Item>
+        </div>
+        <Form.Item name="image_format" style={{ marginBottom: 0 }}>
+          <Select
+            placeholder="Chọn định dạng hình ảnh"
+            disabled={!!(isAutoFilled || isEditMode)}
+            style={{
+              backgroundColor: (isAutoFilled || isEditMode) ? '#f6ffed' : 'white'
+            }}
+          >
+            <Option value="JPEG">JPEG - Phù hợp cho ảnh thực tế</Option>
+            <Option value="PNG">PNG - Phù hợp cho ảnh có trong suốt</Option>
+            <Option value="WebP">WebP - Định dạng hiện đại, nén tốt</Option>
+            <Option value="AVIF">AVIF - Định dạng mới nhất, nén tốt nhất</Option>
+            <Option value="SVG">SVG - Vector, phù hợp cho icon</Option>
+            <Option value="GIF">GIF - Animation</Option>
+          </Select>
+        </Form.Item>
+      </div>
 
-      <Form.Item
-        label={
+      <div>
+        <div style={{ marginBottom: '8px', fontWeight: 'bold', color: '#262626' }}>
           <Space>
             <EditOutlined />
             MIME Type
@@ -130,22 +132,23 @@ export const MediaTechnicalInfo: React.FC<MediaTechnicalInfoProps> = ({
               </Tag>
             )}
           </Space>
-        }
-        name="mime_type"
-      >
-        <Input 
-          placeholder="Ví dụ: image/jpeg" 
-          readOnly={!!(isAutoFilled || isEditMode)}
-          style={{
-            backgroundColor: (isAutoFilled || isEditMode) ? '#f6ffed' : 'white'
-          }}
-        />
-      </Form.Item>
+        </div>
+        <Form.Item name="mime_type" style={{ marginBottom: 0 }}>
+          <Input
+            placeholder="Ví dụ: image/jpeg"
+            readOnly={!!(isAutoFilled || isEditMode)}
+            style={{
+              backgroundColor: (isAutoFilled || isEditMode) ? '#f6ffed' : 'white'
+            }}
+          />
+        </Form.Item>
+      </div>
+
 
       {mode === 'create' && (
         <>
-          <Form.Item
-            label={
+          <div>
+            <div style={{ marginBottom: '8px', fontWeight: 'bold', color: '#262626' }}>
               <Space>
                 <EditOutlined />
                 File Path
@@ -158,18 +161,18 @@ export const MediaTechnicalInfo: React.FC<MediaTechnicalInfoProps> = ({
                   </Tag>
                 )}
               </Space>
-            }
-            name="file_path"
-          >
-            <Input 
-              placeholder="Tự động tạo khi upload file" 
-              readOnly
-              style={{ backgroundColor: '#f6ffed' }}
-            />
-          </Form.Item>
+            </div>
+            <Form.Item name="file_path" style={{ marginBottom: 0 }}>
+              <Input
+                placeholder="Tự động tạo khi upload file"
+                readOnly
+                style={{ backgroundColor: '#f6ffed' }}
+              />
+            </Form.Item>
+          </div>
 
-          <Form.Item
-            label={
+          <div>
+            <div style={{ marginBottom: '8px', fontWeight: 'bold', color: '#262626' }}>
               <Space>
                 <EditOutlined />
                 File URL
@@ -182,20 +185,103 @@ export const MediaTechnicalInfo: React.FC<MediaTechnicalInfoProps> = ({
                   </Tag>
                 )}
               </Space>
-            }
-            name="file_url"
-          >
-            <Input 
-              placeholder="Tự động tạo sau khi upload file" 
-              readOnly
-              style={{ backgroundColor: '#f6ffed' }}
-            />
-          </Form.Item>
+            </div>
+            <Form.Item name="file_url" style={{ marginBottom: 0 }}>
+              <Input
+                placeholder="Tự động tạo sau khi upload file"
+                readOnly
+                style={{ backgroundColor: '#f6ffed' }}
+              />
+            </Form.Item>
+          </div>
         </>
       )}
 
-      <Form.Item
-        label={
+      {/* Public Link URL - Display field */}
+      <div>
+        <div style={{ marginBottom: '8px', fontWeight: 'bold', color: '#262626' }}>
+          <Space>
+            <LinkOutlined />
+            Public Image URL
+            <Tooltip title="URL công khai để truy cập hình ảnh từ website">
+              <InfoCircleOutlined style={{ color: '#1890ff' }} />
+            </Tooltip>
+          </Space>
+        </div>
+        <div style={{ padding: '12px', backgroundColor: '#f6ffed', borderRadius: '6px', border: '1px solid #b7eb8f' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+            <Typography.Text code style={{ flex: 1, wordBreak: 'break-all', fontSize: '12px' }}>
+              {(() => {
+                const imagesBaseUrl = import.meta.env.VITE_PUBLIC_SITE_URL_IMAGES || "http://localhost:4322/images/";
+                let fileName = "";
+
+                if (mode === 'create' && uploadedFiles.length > 0 && selectedFileIndex >= 0) {
+                  // Create mode - get from uploaded file
+                  fileName = uploadedFiles[selectedFileIndex]?.uploadedFileName ||
+                            uploadedFiles[selectedFileIndex]?.file?.name?.replace(/\.[^/.]+$/, "") || "";
+                } else if (mode === 'edit' && existingRecord?.file_name) {
+                  // Edit mode - get from existing record (keep full filename with extension)
+                  fileName = existingRecord.file_name || "ten-file-hinh-anh";
+                } else {
+                  // Fallback
+                  fileName = "ten-file-hinh-anh";
+                }
+
+                return `${imagesBaseUrl}${fileName}`;
+              })()}
+            </Typography.Text>
+          </div>
+          <Space>
+            <Button
+              size="small"
+              icon={<CopyOutlined />}
+              onClick={() => {
+                const imagesBaseUrl = import.meta.env.VITE_PUBLIC_SITE_URL_IMAGES || "http://localhost:4322/images/";
+                let fileName = "";
+
+                if (mode === 'create' && uploadedFiles.length > 0 && selectedFileIndex >= 0) {
+                  fileName = uploadedFiles[selectedFileIndex]?.uploadedFileName ||
+                            uploadedFiles[selectedFileIndex]?.file?.name?.replace(/\.[^/.]+$/, "") || "";
+                } else if (mode === 'edit' && existingRecord?.file_name) {
+                  fileName = existingRecord.file_name || "ten-file-hinh-anh";
+                } else {
+                  fileName = "ten-file-hinh-anh";
+                }
+
+                const publicLinkUrl = `${imagesBaseUrl}${fileName}`;
+                navigator.clipboard.writeText(publicLinkUrl);
+              }}
+            >
+              Copy
+            </Button>
+            <Button
+              size="small"
+              icon={<LinkOutlined />}
+              onClick={() => {
+                const imagesBaseUrl = import.meta.env.VITE_PUBLIC_SITE_URL_IMAGES || "http://localhost:4322/images/";
+                let fileName = "";
+
+                if (mode === 'create' && uploadedFiles.length > 0 && selectedFileIndex >= 0) {
+                  fileName = uploadedFiles[selectedFileIndex]?.uploadedFileName ||
+                            uploadedFiles[selectedFileIndex]?.file?.name?.replace(/\.[^/.]+$/, "") || "";
+                } else if (mode === 'edit' && existingRecord?.file_name) {
+                  fileName = existingRecord.file_name || "ten-file-hinh-anh";
+                } else {
+                  fileName = "ten-file-hinh-anh";
+                }
+
+                const publicLinkUrl = `${imagesBaseUrl}${fileName}`;
+                window.open(publicLinkUrl, "_blank");
+              }}
+            >
+              Mở link
+            </Button>
+          </Space>
+        </div>
+      </div>
+
+      <div>
+        <div style={{ marginBottom: '8px', fontWeight: 'bold', color: '#262626' }}>
           <Space>
             <EditOutlined />
             Lazy Loading
@@ -203,16 +289,14 @@ export const MediaTechnicalInfo: React.FC<MediaTechnicalInfoProps> = ({
               <InfoCircleOutlined style={{ color: "#1890ff" }} />
             </Tooltip>
           </Space>
-        }
-        name="lazy_loading"
-        valuePropName="checked"
-        initialValue={true}
-      >
-        <Switch checkedChildren="Bật" unCheckedChildren="Tắt" />
-      </Form.Item>
+        </div>
+        <Form.Item name="lazy_loading" valuePropName="checked" initialValue={true} style={{ marginBottom: 0 }}>
+          <Switch checkedChildren="Bật" unCheckedChildren="Tắt" />
+        </Form.Item>
+      </div>
 
-      <Form.Item
-        label={
+      <div>
+        <div style={{ marginBottom: '8px', fontWeight: 'bold', color: '#262626' }}>
           <Space>
             <EditOutlined />
             Priority Loading
@@ -220,13 +304,11 @@ export const MediaTechnicalInfo: React.FC<MediaTechnicalInfoProps> = ({
               <InfoCircleOutlined style={{ color: "#1890ff" }} />
             </Tooltip>
           </Space>
-        }
-        name="priority_loading"
-        valuePropName="checked"
-        initialValue={false}
-      >
-        <Switch checkedChildren="Cao" unCheckedChildren="Thường" />
-      </Form.Item>
-    </>
+        </div>
+        <Form.Item name="priority_loading" valuePropName="checked" initialValue={false} style={{ marginBottom: 0 }}>
+          <Switch checkedChildren="Cao" unCheckedChildren="Thường" />
+        </Form.Item>
+      </div>
+    </div>
   );
 };

@@ -54,11 +54,180 @@ export const MediaSEOSection: React.FC<MediaSEOSectionProps> = ({
 }) => {
   const [jsonCollapsed, setJsonCollapsed] = useState(false);
 
+  // Environment variables for URLs
+  const baseUrl = import.meta.env.VITE_PUBLIC_SITE_URL || "https://example.com";
+  const imagesBaseUrl = import.meta.env.VITE_PUBLIC_SITE_URL_IMAGES || `${baseUrl}/images/`;
+
   const renderInfoIcon = (tooltip: string) => (
     <Tooltip title={tooltip} placement="top">
       <InfoCircleOutlined style={{ color: "#1890ff", marginLeft: "8px" }} />
     </Tooltip>
   );
+
+  const generateSchemaMarkup = () => {
+    if (!form) {
+      message.error("Form không khả dụng!");
+      return;
+    }
+
+    // Get current form values
+    const currentValues = form.getFieldsValue();
+
+    // Get file info - handle both create and edit modes
+    let fileName = "sample-image";
+    let fileUrl = "";
+
+    if (uploadedFiles.length > 0) {
+      // Create mode - use uploaded file
+      const selectedFile = uploadedFiles[selectedFileIndex];
+      fileName = selectedFile?.uploadedFileName ||
+                selectedFile?.file?.name?.replace(/\.[^/.]+$/, "") ||
+                "sample-image";
+      fileUrl = selectedFile?.url || "";
+    } else {
+      // Edit mode - use existing form data
+      fileName = currentValues?.file_name?.replace(/\.[^/.]+$/, "") ||
+                currentValues?.alt_text?.replace(/[^a-zA-Z0-9]/g, "-") ||
+                "existing-image";
+      fileUrl = currentValues?.file_url || "";
+    }
+
+    const baseUrl = import.meta.env.VITE_PUBLIC_SITE_URL || "https://example.com";
+
+    // Generate smart alt text
+    const baseName = fileName.replace(/[-_]/g, " ");
+    const smartAltText = currentValues?.alt_text || `Hình ảnh ${baseName} chất lượng cao, phù hợp cho website và marketing`;
+    const smartTitle = currentValues?.title || `${baseName} - Hình ảnh chuyên nghiệp chất lượng cao`;
+    const smartDescription = currentValues?.meta_description || `Khám phá hình ảnh ${baseName} chất lượng cao, được tối ưu cho website và marketing.`;
+
+    // Generate different types of schema markup for images
+    const schemaOptions = [
+      {
+        name: "ImageObject (Cơ bản)",
+        schema: {
+          "@context": "https://schema.org",
+          "@type": "ImageObject",
+          "name": smartTitle,
+          "description": smartDescription,
+          "url": fileUrl || `${imagesBaseUrl}${fileName}.jpg`,
+          "contentUrl": fileUrl || `${imagesBaseUrl}${fileName}.jpg`,
+          "license": `${baseUrl}/license`,
+          "acquireLicensePage": `${baseUrl}/license`,
+          "creditText": import.meta.env.VITE_PUBLIC_SITE_NAME || "Website Media",
+          "creator": {
+            "@type": "Organization",
+            "name": import.meta.env.VITE_PUBLIC_SITE_NAME || "Website Media"
+          },
+          "datePublished": new Date().toISOString(),
+          "dateModified": new Date().toISOString()
+        }
+      },
+      {
+        name: "ImageObject (Nâng cao)",
+        schema: {
+          "@context": "https://schema.org",
+          "@type": "ImageObject",
+          "name": smartTitle,
+          "description": smartDescription,
+          "url": fileUrl || `${imagesBaseUrl}${fileName}.jpg`,
+          "contentUrl": fileUrl || `${imagesBaseUrl}${fileName}.jpg`,
+          "license": `${baseUrl}/license`,
+          "acquireLicensePage": `${baseUrl}/license`,
+          "creditText": import.meta.env.VITE_PUBLIC_SITE_NAME || "Website Media",
+          "creator": {
+            "@type": "Organization",
+            "name": import.meta.env.VITE_PUBLIC_SITE_NAME || "Website Media",
+            "url": baseUrl
+          },
+          "publisher": {
+            "@type": "Organization",
+            "name": import.meta.env.VITE_PUBLIC_SITE_NAME || "Website Media",
+            "logo": {
+              "@type": "ImageObject",
+              "url": `${imagesBaseUrl}logo.png`,
+              "width": 300,
+              "height": 100
+            }
+          },
+          "datePublished": new Date().toISOString(),
+          "dateModified": new Date().toISOString(),
+          "inLanguage": "vi-VN",
+          "contentLocation": {
+            "@type": "Place",
+            "name": "Việt Nam"
+          },
+          "keywords": currentValues?.meta_keywords || [baseName.toLowerCase(), "hình ảnh", "media"],
+          "thumbnail": {
+            "@type": "ImageObject",
+            "url": fileUrl || `${imagesBaseUrl}${fileName}_thumb.jpg`,
+            "width": 300,
+            "height": 200
+          },
+          "width": currentValues?.image_dimensions?.split('x')[0] || 1920,
+          "height": currentValues?.image_dimensions?.split('x')[1] || 1080
+        }
+      },
+      {
+        name: "Photograph (Ảnh nghệ thuật)",
+        schema: {
+          "@context": "https://schema.org",
+          "@type": "Photograph",
+          "name": smartTitle,
+          "description": smartDescription,
+          "url": fileUrl || `${imagesBaseUrl}${fileName}.jpg`,
+          "contentUrl": fileUrl || `${imagesBaseUrl}${fileName}.jpg`,
+          "license": `${baseUrl}/license`,
+          "acquireLicensePage": `${baseUrl}/license`,
+          "creditText": import.meta.env.VITE_PUBLIC_SITE_NAME || "Website Media",
+          "creator": {
+            "@type": "Person",
+            "name": "Photographer Name"
+          },
+          "datePublished": new Date().toISOString(),
+          "dateModified": new Date().toISOString(),
+          "genre": "Digital Art",
+          "artform": "Photography",
+          "artMedium": "Digital"
+        }
+      },
+      {
+        name: "Product Image (Ảnh sản phẩm)",
+        schema: {
+          "@context": "https://schema.org",
+          "@type": "ImageObject",
+          "name": smartTitle,
+          "description": smartDescription,
+          "url": fileUrl || `${imagesBaseUrl}${fileName}.jpg`,
+          "contentUrl": fileUrl || `${imagesBaseUrl}${fileName}.jpg`,
+          "license": `${baseUrl}/license`,
+          "acquireLicensePage": `${baseUrl}/license`,
+          "creditText": import.meta.env.VITE_PUBLIC_SITE_NAME || "Website Media",
+          "about": {
+            "@type": "Product",
+            "name": baseName,
+            "description": smartDescription,
+            "image": fileUrl || `${imagesBaseUrl}${fileName}.jpg`,
+            "brand": {
+              "@type": "Brand",
+              "name": import.meta.env.VITE_PUBLIC_SITE_NAME || "Website Media"
+            }
+          },
+          "datePublished": new Date().toISOString(),
+          "dateModified": new Date().toISOString()
+        }
+      }
+    ];
+
+    // Randomly select one of the schema options
+    const selectedSchema = schemaOptions[Math.floor(Math.random() * schemaOptions.length)];
+
+    // Update form with generated schema
+    form.setFieldsValue({
+      schema_markup: selectedSchema.schema
+    });
+
+    message.success(`🎯 Đã tạo Schema Markup: ${selectedSchema.name} cho hình ảnh!`);
+  };
 
   const generateSmartSEOData = () => {
     if (!form) {
@@ -69,13 +238,25 @@ export const MediaSEOSection: React.FC<MediaSEOSectionProps> = ({
     // Get current form values
     const currentValues = form.getFieldsValue();
 
-    // Get uploaded file info
-    const selectedFile = uploadedFiles[selectedFileIndex];
-    const fileName = selectedFile?.uploadedFileName ||
-                    selectedFile?.file?.name?.replace(/\.[^/.]+$/, "") ||
-                    "sample-image";
+    // Get file info - handle both create and edit modes
+    let fileName = "sample-image";
+    let fileUrl = "";
 
-    const baseUrl = import.meta.env.VITE_PUBLIC_SITE_URL || "https://example.com";
+    if (uploadedFiles.length > 0) {
+      // Create mode - use uploaded file
+      const selectedFile = uploadedFiles[selectedFileIndex];
+      fileName = selectedFile?.uploadedFileName ||
+                 selectedFile?.file?.name?.replace(/\.[^/.]+$/, "") ||
+                 "sample-image";
+      fileUrl = selectedFile?.url || "";
+    } else {
+      // Edit mode - use existing form data
+      fileName = currentValues?.file_name?.replace(/\.[^/.]+$/, "") ||
+                 currentValues?.alt_text?.replace(/[^a-zA-Z0-9]/g, "-") ||
+                 "existing-image";
+      fileUrl = currentValues?.file_url || "";
+    }
+
 
     // Generate smart alt text
     const baseName = fileName.replace(/[-_]/g, " ");
@@ -102,7 +283,7 @@ export const MediaSEOSection: React.FC<MediaSEOSectionProps> = ({
     const ogData = {
       og_title: smartTitle,
       og_description: smartDescription,
-      og_image: selectedFile?.url || `${baseUrl}/images/${fileName}.jpg`,
+      og_image: fileUrl || `${imagesBaseUrl}${fileName}.jpg`,
       og_type: "image",
       og_site_name: import.meta.env.VITE_PUBLIC_SITE_NAME || "Website Media",
       og_locale: "vi_VN"
@@ -113,7 +294,7 @@ export const MediaSEOSection: React.FC<MediaSEOSectionProps> = ({
       twitter_card: "summary_large_image",
       twitter_title: smartTitle,
       twitter_description: smartDescription,
-      twitter_image: selectedFile?.url || `${baseUrl}/images/${fileName}.jpg`,
+      twitter_image: fileUrl || `${imagesBaseUrl}${fileName}.jpg`,
       twitter_site: import.meta.env.VITE_PUBLIC_TWITTER_SITE || "@website",
       twitter_creator: import.meta.env.VITE_PUBLIC_TWITTER_CREATOR || "@admin"
     };
@@ -128,8 +309,8 @@ export const MediaSEOSection: React.FC<MediaSEOSectionProps> = ({
 
     // Generate technical SEO data
     const technicalData = {
-      webp_version_url: `${baseUrl}/images/${fileName}.webp`,
-      avif_version_url: `${baseUrl}/images/${fileName}.avif`,
+      webp_version_url: `${imagesBaseUrl}${fileName}.webp`,
+      avif_version_url: `${imagesBaseUrl}${fileName}.avif`,
       compression_ratio: Math.round((70 + Math.random() * 20) * 10) / 10, // 70-90%
       optimization_score: Math.floor(85 + Math.random() * 10) // 85-95
     };
@@ -163,8 +344,8 @@ export const MediaSEOSection: React.FC<MediaSEOSectionProps> = ({
       "@type": "ImageObject",
       "name": smartTitle,
       "description": smartDescription,
-      "url": selectedFile?.url || `${baseUrl}/images/${fileName}.jpg`,
-      "contentUrl": selectedFile?.url || `${baseUrl}/images/${fileName}.jpg`,
+      "url": fileUrl || `${imagesBaseUrl}${fileName}.jpg`,
+      "contentUrl": fileUrl || `${imagesBaseUrl}${fileName}.jpg`,
       "license": `${baseUrl}/license`,
       "acquireLicensePage": `${baseUrl}/license`,
       "creditText": import.meta.env.VITE_PUBLIC_SITE_NAME || "Website Media",
@@ -177,7 +358,7 @@ export const MediaSEOSection: React.FC<MediaSEOSectionProps> = ({
         "name": import.meta.env.VITE_PUBLIC_SITE_NAME || "Website Media",
         "logo": {
           "@type": "ImageObject",
-          "url": `${baseUrl}/logo.png`,
+          "url": `${imagesBaseUrl}logo.png`,
           "width": 300,
           "height": 100
         }
@@ -192,7 +373,7 @@ export const MediaSEOSection: React.FC<MediaSEOSectionProps> = ({
       "keywords": smartKeywords.join(", "),
       "thumbnail": {
         "@type": "ImageObject",
-        "url": selectedFile?.url || `${baseUrl}/images/${fileName}_thumb.jpg`
+        "url": fileUrl || `${imagesBaseUrl}${fileName}_thumb.jpg`
       }
     };
 
@@ -254,11 +435,40 @@ export const MediaSEOSection: React.FC<MediaSEOSectionProps> = ({
   };
 
   return (
-    <Collapse
-      defaultActiveKey={["basic", "social", "technical", "analytics"]}
-      ghost
-      expandIconPosition="end"
-    >
+    <>
+      <div style={{ marginBottom: "20px", padding: "16px", background: "#f0f8ff", borderRadius: "8px", border: "1px solid #d6e4ff" }}>
+        <Space style={{ width: "100%", justifyContent: "center" }}>
+          <Button
+            size="large"
+            type="primary"
+            onClick={generateSmartSEOData}
+            title="Tạo thông tin SEO thông minh"
+            style={{ fontSize: "16px", padding: "8px 24px", height: "auto" }}
+          >
+            🧠 Tạo SEO Thông minh
+          </Button>
+          {mode === 'create' && onAutoFillSEOScores && (
+            <Button
+              size="large"
+              type="dashed"
+              onClick={onAutoFillSEOScores}
+              title="Điền các giá trị SEO hợp lý"
+              style={{ fontSize: "14px", padding: "8px 20px", height: "auto" }}
+            >
+              🔄 Gợi ý SEO Scores
+            </Button>
+          )}
+        </Space>
+        <Text type="secondary" style={{ display: "block", textAlign: "center", marginTop: "8px", fontSize: "12px" }}>
+          Tự động tạo đầy đủ thông tin SEO, Open Graph, Twitter Card, Schema Markup và các chỉ số performance
+        </Text>
+      </div>
+
+      <Collapse
+        defaultActiveKey={["basic", "social", "technical"]}
+        ghost
+        expandIconPosition="end"
+      >
       {/* Basic SEO Scores */}
       <Panel
         header={
@@ -447,6 +657,7 @@ export const MediaSEOSection: React.FC<MediaSEOSectionProps> = ({
                 </Space>
               }
               name="og_title"
+              extra={<Text type="secondary" style={{ fontSize: '11px' }}>💡 Tối ưu: 95 ký tự. Tiêu đề hấp dẫn, chứa từ khóa</Text>}
             >
               <Input placeholder="Tiêu đề cho Open Graph" maxLength={95} showCount />
             </Form.Item>
@@ -459,6 +670,7 @@ export const MediaSEOSection: React.FC<MediaSEOSectionProps> = ({
                 </Space>
               }
               name="og_description"
+              extra={<Text type="secondary" style={{ fontSize: '11px' }}>💡 Tối ưu: 200 ký tự. Mô tả hấp dẫn, kêu gọi hành động</Text>}
             >
               <TextArea rows={2} placeholder="Mô tả cho Open Graph" maxLength={300} showCount />
             </Form.Item>
@@ -524,6 +736,7 @@ export const MediaSEOSection: React.FC<MediaSEOSectionProps> = ({
                 </Space>
               }
               name="twitter_title"
+              extra={<Text type="secondary" style={{ fontSize: '11px' }}>💡 Tối ưu: 70 ký tự. Tiêu đề ngắn gọn, thu hút</Text>}
             >
               <Input placeholder="Tiêu đề cho Twitter" maxLength={70} showCount />
             </Form.Item>
@@ -536,6 +749,7 @@ export const MediaSEOSection: React.FC<MediaSEOSectionProps> = ({
                 </Space>
               }
               name="twitter_description"
+              extra={<Text type="secondary" style={{ fontSize: '11px' }}>💡 Tối ưu: 200 ký tự. Mô tả hấp dẫn, chứa từ khóa</Text>}
             >
               <TextArea rows={2} placeholder="Mô tả cho Twitter" maxLength={200} showCount />
             </Form.Item>
@@ -582,7 +796,7 @@ export const MediaSEOSection: React.FC<MediaSEOSectionProps> = ({
               }
               name="webp_version_url"
             >
-              <Input placeholder="https://example.com/images/image.webp" />
+              <Input placeholder={`${imagesBaseUrl}image.webp`} />
             </Form.Item>
 
             <Form.Item
@@ -594,7 +808,7 @@ export const MediaSEOSection: React.FC<MediaSEOSectionProps> = ({
               }
               name="avif_version_url"
             >
-              <Input placeholder="https://example.com/images/image.avif" />
+              <Input placeholder={`${imagesBaseUrl}image.avif`} />
             </Form.Item>
           </Space>
 
@@ -691,6 +905,20 @@ export const MediaSEOSection: React.FC<MediaSEOSectionProps> = ({
           </Space>
 
           <Title level={5} style={{ margin: "16px 0 8px 0", color: "#52c41a" }}>📄 Schema Markup</Title>
+          <div style={{ marginBottom: "12px" }}>
+            <Button
+              size="small"
+              type="dashed"
+              onClick={generateSchemaMarkup}
+              title="Tạo Schema Markup phù hợp cho hình ảnh"
+              style={{ marginBottom: "8px" }}
+            >
+              🎯 Tạo Schema Markup
+            </Button>
+            <Text type="secondary" style={{ fontSize: '11px', display: 'block' }}>
+              Tự động tạo Schema.org markup phù hợp với loại hình ảnh
+            </Text>
+          </div>
           <Form.Item
             label={
               <Space>
@@ -751,7 +979,7 @@ export const MediaSEOSection: React.FC<MediaSEOSectionProps> = ({
               </Space>
             }
           >
-            <JsonField height={jsonCollapsed ? 100 : 200} />
+            <JsonField height={jsonCollapsed ? 300 : 400} />
           </Form.Item>
         </div>
       </Panel>
@@ -902,29 +1130,7 @@ export const MediaSEOSection: React.FC<MediaSEOSectionProps> = ({
         </div>
       </Panel>
 
-      {/* Auto-fill button */}
-      {mode === 'create' && onAutoFillSEOScores && (
-        <div style={{ marginTop: '16px', textAlign: 'center' }}>
-          <Space>
-            <Button
-              size="small"
-              type="dashed"
-              onClick={onAutoFillSEOScores}
-              title="Điền các giá trị SEO hợp lý"
-            >
-              🔄 Gợi ý SEO Scores
-            </Button>
-            <Button
-              size="small"
-              type="primary"
-              onClick={generateSmartSEOData}
-              title="Tạo thông tin SEO thông minh"
-            >
-              🧠 Tạo SEO Thông minh
-            </Button>
-          </Space>
-        </div>
-      )}
     </Collapse>
+    </>
   );
 };

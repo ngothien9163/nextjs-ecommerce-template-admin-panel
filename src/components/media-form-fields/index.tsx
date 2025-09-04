@@ -1,5 +1,5 @@
 import React from "react";
-import { Form, Input, Select, Switch, Space, Tooltip } from "antd";
+import { Form, Input, Select, Switch, Space, Tooltip, Typography } from "antd";
 import {
   FileTextOutlined,
   EyeOutlined,
@@ -13,6 +13,7 @@ import { KeywordsInput } from "../keywords-input";
 import { AISuggestions } from "../ai-suggestions";
 
 const { TextArea } = Input;
+const { Text } = Typography;
 const { Option } = Select;
 
 // Preset data cho Credit và License
@@ -122,8 +123,9 @@ export const MediaFormFields: React.FC<MediaFormFieldsProps> = ({
         }
         name="file_name"
         rules={[{ required: true, message: "Vui lòng nhập tên file!" }]}
+        extra={<Text type="secondary" style={{ fontSize: '11px' }}>💡 Giữ tên file mô tả, không quá dài (không giới hạn ký tự)</Text>}
       >
-        <Input placeholder="Tên file gốc" />
+        <Input placeholder="Tên file gốc" showCount maxLength={100} />
       </Form.Item>
 
       <Form.Item
@@ -138,8 +140,9 @@ export const MediaFormFields: React.FC<MediaFormFieldsProps> = ({
         }
         name="alt_text"
         rules={[{ required: true, message: "Vui lòng nhập alt text!" }]}
+        extra={<Text type="secondary" style={{ fontSize: '11px' }}>💡 Tối ưu: 125 ký tự. Mô tả ngắn gọn, chứa từ khóa chính</Text>}
       >
-        <Input placeholder="Mô tả hình ảnh cho SEO" />
+        <Input placeholder="Mô tả hình ảnh cho SEO" showCount maxLength={125} />
       </Form.Item>
 
       <Form.Item
@@ -153,8 +156,9 @@ export const MediaFormFields: React.FC<MediaFormFieldsProps> = ({
           </Space>
         }
         name="title"
+        extra={<Text type="secondary" style={{ fontSize: '11px' }}>💡 Tối ưu: 60 ký tự. Tiêu đề ngắn gọn, hấp dẫn</Text>}
       >
-        <Input placeholder="Tiêu đề khi hover" />
+        <Input placeholder="Tiêu đề khi hover" showCount maxLength={60} />
       </Form.Item>
 
       <Form.Item
@@ -168,8 +172,9 @@ export const MediaFormFields: React.FC<MediaFormFieldsProps> = ({
           </Space>
         }
         name="caption"
+        extra={<Text type="secondary" style={{ fontSize: '11px' }}>💡 Tối ưu: 150-200 ký tự. Mô tả chi tiết, hấp dẫn</Text>}
       >
-        <TextArea rows={3} placeholder="Chú thích hình ảnh" />
+        <TextArea rows={3} placeholder="Chú thích hình ảnh" showCount maxLength={200} />
       </Form.Item>
 
       {/* AI Suggestions */}
@@ -199,8 +204,9 @@ export const MediaFormFields: React.FC<MediaFormFieldsProps> = ({
           </Space>
         }
         name="meta_description"
+        extra={<Text type="secondary" style={{ fontSize: '11px' }}>💡 Tối ưu: 160 ký tự. Chứa từ khóa, kêu gọi hành động</Text>}
       >
-        <TextArea rows={2} placeholder="Mô tả chi tiết cho SEO" />
+        <TextArea rows={2} placeholder="Mô tả chi tiết cho SEO" showCount maxLength={160} />
       </Form.Item>
 
       <Form.Item name="meta_keywords">

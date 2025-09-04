@@ -320,13 +320,14 @@ export const MediaEdit: React.FC = () => {
       // Tách SEO data từ values (sử dụng safe destructuring)
       const valuesObj = values || {};
       const seoFields = [
-        'og_title', 'og_description', 'og_image', 'twitter_title', 'twitter_description', 'twitter_image',
+        'og_title', 'og_description', 'og_image', 'og_type', 'og_site_name', 'og_locale',
+        'twitter_card', 'twitter_title', 'twitter_description', 'twitter_image', 'twitter_site', 'twitter_creator',
         'schema_markup', 'compression_ratio', 'optimization_score', 'responsive_images',
         'webp_version_url', 'avif_version_url', 'ai_alt_text', 'ai_description', 'ai_tags',
         'ai_relevance_score', 'visual_search_optimized', 'visual_search_tags', 'voice_search_optimized',
         'voice_search_phrases', 'social_shares', 'social_engagement', 'click_through_rate',
         'impressions', 'clicks', 'alt_text_translations', 'caption_translations',
-        'auto_optimization_enabled', 'manual_override'
+        'auto_optimization_enabled', 'manual_override', 'is_active'
       ];
 
       const seoData: any = {};
@@ -400,56 +401,6 @@ export const MediaEdit: React.FC = () => {
           <Form {...formProps} layout="vertical">
             <Card title="Thông tin Media" style={{ marginBottom: "20px" }}>
               <MediaFormFields mode="edit" form={formProps.form} />
-            </Card>
-
-            <Card title="Thông tin kỹ thuật" style={{ marginBottom: "20px" }}>
-              <MediaTechnicalInfo mode="edit" />
-              
-              {/* Display only fields for edit mode */}
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: "16px",
-                  marginTop: "16px",
-                  padding: "16px",
-                  backgroundColor: "#f5f5f5",
-                  borderRadius: "6px",
-                }}
-              >
-                <div>
-                  <Text strong>Ngày tạo:</Text>
-                  <br />
-                  <Text type="secondary">
-                    {mediaData?.created_at
-                      ? new Date(mediaData.created_at).toLocaleDateString("vi-VN")
-                      : "N/A"}
-                  </Text>
-                </div>
-                <div>
-                  <Text strong>Ngày cập nhật:</Text>
-                  <br />
-                  <Text type="secondary">
-                    {mediaData?.updated_at
-                      ? new Date(mediaData.updated_at).toLocaleDateString("vi-VN")
-                      : "N/A"}
-                  </Text>
-                </div>
-                <div>
-                  <Text strong>File Path:</Text>
-                  <br />
-                  <Text type="secondary" code copyable>
-                    {mediaData?.file_path || "N/A"}
-                  </Text>
-                </div>
-                <div>
-                  <Text strong>File URL:</Text>
-                  <br />
-                  <Text type="secondary" code copyable>
-                    {mediaData?.file_url || "N/A"}
-                  </Text>
-                </div>
-              </div>
             </Card>
 
             {/* Card SEO Scores */}
@@ -561,6 +512,56 @@ export const MediaEdit: React.FC = () => {
                 />
               </div>
             )}
+          </Card>
+
+          <Card title="Thông tin kỹ thuật" style={{ marginTop: "20px" }}>
+            <MediaTechnicalInfo mode="edit" existingRecord={mediaData} />
+
+            {/* Display only fields for edit mode */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "16px",
+                marginTop: "16px",
+                padding: "16px",
+                backgroundColor: "#f5f5f5",
+                borderRadius: "6px",
+              }}
+            >
+              <div>
+                <Text strong>Ngày tạo:</Text>
+                <br />
+                <Text type="secondary">
+                  {mediaData?.created_at
+                    ? new Date(mediaData.created_at).toLocaleDateString("vi-VN")
+                    : "N/A"}
+                </Text>
+              </div>
+              <div>
+                <Text strong>Ngày cập nhật:</Text>
+                <br />
+                <Text type="secondary">
+                  {mediaData?.updated_at
+                    ? new Date(mediaData.updated_at).toLocaleDateString("vi-VN")
+                    : "N/A"}
+                </Text>
+              </div>
+              <div>
+                <Text strong>File Path:</Text>
+                <br />
+                <Text type="secondary" code copyable>
+                  {mediaData?.file_path || "N/A"}
+                </Text>
+              </div>
+              <div>
+                <Text strong>File URL:</Text>
+                <br />
+                <Text type="secondary" code copyable>
+                  {mediaData?.file_url || "N/A"}
+                </Text>
+              </div>
+            </div>
           </Card>
         </div>
       </div>

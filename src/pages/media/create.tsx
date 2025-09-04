@@ -724,9 +724,15 @@ export const MediaCreate: React.FC = () => {
           og_title,
           og_description,
           og_image,
+          og_type,
+          og_site_name,
+          og_locale,
+          twitter_card,
           twitter_title,
           twitter_description,
           twitter_image,
+          twitter_site,
+          twitter_creator,
           schema_markup,
           compression_ratio,
           optimization_score,
@@ -750,6 +756,7 @@ export const MediaCreate: React.FC = () => {
           caption_translations,
           auto_optimization_enabled,
           manual_override,
+          is_active,
           ...mediaData
         } = cleanValues;
 

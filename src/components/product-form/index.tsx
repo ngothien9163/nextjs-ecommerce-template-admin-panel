@@ -353,7 +353,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                     }}>Tạo dữ liệu thông minh</Button>
                   }
                 >
-                  <JsonField height={220} />
+                  <JsonField height={300} />
                 </Form.Item>
               </Col>
             </Row>

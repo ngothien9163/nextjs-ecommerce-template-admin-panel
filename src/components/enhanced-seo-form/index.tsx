@@ -1099,7 +1099,7 @@ export const EnhancedSEOForm: React.FC<EnhancedSEOFormProps> = ({
                     </Button>
                   }
                 >
-                  <JsonField height={200} />
+                  <JsonField height={300} />
                 </Form.Item>
               </Col>
             </Row>
