@@ -139,6 +139,8 @@ export const EnhancedSEOForm: React.FC<EnhancedSEOFormProps> = ({
     const content = formValues?.content || "";
     const excerpt = formValues?.excerpt || "";
     const slug = formValues?.slug || "";
+    // Get featured image from blog post form
+    const featuredImage = formValues?.featured_image || formValues?.featured_image_url;
 
     // Generate smart meta keywords from title and content (3-4 words or more per keyword)
     const titleWords = title
@@ -215,7 +217,7 @@ export const EnhancedSEOForm: React.FC<EnhancedSEOFormProps> = ({
     const fullPageUrl = pageUrl || `/blog/${slug}`;
     const canonicalUrl = `${baseUrl}${fullPageUrl}`;
 
-    // Use selected images if available, otherwise use dynamic API
+    // Use selected images if available, otherwise use featured image or dynamic API
     const existingOgImage = formValues?.seo_data?.og_image;
     const existingTwitterImage = formValues?.seo_data?.twitter_image;
 
@@ -227,8 +229,12 @@ export const EnhancedSEOForm: React.FC<EnhancedSEOFormProps> = ({
       return url;
     };
 
+    // Priority: existing OG image > featured image > dynamic OG image
     const ogImageUrl =
-      existingOgImage ? replaceLocalhostUrl(existingOgImage) : `${baseUrl}/api/og?title=${encodeURIComponent(title)}`; // Use selected image or dynamic OG image
+      existingOgImage ? replaceLocalhostUrl(existingOgImage) :
+      featuredImage ? replaceLocalhostUrl(featuredImage) :
+      `${baseUrl}/api/og?title=${encodeURIComponent(title)}`; // Use selected image, featured image, or dynamic OG image
+
     const twitterImageUrl = existingTwitterImage ? replaceLocalhostUrl(existingTwitterImage) : ogImageUrl; // Use selected Twitter image or same as OG
 
     // Generate smart SEO suggestions
@@ -302,7 +308,20 @@ export const EnhancedSEOForm: React.FC<EnhancedSEOFormProps> = ({
         headline: title,
         description: metaDescription,
         url: canonicalUrl,
-        image: {
+        image: featuredImage && featuredImage !== ogImageUrl ? [
+          {
+            "@type": "ImageObject",
+            url: replaceLocalhostUrl(featuredImage),
+            width: 1200,
+            height: 630,
+          },
+          {
+            "@type": "ImageObject",
+            url: replaceLocalhostUrl(ogImageUrl),
+            width: 1200,
+            height: 630,
+          }
+        ] : {
           "@type": "ImageObject",
           url: replaceLocalhostUrl(ogImageUrl),
           width: 1200,
@@ -356,8 +375,13 @@ export const EnhancedSEOForm: React.FC<EnhancedSEOFormProps> = ({
     const formValues = form?.form?.getFieldsValue();
     const baseUrl =
       import.meta.env.VITE_PUBLIC_SITE_URL || "https://example.com";
+    // Get featured image from blog post form
+    const featuredImage = formValues?.featured_image || formValues?.featured_image_url;
+    // Priority: existing OG image > featured image > default image
     const ogImage =
-      formValues?.seo_data?.og_image || `${baseUrl}/images/blog-default.jpg`;
+      formValues?.seo_data?.og_image ||
+      featuredImage ||
+      `${baseUrl}/images/blog-default.jpg`;
 
     // Helper function to replace localhost URLs with production URL
     const replaceLocalhostUrl = (url: string) => {
@@ -374,7 +398,10 @@ export const EnhancedSEOForm: React.FC<EnhancedSEOFormProps> = ({
         headline: formValues?.title || "Tiêu đề bài viết",
         description: formValues?.excerpt || "Mô tả bài viết",
         url: `${baseUrl}${pageUrl || "/blog/default"}`,
-        image: replaceLocalhostUrl(ogImage),
+        image: featuredImage && featuredImage !== ogImage ? [
+          replaceLocalhostUrl(featuredImage),
+          replaceLocalhostUrl(ogImage)
+        ] : replaceLocalhostUrl(ogImage),
         author: {
           "@type": "Person",
           name: "Admin",
@@ -482,8 +509,13 @@ export const EnhancedSEOForm: React.FC<EnhancedSEOFormProps> = ({
     const formValues = form?.form?.getFieldsValue();
     const baseUrl =
       import.meta.env.VITE_PUBLIC_SITE_URL || "https://example.com";
+    // Get featured image from blog post form
+    const featuredImage = formValues?.featured_image || formValues?.featured_image_url;
+    // Priority: existing OG image > featured image > default image
     const ogImage =
-      formValues?.seo_data?.og_image || `${baseUrl}/images/blog-default.jpg`;
+      formValues?.seo_data?.og_image ||
+      featuredImage ||
+      `${baseUrl}/images/blog-default.jpg`;
 
     // Helper function to replace localhost URLs with production URL
     const replaceLocalhostUrl = (url: string) => {
@@ -499,7 +531,10 @@ export const EnhancedSEOForm: React.FC<EnhancedSEOFormProps> = ({
       headline: formValues?.title || "Tiêu đề bài viết",
       description: formValues?.excerpt || "Mô tả bài viết",
       url: `${baseUrl}${pageUrl || "/blog/default"}`,
-      image: replaceLocalhostUrl(ogImage),
+      image: featuredImage && featuredImage !== ogImage ? [
+        replaceLocalhostUrl(featuredImage),
+        replaceLocalhostUrl(ogImage)
+      ] : replaceLocalhostUrl(ogImage),
       author: {
         "@type": "Person",
         name: "Admin",

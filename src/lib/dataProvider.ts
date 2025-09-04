@@ -1,5 +1,4 @@
 import { DataProvider } from '@refinedev/core';
-import { DataProvider } from '@refinedev/core';
 import { supabase } from './supabase';
 import { supabaseAdmin } from './supabase-admin';
 import { blogPostService } from './blog-post-service';
@@ -97,11 +96,11 @@ export const dataProvider: DataProvider = {
 
   getOne: async ({ resource, id }) => {
     console.log('🔍 getOne called for resource:', resource, 'with ID:', id);
-    
+
     let query;
-    
-    // Use admin client for categories and media to bypass RLS issues
-    const client = (resource === 'categories' || resource === 'media') ? supabaseAdmin : supabase;
+
+    // Use admin client for categories, media, and blog_categories to bypass RLS issues
+    const client = (resource === 'categories' || resource === 'media' || resource === 'blog_categories') ? supabaseAdmin : supabase;
     
     // Special handling for products to include category information
     if (resource === 'products') {
@@ -272,8 +271,8 @@ export const dataProvider: DataProvider = {
       }
     }
     
-    // Use admin client for categories and media to bypass RLS issues
-    const client = (resource === 'categories' || resource === 'media') ? supabaseAdmin : supabase;
+    // Use admin client for categories, media, and blog_categories to bypass RLS issues
+    const client = (resource === 'categories' || resource === 'media' || resource === 'blog_categories') ? supabaseAdmin : supabase;
     
     // Xử lý array fields cho media resource
     let processedVariables = variables;
@@ -346,9 +345,9 @@ export const dataProvider: DataProvider = {
 
   deleteOne: async ({ resource, id }) => {
     console.log('🔍 deleteOne called for resource:', resource, 'with ID:', id);
-    
-    // Use admin client for media to bypass RLS issues
-    const client = supabase;
+
+    // Use admin client for categories, media, and blog_categories to bypass RLS issues
+    const client = (resource === 'categories' || resource === 'media' || resource === 'blog_categories') ? supabaseAdmin : supabase;
     
     // Special handling for media resource - delete file from bucket first
     if (resource === 'media') {

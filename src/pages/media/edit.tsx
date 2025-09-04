@@ -26,6 +26,7 @@ import { supabaseAdmin } from "../../lib/supabase-admin";
 import { MediaFormFields } from "../../components/media-form-fields";
 import { MediaTechnicalInfo } from "../../components/media-technical-info";
 import { MediaSEOSection } from "../../components/media-seo-section";
+import { SEOMediaService } from "../../lib/seo-media-service";
 
 const { Text } = Typography;
 
@@ -310,25 +311,58 @@ export const MediaEdit: React.FC = () => {
       // Validate form
       await formProps.form?.validateFields();
       const values = formProps.form?.getFieldsValue();
-      
+
       if (!mediaData?.id) {
         message.error("Không tìm thấy ID của media!");
         return;
       }
-      
-      // Update using useUpdate hook
+
+      // Tách SEO data từ values (sử dụng safe destructuring)
+      const valuesObj = values || {};
+      const seoFields = [
+        'og_title', 'og_description', 'og_image', 'twitter_title', 'twitter_description', 'twitter_image',
+        'schema_markup', 'compression_ratio', 'optimization_score', 'responsive_images',
+        'webp_version_url', 'avif_version_url', 'ai_alt_text', 'ai_description', 'ai_tags',
+        'ai_relevance_score', 'visual_search_optimized', 'visual_search_tags', 'voice_search_optimized',
+        'voice_search_phrases', 'social_shares', 'social_engagement', 'click_through_rate',
+        'impressions', 'clicks', 'alt_text_translations', 'caption_translations',
+        'auto_optimization_enabled', 'manual_override'
+      ];
+
+      const seoData: any = {};
+      const mediaDataOnly: any = {};
+
+      Object.keys(valuesObj).forEach(key => {
+        if (seoFields.includes(key)) {
+          seoData[key] = (valuesObj as any)[key];
+        } else {
+          mediaDataOnly[key] = (valuesObj as any)[key];
+        }
+      });
+
+      // Update media data using useUpdate hook
       await updateMedia({
         resource: "media",
         id: mediaData.id,
-        values: values,
+        values: mediaDataOnly,
       });
-      
+
+      // Lưu SEO data vào bảng seo_medias
+      try {
+        const seoDataToSave = SEOMediaService.convertFormDataToSEOMedia(seoData, String(mediaData.id));
+        await SEOMediaService.saveSEOMediaData(seoDataToSave);
+        console.log('✅ SEO data saved to seo_medias table');
+      } catch (seoError) {
+        console.error('❌ Error saving SEO data:', seoError);
+        // Không throw error để không làm fail toàn bộ process
+      }
+
       // Show success message
       message.success("Cập nhật thành công!");
-      
+
       // Reload the data
       queryResult?.refetch();
-      
+
     } catch (error) {
       console.error("Save error:", error);
       message.error("Có lỗi xảy ra khi lưu!");
@@ -420,7 +454,12 @@ export const MediaEdit: React.FC = () => {
 
             {/* Card SEO Scores */}
             <Card title="Điểm SEO & Performance" style={{ marginBottom: "20px" }}>
-              <MediaSEOSection mode="edit" />
+              <MediaSEOSection
+                mode="edit"
+                form={formProps.form}
+                uploadedFiles={[]} // Edit mode doesn't have uploaded files
+                selectedFileIndex={0}
+              />
             </Card>
           </Form>
         </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button, Image, Card, Input, Space, Tag, Typography, message, Empty, Spin, Select, Row, Col } from 'antd';
-import { PictureOutlined, SearchOutlined, EyeOutlined, DeleteOutlined, PlusOutlined, ReloadOutlined, UploadOutlined } from '@ant-design/icons';
+import { PictureOutlined, SearchOutlined, EyeOutlined, DeleteOutlined, PlusOutlined, ReloadOutlined, UploadOutlined, LinkOutlined } from '@ant-design/icons';
 import { useTable } from '@refinedev/antd';
 import { BaseRecord } from '@refinedev/core';
 
@@ -122,6 +122,14 @@ export const BlogCategoryImageSelector: React.FC<BlogCategoryImageSelectorProps>
     message.success('Đã xóa ảnh đại diện!');
   };
 
+  const handleViewPublicUrl = () => {
+    if (selectedMedia) {
+      const publicSiteUrl = import.meta.env.VITE_PUBLIC_SITE_URL || 'http://localhost:4322';
+      const publicUrl = `${publicSiteUrl}/images/${selectedMedia.file_name}`;
+      window.open(publicUrl, '_blank');
+    }
+  };
+
   const openLightbox = (index: number) => {
     setCurrentImageIndex(index);
     setIsLightboxOpen(true);
@@ -179,6 +187,7 @@ export const BlogCategoryImageSelector: React.FC<BlogCategoryImageSelectorProps>
                   type="text"
                   icon={<EyeOutlined />}
                   size="small"
+                  title="Xem ảnh trong lightbox"
                   onClick={() => {
                     const index = tableProps.dataSource?.findIndex((item: BaseRecord) => item.id === selectedMedia.id) || 0;
                     openLightbox(index);
@@ -186,9 +195,17 @@ export const BlogCategoryImageSelector: React.FC<BlogCategoryImageSelectorProps>
                 />
                 <Button
                   type="text"
+                  icon={<LinkOutlined />}
+                  size="small"
+                  title="Xem ảnh trên site công khai"
+                  onClick={handleViewPublicUrl}
+                />
+                <Button
+                  type="text"
                   icon={<DeleteOutlined />}
                   size="small"
                   danger
+                  title="Xóa ảnh đại diện"
                   onClick={handleRemove}
                 />
               </Space>
@@ -312,9 +329,15 @@ export const BlogCategoryImageSelector: React.FC<BlogCategoryImageSelectorProps>
                   }}
                   onClick={() => handleSelect(mediaItem)}
                   actions={[
-                    <EyeOutlined key="view" onClick={(e) => {
+                    <EyeOutlined key="view" title="Xem ảnh trong lightbox" onClick={(e) => {
                       e.stopPropagation();
                       openLightbox(index);
+                    }} />,
+                    <LinkOutlined key="public" title="Xem ảnh trên site công khai" onClick={(e) => {
+                      e.stopPropagation();
+                      const publicSiteUrl = import.meta.env.VITE_PUBLIC_SITE_URL || 'http://localhost:4322';
+                      const publicUrl = `${publicSiteUrl}/images/${mediaItem.file_name}`;
+                      window.open(publicUrl, '_blank');
                     }} />
                   ]}
                 >

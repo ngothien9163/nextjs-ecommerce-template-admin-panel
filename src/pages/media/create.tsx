@@ -18,6 +18,7 @@ import { dataProvider } from "../../lib/dataProvider";
 import { MediaFormFields } from "../../components/media-form-fields";
 import { MediaTechnicalInfo } from "../../components/media-technical-info";
 import { MediaSEOSection } from "../../components/media-seo-section";
+import { SEOMediaService } from "../../lib/seo-media-service";
 
 const { Text } = Typography;
 
@@ -718,11 +719,59 @@ export const MediaCreate: React.FC = () => {
           }
         );
 
-        // Sử dụng data provider để tạo record
-        await dataProvider.create({
+        // Tách SEO data từ cleanValues
+        const {
+          og_title,
+          og_description,
+          og_image,
+          twitter_title,
+          twitter_description,
+          twitter_image,
+          schema_markup,
+          compression_ratio,
+          optimization_score,
+          responsive_images,
+          webp_version_url,
+          avif_version_url,
+          ai_alt_text,
+          ai_description,
+          ai_tags,
+          ai_relevance_score,
+          visual_search_optimized,
+          visual_search_tags,
+          voice_search_optimized,
+          voice_search_phrases,
+          social_shares,
+          social_engagement,
+          click_through_rate,
+          impressions,
+          clicks,
+          alt_text_translations,
+          caption_translations,
+          auto_optimization_enabled,
+          manual_override,
+          ...mediaData
+        } = cleanValues;
+
+        // Sử dụng data provider để tạo record media
+        const mediaResult = await dataProvider.create({
           resource: "media",
-          variables: cleanValues,
+          variables: mediaData,
         });
+
+        console.log('✅ Media record created:', mediaResult.data);
+
+        // Lưu SEO data vào bảng seo_medias nếu có media_id
+        if (mediaResult.data?.id) {
+          try {
+            const seoData = SEOMediaService.convertFormDataToSEOMedia(cleanValues, String(mediaResult.data.id));
+            await SEOMediaService.saveSEOMediaData(seoData);
+            console.log('✅ SEO data saved to seo_medias table');
+          } catch (seoError) {
+            console.error('❌ Error saving SEO data:', seoError);
+            // Không throw error để không làm fail toàn bộ process
+          }
+        }
       }
 
       message.success(
@@ -1202,6 +1251,9 @@ export const MediaCreate: React.FC = () => {
               <MediaSEOSection
                 mode="create"
                 onAutoFillSEOScores={() => autoFillSEOScores(true)}
+                form={formProps.form}
+                uploadedFiles={uploadedFiles}
+                selectedFileIndex={selectedFileIndex}
               />
             </Card>
           </Form>
