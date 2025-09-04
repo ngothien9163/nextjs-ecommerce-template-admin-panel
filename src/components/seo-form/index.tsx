@@ -1,6 +1,7 @@
 import React from 'react';
 import { Form, Input, Switch, InputNumber, Select, Upload, Row, Col, Card, Typography, Divider, Space, Button, Collapse, Tooltip } from 'antd';
 import { JsonField } from '../JsonField';
+import { MediaSelector } from '../media-selector';
 import { UploadOutlined, PlusOutlined, MinusCircleOutlined, InfoCircleOutlined, GlobalOutlined, ShareAltOutlined, TwitterOutlined, CodeOutlined, BarChartOutlined, TrophyOutlined, SettingOutlined } from '@ant-design/icons';
 import './seo-form.css';
 
@@ -16,6 +17,72 @@ interface SEOFormProps {
 export const SEOForm: React.FC<SEOFormProps> = ({ form, isEdit = false }) => {
   const [ogType, setOgType] = React.useState('website');
   const [twitterCard, setTwitterCard] = React.useState('summary_large_image');
+
+  // Custom JsonField wrapper for Ant Design Form integration
+  const JsonFieldWrapper: React.FC<{ value?: any; onChange?: (value: any) => void }> = ({ value, onChange }) => {
+    const [isExpanded, setIsExpanded] = React.useState(false);
+
+    // Function to expand all JSON child elements
+    const expandAllJsonChildren = (obj: any, path: string[] = []): any => {
+      if (obj === null || obj === undefined) return obj;
+      if (typeof obj !== 'object') return obj;
+
+      if (Array.isArray(obj)) {
+        return obj.map((item, index) => expandAllJsonChildren(item, [...path, index.toString()]));
+      }
+
+      const expandedObj: any = {};
+      for (const key in obj) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
+          const value = obj[key];
+          if (typeof value === 'object' && value !== null) {
+            // Add expansion metadata for nested objects
+            expandedObj[key] = {
+              ...expandAllJsonChildren(value, [...path, key]),
+              _expanded: true // Mark as expanded
+            };
+          } else {
+            expandedObj[key] = value;
+          }
+        }
+      }
+      return expandedObj;
+    };
+
+    const handleExpandAll = () => {
+      if (value && typeof value === 'object') {
+        const expandedValue = expandAllJsonChildren(value);
+        setIsExpanded(true);
+        onChange?.(expandedValue);
+      }
+    };
+
+    return (
+      <div style={{ position: 'relative' }}>
+        <JsonField
+          value={value}
+          onChange={onChange}
+          height={280} // Increased by 40% from 200 to 280
+        />
+        <Button
+          size="small"
+          type="text"
+          onClick={handleExpandAll}
+          style={{
+            position: 'absolute',
+            top: 8,
+            right: 8,
+            zIndex: 10,
+            background: 'rgba(255, 255, 255, 0.9)',
+            border: '1px solid #d9d9d9'
+          }}
+          title="Mở rộng tất cả các phần tử JSON"
+        >
+          🔍 Mở rộng
+        </Button>
+      </div>
+    );
+  };
 
   const ogTypeOptions = [
     { label: 'Website', value: 'website' },
@@ -168,99 +235,106 @@ export const SEOForm: React.FC<SEOFormProps> = ({ form, isEdit = false }) => {
                 }
                 name={['seo_data', 'canonical_url']}
               >
-                <Input 
-                  placeholder="https://example.com/product" 
+                <Input
+                  placeholder={`${import.meta.env.VITE_PUBLIC_SITE_URL || 'https://example.com'}/product`}
                   size="large"
                 />
               </Form.Item>
             </Col>
           </Row>
 
-          <Row gutter={[24, 16]}>
-            <Col span={8}>
-              <Form.Item
-                label={
-                  <Space>
-                    <span>Ngôn ngữ</span>
-                    {renderInfoIcon('Ngôn ngữ chính của trang, giúp Google hiểu và index đúng ngôn ngữ')}
-                  </Space>
-                }
-                name={['seo_data', 'language']}
-                initialValue="vi"
-              >
-                <Select options={languageOptions} size="large" />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item
-                label={
-                  <Space>
-                    <span>Character Encoding</span>
-                    {renderInfoIcon('Bộ mã ký tự của trang, thường là UTF-8 để hỗ trợ đa ngôn ngữ')}
-                  </Space>
-                }
-                name={['seo_data', 'charset']}
-                initialValue="UTF-8"
-              >
-                <Input size="large" />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item
-                label={
-                  <Space>
-                    <span>Viewport</span>
-                    {renderInfoIcon('Cài đặt viewport cho responsive design, giúp trang hiển thị tốt trên mobile')}
-                  </Space>
-                }
-                name={['seo_data', 'viewport']}
-                initialValue="width=device-width, initial-scale=1"
-              >
-                <Input size="large" />
-              </Form.Item>
-            </Col>
-          </Row>
+          {/* Technical Settings Row - Combined fields for better UX */}
+          <div className="combined-field-group">
+            <Row gutter={[24, 0]}>
+              <Col span={12}>
+                <Form.Item
+                  label={
+                    <Space>
+                      <span>Ngôn ngữ</span>
+                      {renderInfoIcon('Ngôn ngữ chính của trang, giúp Google hiểu và index đúng ngôn ngữ')}
+                    </Space>
+                  }
+                  name={['seo_data', 'language']}
+                  initialValue="vi"
+                >
+                  <Select options={languageOptions} size="large" />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  label={
+                    <Space>
+                      <span>Robots Directive</span>
+                      {renderInfoIcon('Chỉ thị cho các bot tìm kiếm về cách index và follow links trên trang')}
+                    </Space>
+                  }
+                  name={['seo_data', 'robots_directive']}
+                  initialValue="index,follow"
+                >
+                  <Select options={robotsOptions} size="large" />
+                </Form.Item>
+              </Col>
+            </Row>
+          </div>
 
-          <Row gutter={[24, 16]}>
-            <Col span={12}>
-              <Form.Item
-                label={
-                  <Space>
-                    <span>Robots Directive</span>
-                    {renderInfoIcon('Chỉ thị cho các bot tìm kiếm về cách index và follow links trên trang')}
-                  </Space>
-                }
-                name={['seo_data', 'robots_directive']}
-                initialValue="index,follow"
-              >
-                <Select options={robotsOptions} size="large" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                label={
-                  <Space>
-                    <span>Hreflang Tags (JSON)</span>
-                    {renderInfoIcon('Thẻ hreflang cho đa ngôn ngữ, giúp Google hiểu mối quan hệ giữa các phiên bản ngôn ngữ khác nhau')}
-                  </Space>
-                }
-                name={['seo_data', 'hreflang']}
-                extra={
-                  <Button size="small" onClick={() => {
-                    const canonical = form?.form?.getFieldValue(['seo_data','canonical_url']) || 'https://example.com/product';
-                    const base = canonical.replace(/\/$/, '');
-                    const example = [
-                      { lang: 'vi', url: `${base}/vi` },
-                      { lang: 'en', url: `${base}/en` },
-                    ];
-                    form?.form?.setFieldsValue({ seo_data: { hreflang: example } });
-                  }}>Tạo dữ liệu thông minh</Button>
-                }
-              >
-                <JsonField height={200} />
-              </Form.Item>
-            </Col>
-          </Row>
+          <div className="combined-field-group">
+            <Row gutter={[24, 0]}>
+              <Col span={12}>
+                <Form.Item
+                  label={
+                    <Space>
+                      <span>Character Encoding</span>
+                      {renderInfoIcon('Bộ mã ký tự của trang, thường là UTF-8 để hỗ trợ đa ngôn ngữ')}
+                    </Space>
+                  }
+                  name={['seo_data', 'charset']}
+                  initialValue="UTF-8"
+                >
+                  <Input size="large" />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  label={
+                    <Space>
+                      <span>Viewport</span>
+                      {renderInfoIcon('Cài đặt viewport cho responsive design, giúp trang hiển thị tốt trên mobile')}
+                    </Space>
+                  }
+                  name={['seo_data', 'viewport']}
+                  initialValue="width=device-width, initial-scale=1"
+                >
+                  <Input size="large" />
+                </Form.Item>
+              </Col>
+            </Row>
+          </div>
+
+          {/* Hreflang Section - Enhanced styling for JSON editing */}
+          <div className="json-field-container">
+            <Form.Item
+              label={
+                <Space>
+                  <span>Hreflang Tags (JSON)</span>
+                  {renderInfoIcon('Thẻ hreflang cho đa ngôn ngữ, giúp Google hiểu mối quan hệ giữa các phiên bản ngôn ngữ khác nhau')}
+                </Space>
+              }
+              name={['seo_data', 'hreflang']}
+              extra={
+                <Button size="small" onClick={() => {
+                  const canonical = form?.form?.getFieldValue(['seo_data','canonical_url']) || `${import.meta.env.VITE_PUBLIC_SITE_URL || 'https://example.com'}/product`;
+                  const base = canonical.replace(/\/$/, '');
+                  const example = [
+                    { lang: 'vi', url: `${base}/vi` },
+                    { lang: 'en', url: `${base}/en` },
+                  ];
+                  form?.form?.setFieldsValue({ seo_data: { hreflang: example } });
+                }}>Tạo dữ liệu thông minh</Button>
+              }
+            >
+              <JsonFieldWrapper />
+            </Form.Item>
+          </div>
         </Panel>
 
         {/* Open Graph & Social Media */}
@@ -338,6 +412,7 @@ export const SEOForm: React.FC<SEOFormProps> = ({ form, isEdit = false }) => {
                   </Space>
                 }
                 name={['seo_data', 'og_site_name']}
+                initialValue={import.meta.env.VITE_PUBLIC_SITE_NAME || 'Example Site'}
               >
                 <Input placeholder="Tên website" size="large" />
               </Form.Item>
@@ -364,14 +439,22 @@ export const SEOForm: React.FC<SEOFormProps> = ({ form, isEdit = false }) => {
                 label={
                   <Space>
                     <span>OG Image</span>
-                    {renderInfoIcon('Hình ảnh hiển thị khi chia sẻ trên mạng xã hội. Nên có kích thước 1200x630px')}
+                    {renderInfoIcon('Hình ảnh hiển thị khi chia sẻ trên mạng xã hội. Nên có kích thước 1200x630px. Chọn từ thư viện hình ảnh đã upload')}
                   </Space>
                 }
                 name={['seo_data', 'og_image']}
               >
-                <Input 
-                  placeholder="URL hình ảnh Open Graph" 
-                  size="large"
+                <MediaSelector
+                  placeholder="Chọn hình ảnh OG từ thư viện"
+                  onSelect={(media) => {
+                    // Update the form with the selected image URL
+                    form?.form?.setFieldsValue({
+                      seo_data: {
+                        ...form?.form?.getFieldValue('seo_data'),
+                        og_image: media.file_url
+                      }
+                    });
+                  }}
                 />
               </Form.Item>
             </Col>
@@ -489,7 +572,7 @@ export const SEOForm: React.FC<SEOFormProps> = ({ form, isEdit = false }) => {
                 }
                 name={['seo_data', 'twitter_creator']}
               >
-                <Input placeholder="@username" size="large" />
+                <Input placeholder={import.meta.env.VITE_PUBLIC_TWITTER_CREATOR || "@username"} size="large" />
               </Form.Item>
             </Col>
             <Col span={8}>
@@ -502,7 +585,7 @@ export const SEOForm: React.FC<SEOFormProps> = ({ form, isEdit = false }) => {
                 }
                 name={['seo_data', 'twitter_site']}
               >
-                <Input placeholder="@sitename" size="large" />
+                <Input placeholder={import.meta.env.VITE_PUBLIC_TWITTER_SITE || "@sitename"} size="large" />
               </Form.Item>
             </Col>
           </Row>
@@ -513,14 +596,22 @@ export const SEOForm: React.FC<SEOFormProps> = ({ form, isEdit = false }) => {
                 label={
                   <Space>
                     <span>Twitter Image</span>
-                    {renderInfoIcon('Hình ảnh hiển thị khi chia sẻ trên Twitter. Nên có kích thước 1200x600px')}
+                    {renderInfoIcon('Hình ảnh hiển thị khi chia sẻ trên Twitter. Nên có kích thước 1200x600px. Chọn từ thư viện hình ảnh đã upload')}
                   </Space>
                 }
                 name={['seo_data', 'twitter_image']}
               >
-                <Input 
-                  placeholder="URL hình ảnh Twitter" 
-                  size="large"
+                <MediaSelector
+                  placeholder="Chọn hình ảnh Twitter từ thư viện"
+                  onSelect={(media) => {
+                    // Update the form with the selected image URL
+                    form?.form?.setFieldsValue({
+                      seo_data: {
+                        ...form?.form?.getFieldValue('seo_data'),
+                        twitter_image: media.file_url
+                      }
+                    });
+                  }}
                 />
               </Form.Item>
             </Col>
@@ -550,18 +641,42 @@ export const SEOForm: React.FC<SEOFormProps> = ({ form, isEdit = false }) => {
               <Space size={8}>
                 <span>Nhập dữ liệu có cấu trúc Schema.org dạng JSON-LD để tối ưu hiển thị trên kết quả tìm kiếm</span>
                 <Button size="small" onClick={() => {
+                  const baseUrl = import.meta.env.VITE_PUBLIC_SITE_URL || 'https://example.com';
+
+                  // Helper function to replace localhost URLs with production URL
+                  const replaceLocalhostUrl = (url: string) => {
+                    if (url && url.includes('localhost')) {
+                      return url.replace(/https?:\/\/localhost(:\d+)?/, baseUrl);
+                    }
+                    return url;
+                  };
+
+                  // Get selected image if available
+                  const selectedOgImage = form?.form?.getFieldValue(['seo_data', 'og_image']);
+                  const imageUrl = selectedOgImage ? replaceLocalhostUrl(selectedOgImage) : `${baseUrl}/images/product-default.jpg`;
+
                   const example = {
                     '@context': 'https://schema.org',
                     '@type': 'Product',
                     name: form?.form?.getFieldValue('name') || 'Tên sản phẩm',
                     description: form?.form?.getFieldValue('short_description') || 'Mô tả sản phẩm',
-                    brand: form?.form?.getFieldValue('brand') || 'Thương hiệu',
+                    brand: form?.form?.getFieldValue('brand') || import.meta.env.VITE_PUBLIC_SITE_NAME || 'Thương hiệu',
                     sku: form?.form?.getFieldValue('sku') || 'SKU-001',
                     offers: {
                       '@type': 'Offer',
                       price: String(form?.form?.getFieldValue('price') || 1000000),
                       priceCurrency: 'VND',
                       availability: 'https://schema.org/InStock'
+                    },
+                    url: `${baseUrl}${form?.form?.getFieldValue('slug') ? '/' + form?.form?.getFieldValue('slug') : '/product'}`,
+                    image: imageUrl,
+                    publisher: {
+                      '@type': 'Organization',
+                      name: import.meta.env.VITE_PUBLIC_SITE_NAME || 'Website',
+                      logo: {
+                        '@type': 'ImageObject',
+                        url: `${baseUrl}/logo.png`
+                      }
                     }
                   };
                   form?.form?.setFieldsValue({ seo_data: { schema_markup: example } });
@@ -569,7 +684,7 @@ export const SEOForm: React.FC<SEOFormProps> = ({ form, isEdit = false }) => {
               </Space>
             }
           >
-            <JsonField height={300} />
+            <JsonFieldWrapper />
           </Form.Item>
         </Panel>
 
@@ -794,7 +909,7 @@ export const SEOForm: React.FC<SEOFormProps> = ({ form, isEdit = false }) => {
                   </Space>
                 }
               >
-                <JsonField height={200} />
+                <JsonFieldWrapper />
               </Form.Item>
             </Col>
             <Col span={12}>
@@ -816,7 +931,7 @@ export const SEOForm: React.FC<SEOFormProps> = ({ form, isEdit = false }) => {
                   </Space>
                 }
               >
-                <JsonField height={200} />
+                <JsonFieldWrapper />
               </Form.Item>
             </Col>
           </Row>
@@ -841,7 +956,7 @@ export const SEOForm: React.FC<SEOFormProps> = ({ form, isEdit = false }) => {
                   </Space>
                 }
               >
-                <JsonField height={200} />
+                <JsonFieldWrapper />
               </Form.Item>
             </Col>
             <Col span={12}>
@@ -863,7 +978,7 @@ export const SEOForm: React.FC<SEOFormProps> = ({ form, isEdit = false }) => {
                   </Space>
                 }
               >
-                <JsonField height={200} />
+                <JsonFieldWrapper />
               </Form.Item>
             </Col>
           </Row>
@@ -888,7 +1003,7 @@ export const SEOForm: React.FC<SEOFormProps> = ({ form, isEdit = false }) => {
                   </Space>
                 }
               >
-                <JsonField height={200} />
+                <JsonFieldWrapper />
               </Form.Item>
             </Col>
             <Col span={12}>
@@ -910,7 +1025,7 @@ export const SEOForm: React.FC<SEOFormProps> = ({ form, isEdit = false }) => {
                   </Space>
                 }
               >
-                <JsonField height={200} />
+                <JsonFieldWrapper />
               </Form.Item>
             </Col>
           </Row>
