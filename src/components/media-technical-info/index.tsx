@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Form, Input, Select, Space, Tooltip, Tag, Switch, Button, Typography } from "antd";
 import { EditOutlined, InfoCircleOutlined, CopyOutlined, LinkOutlined } from "@ant-design/icons";
 
@@ -19,17 +19,51 @@ interface MediaTechnicalInfoProps {
   }>;
   selectedFileIndex?: number;
   existingRecord?: any; // For edit mode - existing record data
+  form?: any; // Form instance to set values
 }
 
 export const MediaTechnicalInfo: React.FC<MediaTechnicalInfoProps> = ({
   mode = 'create',
   uploadedFiles = [],
   selectedFileIndex = 0,
-  existingRecord
+  existingRecord,
+  form
 }) => {
   const isAutoFilled = mode === 'create' && uploadedFiles.length > 0 && uploadedFiles[selectedFileIndex]?.dimensions;
   const isEditMode = mode === 'edit';
   const selectedFile = uploadedFiles[selectedFileIndex];
+
+  // Initialize form values with existing data in edit mode
+  useEffect(() => {
+    if (isEditMode && existingRecord && form) {
+      console.log("🔍 Initializing technical info form with existing data:", existingRecord);
+
+      const formValues: any = {};
+
+      // Set technical info fields from existing record
+      if (existingRecord.image_dimensions) {
+        formValues.image_dimensions = existingRecord.image_dimensions;
+      }
+      if (existingRecord.file_size_kb) {
+        formValues.file_size_kb = existingRecord.file_size_kb.toString();
+      }
+      if (existingRecord.image_format) {
+        formValues.image_format = existingRecord.image_format;
+      }
+      if (existingRecord.mime_type) {
+        formValues.mime_type = existingRecord.mime_type;
+      }
+      if (existingRecord.lazy_loading !== undefined) {
+        formValues.lazy_loading = existingRecord.lazy_loading;
+      }
+      if (existingRecord.priority_loading !== undefined) {
+        formValues.priority_loading = existingRecord.priority_loading;
+      }
+
+      console.log("🔍 Setting form values:", formValues);
+      form.setFieldsValue(formValues);
+    }
+  }, [isEditMode, existingRecord, form]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>

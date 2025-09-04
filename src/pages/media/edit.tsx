@@ -26,6 +26,7 @@ import { supabaseAdmin } from "../../lib/supabase-admin";
 import { MediaFormFields } from "../../components/media-form-fields";
 import { MediaTechnicalInfo } from "../../components/media-technical-info";
 import { MediaSEOSection } from "../../components/media-seo-section";
+import { MediaFormLayout } from "../../components/media-form-layout";
 import { SEOMediaService } from "../../lib/seo-media-service";
 
 const { Text } = Typography;
@@ -70,7 +71,7 @@ export const MediaEdit: React.FC = () => {
 
   const onCropComplete = async (crop: any, pixelCrop: any) => {
     console.log("🔍 onCropComplete called:", { crop, pixelCrop });
-    
+
     if (!imageRef.current) {
       console.log("❌ imageRef.current is null");
       return;
@@ -140,18 +141,18 @@ export const MediaEdit: React.FC = () => {
     if (imageRef.current && crop.width && crop.height) {
       console.log("🔍 Manual crop trigger");
       console.log("🔍 Current crop:", crop);
-      
+
       // Convert percentage crop to pixel crop
       const scaleX = imageRef.current.naturalWidth / imageRef.current.width;
       const scaleY = imageRef.current.naturalHeight / imageRef.current.height;
-      
+
       const pixelCrop = {
         x: Math.round((crop.x / 100) * imageRef.current.width),
         y: Math.round((crop.y / 100) * imageRef.current.height),
         width: Math.round((crop.width / 100) * imageRef.current.width),
         height: Math.round((crop.height / 100) * imageRef.current.height)
       };
-      
+
       console.log("🔍 Calculated pixelCrop:", pixelCrop);
       onCropComplete(crop, pixelCrop);
     } else {
@@ -179,16 +180,16 @@ export const MediaEdit: React.FC = () => {
       // Calculate new technical specifications
       const fileSizeKB = Math.round(file.size / 1024);
       const imageFormat = file.type.split("/")[1]?.toUpperCase() || "JPEG";
-      
+
       // Get image dimensions from the current crop
       const currentCrop = crop;
       let newDimensions = { width: 0, height: 0 };
-      
+
       if (imageRef.current && currentCrop.width && currentCrop.height) {
         // Calculate actual pixel dimensions from crop
         const scaleX = imageRef.current.naturalWidth / imageRef.current.width;
         const scaleY = imageRef.current.naturalHeight / imageRef.current.height;
-        
+
         newDimensions = {
           width: Math.round(currentCrop.width * scaleX),
           height: Math.round(currentCrop.height * scaleY)
@@ -371,7 +372,7 @@ export const MediaEdit: React.FC = () => {
   };
 
   return (
-    <Edit 
+    <Edit
       saveButtonProps={{
         ...saveButtonProps,
         onClick: handleSave,
@@ -395,176 +396,111 @@ export const MediaEdit: React.FC = () => {
         </Button>,
       ]}
     >
-      <div style={{ display: "flex", gap: "20px" }}>
-        {/* Form Section */}
-        <div style={{ flex: 1 }}>
-          <Form {...formProps} layout="vertical">
-            <Card title="Thông tin Media" style={{ marginBottom: "20px" }}>
-              <MediaFormFields mode="edit" form={formProps.form} />
-            </Card>
-
-            {/* Card SEO Scores */}
-            <Card title="Điểm SEO & Performance" style={{ marginBottom: "20px" }}>
-              <MediaSEOSection
-                mode="edit"
-                form={formProps.form}
-                uploadedFiles={[]} // Edit mode doesn't have uploaded files
-                selectedFileIndex={0}
-              />
-            </Card>
-          </Form>
-        </div>
-
-        {/* Image Preview & Crop Section */}
-        <div style={{ flex: 1 }}>
-          <Card title="Xem trước & Chỉnh sửa">
-            <div style={{ textAlign: "center", marginBottom: "16px" }}>
-              <Space>
+      <MediaFormLayout
+        mode="edit"
+        formProps={formProps}
+        mediaData={mediaData}
+        showTechnicalInfo={true}
+        technicalInfoMode="edit"
+        form={formProps.form}
+      >
+        <Card title="Xem trước & Chỉnh sửa">
+          <div style={{ textAlign: "center", marginBottom: "16px" }}>
+            <Space>
+              <Button
+                icon={<ScissorOutlined />}
+                onClick={() => setIsCropping(!isCropping)}
+                type={isCropping ? "primary" : "default"}
+              >
+                {isCropping ? "Thoát Crop" : "Crop"}
+              </Button>
+              <Button
+                icon={<RotateLeftOutlined />}
+                onClick={() => handleRotate("left")}
+              >
+                Xoay trái
+              </Button>
+              <Button
+                icon={<RotateRightOutlined />}
+                onClick={() => handleRotate("right")}
+              >
+                Xoay phải
+              </Button>
+              {isCropping && crop.width && crop.height && (
                 <Button
-                  icon={<ScissorOutlined />}
-                  onClick={() => setIsCropping(!isCropping)}
-                  type={isCropping ? "primary" : "default"}
+                  type="dashed"
+                  onClick={handleManualCrop}
+                  disabled={!imageRef.current}
                 >
-                  {isCropping ? "Thoát Crop" : "Crop"}
+                  Tạo Preview
                 </Button>
-                <Button
-                  icon={<RotateLeftOutlined />}
-                  onClick={() => handleRotate("left")}
-                >
-                  Xoay trái
-                </Button>
-                <Button
-                  icon={<RotateRightOutlined />}
-                  onClick={() => handleRotate("right")}
-                >
-                  Xoay phải
-                </Button>
-                {isCropping && crop.width && crop.height && (
-                  <Button
-                    type="dashed"
-                    onClick={handleManualCrop}
-                    disabled={!imageRef.current}
-                  >
-                    Tạo Preview
-                  </Button>
-                )}
-              </Space>
-            </div>
-
-            <div style={{ position: "relative", textAlign: "center" }}>
-              {isCropping ? (
-                <div style={{ maxWidth: "100%", overflow: "hidden" }}>
-                  <ReactCrop
-                    crop={crop}
-                    onChange={onCropChange}
-                    onComplete={(crop, pixelCrop) =>
-                      onCropComplete(crop, pixelCrop)
-                    }
-                  >
-                    <img
-                      ref={imageRef}
-                      src={mediaData?.file_url}
-                      alt={mediaData?.alt_text || mediaData?.file_name}
-                      style={{
-                        maxWidth: "100%",
-                        maxHeight: "400px",
-                        transform: `rotate(${rotation}deg)`,
-                      }}
-                    />
-                  </ReactCrop>
-                  <div style={{ marginTop: "16px" }}>
-                    {croppedImageUrl ? (
-                      <Button
-                        type="primary"
-                        icon={<SaveOutlined />}
-                        onClick={handleCropSave}
-                      >
-                        Lưu Crop
-                      </Button>
-                    ) : (
-                      <div style={{ color: "#666", fontSize: "14px" }}>
-                        💡 Kéo thả để chọn vùng cắt, sau đó nhấn "Tạo Preview" để xem trước
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <Image
-                  src={mediaData?.file_url}
-                  alt={mediaData?.alt_text || mediaData?.file_name}
-                  style={{
-                    maxWidth: "100%",
-                    maxHeight: "400px",
-                    transform: `rotate(${rotation}deg)`,
-                  }}
-                  fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RnG4W+FgYxN"
-                />
               )}
-            </div>
+            </Space>
+          </div>
 
-            {croppedImageUrl && (
-              <div style={{ marginTop: "16px" }}>
-                <Divider>Hình ảnh đã crop</Divider>
-                <Image
-                  src={croppedImageUrl}
-                  alt="Cropped preview"
-                  style={{ maxWidth: "100%", maxHeight: "200px" }}
-                />
+          <div style={{ position: "relative", textAlign: "center" }}>
+            {isCropping ? (
+              <div style={{ maxWidth: "100%", overflow: "hidden" }}>
+                <ReactCrop
+                  crop={crop}
+                  onChange={onCropChange}
+                  onComplete={(crop, pixelCrop) =>
+                    onCropComplete(crop, pixelCrop)
+                  }
+                >
+                  <img
+                    ref={imageRef}
+                    src={mediaData?.file_url}
+                    alt={mediaData?.alt_text || mediaData?.file_name}
+                    style={{
+                      maxWidth: "100%",
+                      maxHeight: "400px",
+                      transform: `rotate(${rotation}deg)`,
+                    }}
+                  />
+                </ReactCrop>
+                <div style={{ marginTop: "16px" }}>
+                  {croppedImageUrl ? (
+                    <Button
+                      type="primary"
+                      icon={<SaveOutlined />}
+                      onClick={handleCropSave}
+                    >
+                      Lưu Crop
+                    </Button>
+                  ) : (
+                    <div style={{ color: "#666", fontSize: "14px" }}>
+                      💡 Kéo thả để chọn vùng cắt, sau đó nhấn "Tạo Preview" để xem trước
+                    </div>
+                  )}
+                </div>
               </div>
+            ) : (
+              <Image
+                src={mediaData?.file_url}
+                alt={mediaData?.alt_text || mediaData?.file_name}
+                style={{
+                  maxWidth: "100%",
+                  maxHeight: "400px",
+                  transform: `rotate(${rotation}deg)`,
+                }}
+                fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RnG4W+FgYxN"
+  />
             )}
-          </Card>
+          </div>
 
-          <Card title="Thông tin kỹ thuật" style={{ marginTop: "20px" }}>
-            <MediaTechnicalInfo mode="edit" existingRecord={mediaData} />
-
-            {/* Display only fields for edit mode */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: "16px",
-                marginTop: "16px",
-                padding: "16px",
-                backgroundColor: "#f5f5f5",
-                borderRadius: "6px",
-              }}
-            >
-              <div>
-                <Text strong>Ngày tạo:</Text>
-                <br />
-                <Text type="secondary">
-                  {mediaData?.created_at
-                    ? new Date(mediaData.created_at).toLocaleDateString("vi-VN")
-                    : "N/A"}
-                </Text>
-              </div>
-              <div>
-                <Text strong>Ngày cập nhật:</Text>
-                <br />
-                <Text type="secondary">
-                  {mediaData?.updated_at
-                    ? new Date(mediaData.updated_at).toLocaleDateString("vi-VN")
-                    : "N/A"}
-                </Text>
-              </div>
-              <div>
-                <Text strong>File Path:</Text>
-                <br />
-                <Text type="secondary" code copyable>
-                  {mediaData?.file_path || "N/A"}
-                </Text>
-              </div>
-              <div>
-                <Text strong>File URL:</Text>
-                <br />
-                <Text type="secondary" code copyable>
-                  {mediaData?.file_url || "N/A"}
-                </Text>
-              </div>
+          {croppedImageUrl && (
+            <div style={{ marginTop: "16px" }}>
+              <Divider>Hình ảnh đã crop</Divider>
+              <Image
+                src={croppedImageUrl}
+                alt="Cropped preview"
+                style={{ maxWidth: "100%", maxHeight: "200px" }}
+              />
             </div>
-          </Card>
-        </div>
-      </div>
+          )}
+        </Card>
+      </MediaFormLayout>
     </Edit>
   );
 };

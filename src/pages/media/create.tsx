@@ -18,6 +18,7 @@ import { dataProvider } from "../../lib/dataProvider";
 import { MediaFormFields } from "../../components/media-form-fields";
 import { MediaTechnicalInfo } from "../../components/media-technical-info";
 import { MediaSEOSection } from "../../components/media-seo-section";
+import { MediaFormLayout } from "../../components/media-form-layout";
 import { SEOMediaService } from "../../lib/seo-media-service";
 
 const { Text } = Typography;
@@ -814,7 +815,15 @@ export const MediaCreate: React.FC = () => {
         },
       }}
     >
-      <div style={{ display: "flex", gap: "20px" }}>
+      <MediaFormLayout
+        mode="create"
+        formProps={formProps}
+        uploadedFiles={uploadedFiles}
+        selectedFileIndex={selectedFileIndex}
+        onAutoFillSEOScores={() => autoFillSEOScores(true)}
+        showTechnicalInfo={uploadedFiles.length > 0}
+        technicalInfoMode="create"
+      >
         {/* Upload Section */}
         <div style={{ flex: 1 }}>
           <Card title="Upload Files" style={{ marginBottom: "20px" }}>
@@ -1025,247 +1034,21 @@ export const MediaCreate: React.FC = () => {
               </div>
             </Card>
           )}
-        </div>
 
-        {/* Form Section */}
-        <div style={{ flex: 1 }}>
-          <Form {...formProps} layout="vertical" onFinish={handleFormSubmit}>
-            <Card
-              title={
-                <div>
-                  <div style={{ marginBottom: "8px" }}>
-                    <span>Thông tin Media</span>
-                  </div>
-                  {uploadedFiles.length > 0 && (
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "12px",
-                        flexWrap: "wrap",
-                        padding: "8px 12px",
-                        backgroundColor: "#f6ffed",
-                        border: "1px solid #b7eb8f",
-                        borderRadius: "6px",
-                        marginTop: "8px",
-                      }}
-                    >
-                      <Tag
-                        color="green"
-                        style={{
-                          maxWidth: "100%",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          margin: 0,
-                          padding: "4px 8px",
-                          fontSize: "13px",
-                        }}
-                      >
-                        {uploadedFiles.length === 1 ? (
-                          <>
-                            File:{" "}
-                            {uploadedFiles[0]?.uploadedFileName ||
-                              uploadedFiles[0]?.file.name}
-                            {uploadedFiles[0]?.uploadedFileName &&
-                              uploadedFiles[0]?.uploadedFileName !==
-                                uploadedFiles[0]?.file.name && (
-                                <span style={{ color: "#1890ff" }}>
-                                  {" "}
-                                  (đã đổi tên)
-                                </span>
-                              )}
-                          </>
-                        ) : (
-                          <>
-                            File đang chọn: {uploadedFiles[selectedFileIndex]?.uploadedFileName || uploadedFiles[selectedFileIndex]?.file.name}
-                            <br/>
-                            <span style={{ fontSize: '11px', color: '#666' }}>
-                              (Các file khác sẽ tự động tạo thông tin)
-                            </span>
-                          </>
-                        )}
-                      </Tag>
-                      <Button
-                        size="small"
-                        type="dashed"
-                        onClick={() => {
-                          // Ghi đè thông tin hiện tại với thông tin từ file đang chọn
-                          const fileData = uploadedFiles[selectedFileIndex];
-                          const file = fileData.file;
-                          const fileName = file.name.replace(/\.[^/.]+$/, "");
-                          
-                          const smartAltText = fileName
-                            .replace(/[-_]/g, " ")
-                            .replace(/\b\w/g, (l) => l.toUpperCase())
-                            .replace(/\s+/g, " ")
-                            .trim();
-
-                          const captions = [
-                            `${smartAltText} - Hình ảnh chất lượng cao`,
-                            `Ảnh ${smartAltText.toLowerCase()} đẹp và rõ nét`,
-                            `${smartAltText} - Tài liệu hình ảnh chuyên nghiệp`,
-                            `Hình ảnh ${smartAltText.toLowerCase()} phù hợp cho nhiều mục đích sử dụng`,
-                            `${smartAltText} - Bức ảnh được chụp với độ phân giải cao`,
-                            `Khám phá vẻ đẹp của ${smartAltText.toLowerCase()} qua góc nhìn chuyên nghiệp`,
-                            `${smartAltText} - Hình ảnh tối ưu cho thiết kế và marketing`,
-                            `Tài liệu hình ảnh ${smartAltText.toLowerCase()} chất lượng, sẵn sàng sử dụng`,
-                            `${smartAltText} - Bộ sưu tập hình ảnh đa dạng và phong phú`,
-                            `Hình ảnh ${smartAltText.toLowerCase()} chuyên nghiệp, phù hợp cho mọi dự án`,
-                          ];
-
-                          const metaDescriptions = [
-                            `Hình ảnh ${smartAltText.toLowerCase()}, chất lượng cao, phù hợp cho website và marketing.`,
-                            `Ảnh ${smartAltText.toLowerCase()} đẹp, rõ nét, tối ưu cho SEO và trải nghiệm người dùng.`,
-                            `${smartAltText} - Hình ảnh chuyên nghiệp, phù hợp cho các dự án thương mại và cá nhân.`,
-                            `Tải hình ảnh ${smartAltText.toLowerCase()} miễn phí, chất lượng cao, không có watermark.`,
-                            `Khám phá ${smartAltText.toLowerCase()} với hình ảnh chất lượng 4K, tối ưu cho mọi thiết bị.`,
-                            `${smartAltText} - Bộ sưu tập hình ảnh đa dạng, phù hợp cho thiết kế và nội dung sáng tạo.`,
-                            `Hình ảnh ${smartAltText.toLowerCase()} chuyên nghiệp, hỗ trợ đa định dạng và tương thích mọi trình duyệt.`,
-                            `Tải xuống ${smartAltText.toLowerCase()} miễn phí, độ phân giải cao, không giới hạn sử dụng.`,
-                            `${smartAltText} - Tài nguyên hình ảnh chất lượng, tối ưu cho SEO và tốc độ tải trang.`,
-                            `Khám phá bộ sưu tập ${smartAltText.toLowerCase()} đa dạng, phù hợp cho mọi nhu cầu thiết kế.`,
-                          ];
-
-                          const keywords = generateKeywords(fileName);
-
-                          formProps.form?.setFieldsValue({
-                            file_name: fileName,
-                            alt_text: smartAltText,
-                            title: smartAltText,
-                            caption: captions[0],
-                            meta_description: metaDescriptions[0],
-                            meta_keywords: keywords,
-                          });
-
-                          message.info('Đã tự động điền lại thông tin từ file đang chọn!');
-                        }}
-                        title="Tự động điền lại thông tin từ file"
-                        style={{
-                          margin: 0,
-                          fontSize: "12px",
-                          height: "24px",
-                          padding: "0 8px",
-                        }}
-                      >
-                        🔄 Tự động điền
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              }
-            >
-              {uploadedFiles.length > 0 && (
-                <div
-                  style={{
-                    marginBottom: "16px",
-                    padding: "12px",
-                    backgroundColor: "#f6ffed",
-                    border: "1px solid #b7eb8f",
-                    borderRadius: "6px",
-                  }}
-                >
-                  <Text
-                    strong
-                    style={{
-                      color: "#52c41a",
-                      marginBottom: "8px",
-                      display: "block",
-                    }}
-                  >
-                    ✓ Thông tin tự động đã được lấy:
-                  </Text>
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr",
-                      gap: "8px",
-                      fontSize: "12px",
-                    }}
-                  >
-                    <div>
-                      <strong>Kích thước:</strong>{" "}
-                      {uploadedFiles[selectedFileIndex]?.dimensions
-                        ? `${uploadedFiles[selectedFileIndex].dimensions.width}x${uploadedFiles[selectedFileIndex].dimensions.height}`
-                        : "Chưa xác định"}
-                    </div>
-                    <div>
-                      <strong>Dung lượng:</strong>{" "}
-                      {uploadedFiles[selectedFileIndex]?.fileSizeKB
-                        ? `${uploadedFiles[selectedFileIndex].fileSizeKB} KB`
-                        : "Chưa xác định"}
-                    </div>
-                    <div>
-                      <strong>Định dạng:</strong>{" "}
-                      {uploadedFiles[selectedFileIndex]?.imageFormat ||
-                        "Chưa xác định"}
-                    </div>
-                    <div>
-                      <strong>MIME Type:</strong>{" "}
-                      {uploadedFiles[selectedFileIndex]?.file.type ||
-                        "Chưa xác định"}
-                    </div>
-                  </div>
-                  {uploadedFiles[selectedFileIndex]?.uploaded && (
-                    <div style={{ marginTop: "8px", color: "#52c41a" }}>
-                      <strong>✓ Đã upload thành công!</strong> <br />
-                      <div style={{ fontSize: "11px", marginTop: "4px" }}>
-                        <strong>Tên file:</strong>{" "}
-                        {uploadedFiles[selectedFileIndex].uploadedFileName ||
-                          uploadedFiles[selectedFileIndex].file.name}{" "}
-                        <br />
-                        <strong>URL:</strong>{" "}
-                        <Text code copyable style={{ fontSize: "11px" }}>
-                          {uploadedFiles[selectedFileIndex].url}
-                        </Text>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-              <MediaFormFields
-                mode="create"
-                uploadedFiles={uploadedFiles}
-                selectedFileIndex={selectedFileIndex}
-                form={formProps.form}
-              />
-
+          {/* Thông tin kỹ thuật Section */}
+          {uploadedFiles.length > 0 && (
+            <Card title="Thông tin kỹ thuật" style={{ marginTop: "20px" }}>
               <MediaTechnicalInfo
                 mode="create"
                 uploadedFiles={uploadedFiles}
                 selectedFileIndex={selectedFileIndex}
               />
             </Card>
-
-            {/* Card SEO nâng cao */}
-            <Card
-              title={
-                <div
-                  style={{ display: "flex", alignItems: "center", gap: "12px" }}
-                >
-                  <span>Thông tin SEO nâng cao</span>
-                  <Button
-                    size="small"
-                    type="dashed"
-                    onClick={() => autoFillSEOScores(true)}
-                    title="Điền các giá trị SEO hợp lý"
-                  >
-                    🔄 Gợi ý
-                  </Button>
-                </div>
-              }
-              style={{ marginBottom: "20px" }}
-            >
-              <MediaSEOSection
-                mode="create"
-                onAutoFillSEOScores={() => autoFillSEOScores(true)}
-                form={formProps.form}
-                uploadedFiles={uploadedFiles}
-                selectedFileIndex={selectedFileIndex}
-              />
-            </Card>
-          </Form>
+          )}
         </div>
-      </div>
+
+        {/* Upload Section Content */}
+        </MediaFormLayout>
     </Create>
   );
 };
