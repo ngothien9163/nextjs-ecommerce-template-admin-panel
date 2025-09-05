@@ -26,6 +26,8 @@ import {
   CopyOutlined,
   InfoCircleOutlined,
   ReloadOutlined,
+  GlobalOutlined,
+  PictureOutlined,
 } from "@ant-design/icons";
 import { useDropzone } from "react-dropzone";
 // Disable GridLayout import for now
@@ -356,6 +358,20 @@ export const MediaList: React.FC = () => {
                 Refresh
               </Button>
             </Tooltip>
+            <Tooltip title="Mở thư mục images trên server để xem tất cả hình ảnh">
+              <Button
+                icon={<GlobalOutlined />}
+                onClick={() => {
+                  const imagesUrl = "http://localhost:4322/images";
+                  console.log('🌐 Opening images URL:', imagesUrl);
+                  window.open(imagesUrl, "_blank");
+                  message.info("Đã mở thư mục images trong tab mới!");
+                }}
+                title="Mở thư mục images"
+              >
+                Xem Images
+              </Button>
+            </Tooltip>
             <CreateButton />
           </Space>
         }
@@ -467,53 +483,66 @@ export const MediaList: React.FC = () => {
                   size="small" 
                   style={{ height: "100%" }}
                   actions={[
-                    <EyeOutlined 
-                      key="view" 
+                    <EyeOutlined
+                      key="view"
                       onClick={(e) => {
                         e.stopPropagation();
                         console.log('View clicked:', item.id);
                         handleView(item.id);
-                      }} 
+                      }}
                       style={{ color: "#1890ff" }}
                       title="Xem chi tiết"
                     />,
-                    <EditOutlined 
-                      key="edit" 
+                    <EditOutlined
+                      key="edit"
                       onClick={(e) => {
                         e.stopPropagation();
                         console.log('Edit clicked:', item.id);
                         handleEdit(item.id);
-                      }} 
+                      }}
                       style={{ color: "#52c41a" }}
                       title="Chỉnh sửa"
                     />,
-                    <LinkOutlined 
-                      key="link" 
+                    <PictureOutlined
+                      key="image"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // Use public images URL instead of Supabase storage URL
+                        const publicImageUrl = `http://localhost:4322/images/${item.file_name}`;
+                        console.log('Image view clicked:', publicImageUrl);
+                        window.open(publicImageUrl, "_blank");
+                        message.info("Đã mở hình ảnh qua public URL!");
+                      }}
+                      style={{ color: "#eb2f96" }}
+                      title="Xem hình ảnh qua public URL"
+                    />,
+                    <LinkOutlined
+                      key="link"
                       onClick={(e) => {
                         e.stopPropagation();
                         console.log('Link clicked:', item.file_url);
                         openImageUrl(item.file_url);
-                      }} 
+                      }}
                       style={{ color: "#722ed1" }}
                       title="Mở link"
                     />,
-                    <CopyOutlined 
-                      key="copy" 
+                    <CopyOutlined
+                      key="copy"
                       onClick={(e) => {
                         e.stopPropagation();
                         console.log('Copy clicked:', item.file_url);
                         copyToClipboard(item.file_url);
-                      }} 
+                      }}
                       style={{ color: "#fa8c16" }}
                       title="Copy URL"
                     />,
-                    <InfoCircleOutlined 
-                      key="info" 
+                    <InfoCircleOutlined
+                      key="info"
                       onClick={(e) => {
                         e.stopPropagation();
                         console.log('Info clicked:', item.id);
                         showImageInfo(item);
-                      }} 
+                      }}
                       style={{ color: "#13c2c2" }}
                       title="Thông tin"
                     />

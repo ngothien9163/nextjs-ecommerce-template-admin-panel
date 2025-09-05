@@ -70,6 +70,8 @@ import { MediaGallerySelectorDemo } from "./pages/media-gallery-demo";
 
 import { Dashboard } from "./pages/dashboard";
 
+import { AISettings } from "./pages/ai-settings";
+
 function App() {
   return (
     <BrowserRouter>
@@ -179,6 +181,13 @@ function App() {
                   label: "Media",
                 },
               },
+              {
+                name: "ai-settings",
+                list: "/ai-settings",
+                meta: {
+                  label: "Cài đặt AI",
+                },
+              },
             ]}
             options={{
               syncWithLocation: true,
@@ -252,6 +261,7 @@ function App() {
                   <Route path="show/:id" element={<MediaShow />} />
                   <Route path="gallery-selector-demo" element={<MediaGallerySelectorDemo />} />
                 </Route>
+                <Route path="/ai-settings" element={<AISettings />} />
               </Route>
             </Routes>
 

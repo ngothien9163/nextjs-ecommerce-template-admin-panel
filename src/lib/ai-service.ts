@@ -14,6 +14,12 @@ export interface AISuggestionResponse {
   source: "rule-based" | "openai" | "gemini" | "claude";
 }
 
+// Alias for backward compatibility
+export interface AIResponse {
+  metaDescription: string;
+  keywords: string[];
+}
+
 export interface AIConfig {
   enableExternalAI: boolean;
   preferredProvider: "openai" | "gemini" | "claude";
@@ -65,54 +71,46 @@ const removeFromStorage = (key: string) => {
   }
 };
 
-// Rule-based AI Engine
+// Fallback AI Engine (used only when external AI is unavailable)
 class RuleBasedAI {
-  private readonly descriptionTemplates = [
-    "Hình ảnh {fileName} chất lượng cao, tối ưu cho SEO và trải nghiệm người dùng tốt nhất.",
-    "Khám phá {fileName} với độ phân giải cao, phù hợp cho website và marketing chuyên nghiệp.",
-    "{fileName} - Tài nguyên hình ảnh chất lượng, tối ưu cho tốc độ tải và SEO.",
-    "Tải xuống {fileName} miễn phí, hình ảnh chuyên nghiệp cho mọi dự án thiết kế.",
-    "{fileName} - Bộ sưu tập hình ảnh đa dạng, phù hợp cho nội dung sáng tạo.",
-    "Hình ảnh {fileName} chuyên nghiệp, hỗ trợ đa định dạng và tương thích mọi trình duyệt.",
-    "Khám phá vẻ đẹp của {fileName} qua góc nhìn chuyên nghiệp và chất lượng cao.",
-    "{fileName} - Bức ảnh được chụp với độ phân giải cao, phù hợp cho nhiều mục đích sử dụng.",
-    "Tài liệu hình ảnh {fileName} chất lượng, sẵn sàng sử dụng cho website và marketing.",
-    "{fileName} - Hình ảnh tối ưu cho thiết kế và marketing, đảm bảo chất lượng cao.",
-  ];
-
-  private readonly keywordCategories = {
-    quality: ["chất lượng cao", "độ phân giải cao", "chuyên nghiệp", "tối ưu"],
-    seo: ["SEO", "tối ưu SEO", "tìm kiếm", "marketing"],
-    design: ["thiết kế", "sáng tạo", "nội dung", "website"],
-    format: ["hình ảnh", "ảnh đẹp", "tài liệu", "tài nguyên"],
-    usage: ["miễn phí", "download", "sử dụng", "dự án"],
-  };
-
   generateMetaDescription(request: AISuggestionRequest): string {
-    const { fileName } = request;
+    const { fileName, altText, title, caption } = request;
 
     // Extract base name without extension and clean it
     const baseName = fileName.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
 
-    // Choose template based on context
-    let template =
-      this.descriptionTemplates[
-        Math.floor(Math.random() * this.descriptionTemplates.length)
-      ];
+    // Create a dynamic description based on available context
+    let description = `Hình ảnh ${baseName}`;
 
-    // Replace {fileName} with baseName only (no duplicates)
-    template = template.replace("{fileName}", baseName);
+    if (altText) {
+      description += ` - ${altText}`;
+    }
 
-    return template;
+    if (title) {
+      description += ` với tiêu đề "${title}"`;
+    }
+
+    description +=
+      ". Chất lượng cao, tối ưu cho SEO và trải nghiệm người dùng.";
+
+    // Ensure description is within optimal length (120-160 characters)
+    if (description.length > 160) {
+      description = description.substring(0, 157) + "...";
+    }
+
+    return description;
   }
 
   generateMetaKeywords(request: AISuggestionRequest): string[] {
-    const { fileName } = request;
+    const { fileName, altText, title, caption } = request;
 
-    // Extract base name and create multi-word keywords from filename
+    // Extract base name and create keywords from filename
     const baseName = fileName.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
-    const words = baseName.toLowerCase().split(" ").filter((word) => word.length >= 2);
-    
+    const words = baseName
+      .toLowerCase()
+      .split(" ")
+      .filter((word) => word.length >= 2);
+
     // Create multi-word combinations from filename (2-3 words)
     const fileNameKeywords: string[] = [];
     for (let i = 0; i < words.length; i++) {
@@ -126,25 +124,66 @@ class RuleBasedAI {
       }
     }
 
-    // Add category keywords (2-3 words each)
-    const categoryKeywords = [
+    // Add single words from filename
+    fileNameKeywords.push(...words);
+
+    // Add context-based keywords from altText, title, caption
+    const contextWords: string[] = [];
+    if (altText) {
+      contextWords.push(
+        ...altText
+          .toLowerCase()
+          .split(" ")
+          .filter((word) => word.length >= 2)
+      );
+    }
+    if (title) {
+      contextWords.push(
+        ...title
+          .toLowerCase()
+          .split(" ")
+          .filter((word) => word.length >= 2)
+      );
+    }
+    if (caption) {
+      contextWords.push(
+        ...caption
+          .toLowerCase()
+          .split(" ")
+          .filter((word) => word.length >= 2)
+      );
+    }
+
+    // Create combinations from context words
+    for (let i = 0; i < contextWords.length; i++) {
+      if (i < contextWords.length - 1) {
+        fileNameKeywords.push(`${contextWords[i]} ${contextWords[i + 1]}`);
+      }
+    }
+
+    // Add common SEO keywords dynamically
+    const seoKeywords = [
+      "hình ảnh",
+      "ảnh đẹp",
       "chất lượng cao",
       "tối ưu SEO",
-      "thiết kế chuyên nghiệp",
-      "hình ảnh đẹp",
-      "tài nguyên miễn phí",
-      "nội dung sáng tạo",
-      "marketing chuyên nghiệp",
-      "website tối ưu",
-      "tài liệu chất lượng",
-      "ảnh chuyên nghiệp",
+      "thiết kế",
+      "marketing",
+      "website",
+      "tài nguyên",
+      "đồ họa",
+      "sáng tạo",
+      "chuyên nghiệp",
+      "tải xuống",
     ];
 
-    // Combine and deduplicate
-    const allKeywords = [...fileNameKeywords, ...categoryKeywords];
+    // Combine all keywords
+    const allKeywords = [...fileNameKeywords, ...seoKeywords, ...contextWords];
 
-    // Remove duplicates and limit to 12 keywords
-    const uniqueKeywords = [...new Set(allKeywords)].slice(0, 12);
+    // Remove duplicates, filter by length, and limit to 12 keywords
+    const uniqueKeywords = [...new Set(allKeywords)]
+      .filter((keyword) => keyword.length >= 3 && keyword.length <= 50)
+      .slice(0, 12);
 
     return uniqueKeywords;
   }
@@ -164,6 +203,29 @@ class RuleBasedAI {
   }
 }
 
+// Common prompt generator for all AI providers
+// This ensures consistency across OpenAI, Gemini, and future AI providers
+function generateSEOContentPrompt(request: AISuggestionRequest): string {
+  return `Tạo Meta Description và Keywords SEO cho hình ảnh:
+ - Tên file: ${request.fileName}
+ - Alt text: ${request.altText || "Không có"}
+ - Title: ${request.title || "Không có"}
+ - Caption: ${request.caption || "Không có"}
+
+ Yêu cầu NGHIÊM NGẶT:
+  1. Meta Description: TỐI ĐA 160 ký tự, TỐI THIỂU 120 ký tự, tối ưu SEO, hấp dẫn.
+  2. Keywords: 5-7 từ khóa, mỗi keyword 2-4 từ trở lên, phân cách bằng dấu phẩy.
+     Ví dụ: "laptop gaming asus", "thiết kế chuyên nghiệp", "tối ưu SEO"
+
+  QUAN TRỌNG: Meta Description PHẢI dưới 160 ký tự! Nếu vượt quá sẽ bị cắt ngắn.
+
+  Trả về CHỈ JSON format, không có text khác:
+  {
+    "metaDescription": "...",
+    "keywords": ["keyword1", "keyword2", ...]
+  }`;
+}
+
 // External AI API Services
 class OpenAI {
   constructor(private apiKey: string) {}
@@ -172,22 +234,7 @@ class OpenAI {
     request: AISuggestionRequest
   ): Promise<AISuggestionResponse> {
     try {
-             const prompt = `Tạo Meta Description và Keywords SEO cho hình ảnh:
- - Tên file: ${request.fileName}
- - Alt text: ${request.altText || "Không có"}
- - Title: ${request.title || "Không có"}
- - Caption: ${request.caption || "Không có"}
-
- Yêu cầu:
- 1. Meta Description: 150-160 ký tự, tối ưu SEO, hấp dẫn
- 2. Keywords: 10-12 từ khóa, MỖI KEYWORD PHẢI CÓ TỪ 2-3 TỪ TRỞ LÊN, phân cách bằng dấu phẩy
-    Ví dụ: "laptop gaming asus", "thiết kế chuyên nghiệp", "tối ưu SEO"
-
- Trả về JSON format:
- {
-   "metaDescription": "...",
-   "keywords": ["keyword1", "keyword2", ...]
- }`;
+      const prompt = generateSEOContentPrompt(request);
 
       const response = await fetch(
         "https://api.openai.com/v1/chat/completions",
@@ -213,12 +260,52 @@ class OpenAI {
       const data = await response.json();
       const content = data.choices[0].message.content;
 
+      // Extract JSON from the response (remove markdown code blocks if present)
+      let jsonString = content;
+      if (content.includes("```json")) {
+        jsonString = content.replace(/```json\n?/g, "").replace(/```\n?/g, "");
+      }
+
       // Parse JSON response
-      const parsed = JSON.parse(content);
+      const parsed = JSON.parse(jsonString.trim());
+
+      // Validate and truncate Meta Description to optimal SEO length (150-160 characters)
+      let metaDescription = parsed.metaDescription || "";
+      if (metaDescription.length > 160) {
+        // Find the last complete sentence within 150 characters
+        const truncated = metaDescription.substring(0, 150);
+        const lastSentenceEnd = Math.max(
+          truncated.lastIndexOf("。"),
+          truncated.lastIndexOf(". "),
+          truncated.lastIndexOf("! "),
+          truncated.lastIndexOf("? ")
+        );
+
+        if (lastSentenceEnd > 100) {
+          // Only truncate at sentence if we have at least 100 chars
+          metaDescription = metaDescription.substring(0, lastSentenceEnd + 1);
+        } else {
+          // Fallback: truncate at word boundary
+          const lastSpace = truncated.lastIndexOf(" ");
+          metaDescription =
+            lastSpace > 100
+              ? metaDescription.substring(0, lastSpace) + "..."
+              : metaDescription.substring(0, 150) + "...";
+        }
+      }
+
+      // Validate and limit keywords (max 12 keywords, each max 50 chars)
+      let keywords = Array.isArray(parsed.keywords) ? parsed.keywords : [];
+      keywords = keywords
+        .filter((keyword: string) => keyword && typeof keyword === "string")
+        .map((keyword: string) =>
+          keyword.length > 50 ? keyword.substring(0, 47) + "..." : keyword
+        )
+        .slice(0, 12);
 
       return {
-        metaDescription: parsed.metaDescription,
-        metaKeywords: parsed.keywords,
+        metaDescription,
+        metaKeywords: keywords,
         confidence: 0.95,
         source: "openai",
       };
@@ -236,43 +323,28 @@ class Gemini {
     request: AISuggestionRequest
   ): Promise<AISuggestionResponse> {
     try {
-             const prompt = `Tạo Meta Description và Keywords SEO cho hình ảnh:
- - Tên file: ${request.fileName}
- - Alt text: ${request.altText || "Không có"}
- - Title: ${request.title || "Không có"}
- - Caption: ${request.caption || "Không có"}
+      const prompt = generateSEOContentPrompt(request);
 
- Yêu cầu:
- 1. Meta Description: 150-160 ký tự, tối ưu SEO, hấp dẫn
- 2. Keywords: 10-12 từ khóa, MỖI KEYWORD PHẢI CÓ TỪ 2-3 TỪ TRỞ LÊN, phân cách bằng dấu phẩy
-    Ví dụ: "laptop gaming asus", "thiết kế chuyên nghiệp", "tối ưu SEO"
-
- Trả về JSON format:
- {
-   "metaDescription": "...",
-   "keywords": ["keyword1", "keyword2", ...]
- }`;
-
-             const response = await fetch(
-         `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${this.apiKey}`,
-         {
-           method: "POST",
-           headers: {
-             "Content-Type": "application/json",
-           },
-           body: JSON.stringify({
-             contents: [
-               {
-                 parts: [
-                   {
-                     text: prompt,
-                   },
-                 ],
-               },
-             ],
-           }),
-         }
-       );
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${this.apiKey}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  {
+                    text: prompt,
+                  },
+                ],
+              },
+            ],
+          }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`Gemini API error: ${response.status}`);
@@ -281,12 +353,52 @@ class Gemini {
       const data = await response.json();
       const content = data.candidates[0].content.parts[0].text;
 
+      // Extract JSON from the response (remove markdown code blocks if present)
+      let jsonString = content;
+      if (content.includes("```json")) {
+        jsonString = content.replace(/```json\n?/g, "").replace(/```\n?/g, "");
+      }
+
       // Parse JSON response
-      const parsed = JSON.parse(content);
+      const parsed = JSON.parse(jsonString.trim());
+
+      // Validate and truncate Meta Description to optimal SEO length (150-160 characters)
+      let metaDescription = parsed.metaDescription || "";
+      if (metaDescription.length > 160) {
+        // Find the last complete sentence within 150 characters
+        const truncated = metaDescription.substring(0, 150);
+        const lastSentenceEnd = Math.max(
+          truncated.lastIndexOf("。"),
+          truncated.lastIndexOf(". "),
+          truncated.lastIndexOf("! "),
+          truncated.lastIndexOf("? ")
+        );
+
+        if (lastSentenceEnd > 100) {
+          // Only truncate at sentence if we have at least 100 chars
+          metaDescription = metaDescription.substring(0, lastSentenceEnd + 1);
+        } else {
+          // Fallback: truncate at word boundary
+          const lastSpace = truncated.lastIndexOf(" ");
+          metaDescription =
+            lastSpace > 100
+              ? metaDescription.substring(0, lastSpace) + "..."
+              : metaDescription.substring(0, 150) + "...";
+        }
+      }
+
+      // Validate and limit keywords (max 12 keywords, each max 50 chars)
+      let keywords = Array.isArray(parsed.keywords) ? parsed.keywords : [];
+      keywords = keywords
+        .filter((keyword: string) => keyword && typeof keyword === "string")
+        .map((keyword: string) =>
+          keyword.length > 50 ? keyword.substring(0, 47) + "..." : keyword
+        )
+        .slice(0, 12);
 
       return {
-        metaDescription: parsed.metaDescription,
-        metaKeywords: parsed.keywords,
+        metaDescription,
+        metaKeywords: keywords,
         confidence: 0.92,
         source: "gemini",
       };
@@ -334,7 +446,7 @@ export class AIService {
   async generateSuggestions(
     request: AISuggestionRequest
   ): Promise<AISuggestionResponse> {
-    // Try external AI first if enabled
+    // If external AI is enabled, try it first
     if (this.config.enableExternalAI) {
       try {
         switch (this.config.preferredProvider) {
@@ -350,7 +462,7 @@ export class AIService {
             break;
         }
       } catch (error) {
-        console.warn("External AI failed, falling back to rule-based:", error);
+        console.warn("External AI failed:", error);
 
         if (!this.config.fallbackToRuleBased) {
           throw error;
@@ -358,8 +470,15 @@ export class AIService {
       }
     }
 
-    // Fallback to rule-based AI
-    return await this.ruleBasedAI.generateSuggestions(request);
+    // Only use rule-based AI if external AI is disabled OR if fallback is enabled and external AI failed
+    if (!this.config.enableExternalAI || this.config.fallbackToRuleBased) {
+      return await this.ruleBasedAI.generateSuggestions(request);
+    }
+
+    // If external AI is enabled but no provider is available and no fallback, throw error
+    throw new Error(
+      "External AI is enabled but no valid provider or API key is configured"
+    );
   }
 
   updateConfig(newConfig: Partial<AIConfig>) {

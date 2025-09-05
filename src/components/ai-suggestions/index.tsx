@@ -64,10 +64,10 @@ export const AISuggestions: React.FC<AISuggestionsProps> = ({
       onMetaDescriptionSuggest(response.metaDescription);
 
       message.success(
-        `Đã tạo Meta Description bằng ${
+        `Đã tạo Meta Description (${response.metaDescription.length} ký tự) bằng ${
           response.source === "rule-based"
-            ? "AI thông minh"
-            : response.source.toUpperCase()
+            ? "AI thông minh (miễn phí)"
+            : `${response.source.toUpperCase()} API`
         }!`
       );
     } catch (error) {
@@ -97,10 +97,10 @@ export const AISuggestions: React.FC<AISuggestionsProps> = ({
       onMetaKeywordsSuggest(response.metaKeywords);
 
       message.success(
-        `Đã tạo Meta Keywords bằng ${
+        `Đã tạo ${response.metaKeywords.length} Meta Keywords bằng ${
           response.source === "rule-based"
-            ? "AI thông minh"
-            : response.source.toUpperCase()
+            ? "AI thông minh (miễn phí)"
+            : `${response.source.toUpperCase()} API`
         }!`
       );
     } catch (error) {
@@ -133,8 +133,8 @@ export const AISuggestions: React.FC<AISuggestionsProps> = ({
       message.success(
         `Đã tạo tất cả bằng ${
           response.source === "rule-based"
-            ? "AI thông minh"
-            : response.source.toUpperCase()
+            ? "AI thông minh (miễn phí)"
+            : `${response.source.toUpperCase()} API`
         }!`
       );
     } catch (error) {
@@ -208,7 +208,10 @@ export const AISuggestions: React.FC<AISuggestionsProps> = ({
         </div>
 
         <div style={{ fontSize: "12px", color: "#666", marginBottom: "12px" }}>
-          Sử dụng AI để tự động tạo Meta Description và Keywords tối ưu cho SEO
+          {aiConfig.enableExternalAI
+            ? `Sử dụng ${aiConfig.preferredProvider.toUpperCase()} để tạo nội dung SEO chất lượng cao`
+            : "Sử dụng AI thông minh để tự động tạo Meta Description và Keywords tối ưu cho SEO"
+          }
         </div>
 
         <Space wrap>

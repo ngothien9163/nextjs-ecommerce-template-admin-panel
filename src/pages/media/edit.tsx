@@ -19,6 +19,7 @@ import {
   RotateRightOutlined,
   ArrowLeftOutlined,
   EyeOutlined,
+  ReloadOutlined,
 } from "@ant-design/icons";
 import ReactCrop, { Crop, PixelCrop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
@@ -42,6 +43,7 @@ export const MediaEdit: React.FC = () => {
   const [isCropping, setIsCropping] = useState(false);
   const [croppedImageUrl, setCroppedImageUrl] = useState<string | null>(null);
   const [rotation, setRotation] = useState(0);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const imageRef = useRef<HTMLImageElement>(null);
   const navigate = useNavigate();
 
@@ -62,6 +64,71 @@ export const MediaEdit: React.FC = () => {
 
   const mediaData = queryResult?.data?.data;
   const { mutate: updateMedia } = useUpdate();
+
+  // Load SEO data when media data is available
+  useEffect(() => {
+    const loadSEOData = async () => {
+      if (mediaData?.id && formProps.form) {
+        try {
+          console.log('🔍 Loading SEO data for media:', mediaData.id, 'Trigger:', refreshTrigger);
+          const seoData = await SEOMediaService.getSEOMediaData(String(mediaData.id));
+
+          if (seoData) {
+            console.log('✅ SEO data loaded:', seoData);
+
+            // Convert SEO data back to form format
+            const formSEOData: any = {};
+
+            // Map SEO data fields back to form fields
+            if (seoData.og_title) formSEOData.og_title = seoData.og_title;
+            if (seoData.og_description) formSEOData.og_description = seoData.og_description;
+            if (seoData.og_image) formSEOData.og_image = seoData.og_image;
+            if (seoData.twitter_title) formSEOData.twitter_title = seoData.twitter_title;
+            if (seoData.twitter_description) formSEOData.twitter_description = seoData.twitter_description;
+            if (seoData.twitter_image) formSEOData.twitter_image = seoData.twitter_image;
+            if (seoData.schema_markup) formSEOData.schema_markup = seoData.schema_markup;
+            if (seoData.compression_ratio) formSEOData.compression_ratio = seoData.compression_ratio;
+            if (seoData.optimization_score) formSEOData.optimization_score = seoData.optimization_score;
+            if (seoData.responsive_images) formSEOData.responsive_images = seoData.responsive_images;
+            if (seoData.webp_version_url) formSEOData.webp_version_url = seoData.webp_version_url;
+            if (seoData.avif_version_url) formSEOData.avif_version_url = seoData.avif_version_url;
+            if (seoData.ai_alt_text) formSEOData.ai_alt_text = seoData.ai_alt_text;
+            if (seoData.ai_description) formSEOData.ai_description = seoData.ai_description;
+            if (seoData.ai_tags) formSEOData.ai_tags = seoData.ai_tags;
+            if (seoData.ai_relevance_score) formSEOData.ai_relevance_score = seoData.ai_relevance_score;
+            if (seoData.visual_search_optimized !== undefined) formSEOData.visual_search_optimized = seoData.visual_search_optimized;
+            if (seoData.visual_search_tags) formSEOData.visual_search_tags = seoData.visual_search_tags;
+            if (seoData.voice_search_optimized !== undefined) formSEOData.voice_search_optimized = seoData.voice_search_optimized;
+            if (seoData.voice_search_phrases) formSEOData.voice_search_phrases = seoData.voice_search_phrases;
+            if (seoData.social_shares !== undefined) formSEOData.social_shares = seoData.social_shares;
+            if (seoData.social_engagement !== undefined) formSEOData.social_engagement = seoData.social_engagement;
+            if (seoData.click_through_rate !== undefined) formSEOData.click_through_rate = seoData.click_through_rate;
+            if (seoData.impressions !== undefined) formSEOData.impressions = seoData.impressions;
+            if (seoData.clicks !== undefined) formSEOData.clicks = seoData.clicks;
+            if (seoData.alt_text_translations) formSEOData.alt_text_translations = seoData.alt_text_translations;
+            if (seoData.caption_translations) formSEOData.caption_translations = seoData.caption_translations;
+            if (seoData.auto_optimization_enabled !== undefined) formSEOData.auto_optimization_enabled = seoData.auto_optimization_enabled;
+            if (seoData.manual_override !== undefined) formSEOData.manual_override = seoData.manual_override;
+            if (seoData.is_active !== undefined) formSEOData.is_active = seoData.is_active;
+
+            // Set default values for missing fields
+            if (seoData.og_type === undefined) formSEOData.og_type = 'image';
+            if (seoData.twitter_card === undefined) formSEOData.twitter_card = 'summary_large_image';
+
+            // Set SEO data in form
+            formProps.form.setFieldsValue(formSEOData);
+            console.log('✅ SEO data populated in form');
+          } else {
+            console.log('ℹ️ No existing SEO data found for this media');
+          }
+        } catch (error) {
+          console.error('❌ Error loading SEO data:', error);
+        }
+      }
+    };
+
+    loadSEOData();
+  }, [mediaData?.id, formProps.form, refreshTrigger]);
 
   // Crop functionality
   const onCropChange = (crop: Crop) => {
@@ -362,8 +429,12 @@ export const MediaEdit: React.FC = () => {
       // Show success message
       message.success("Cập nhật thành công!");
 
-      // Reload the data
-      queryResult?.refetch();
+      // Reload the data to reflect changes
+      console.log('💾 Save completed, triggering refresh');
+      await queryResult?.refetch();
+      setRefreshTrigger(prev => prev + 1);
+      console.log('💾 Refresh trigger updated to:', refreshTrigger + 1);
+      message.info("Đang tải lại dữ liệu...");
 
     } catch (error) {
       console.error("Save error:", error);
@@ -384,6 +455,20 @@ export const MediaEdit: React.FC = () => {
           onClick={handleBackToList}
         >
           Quay về danh sách
+        </Button>,
+        <Button
+          key="refresh"
+          icon={<ReloadOutlined />}
+          onClick={async () => {
+            console.log('🔄 Manual refresh triggered');
+            await queryResult?.refetch();
+            setRefreshTrigger(prev => prev + 1);
+            console.log('🔄 Refresh trigger updated to:', refreshTrigger + 1);
+            message.info("Đã làm mới dữ liệu!");
+          }}
+          title="Làm mới dữ liệu từ server"
+        >
+          Refresh
         </Button>,
         <Button
           key="view"

@@ -53,6 +53,7 @@ export const MediaSEOSection: React.FC<MediaSEOSectionProps> = ({
   selectedFileIndex = 0
 }) => {
   const [jsonCollapsed, setJsonCollapsed] = useState(false);
+  const [lastGeneratedSchema, setLastGeneratedSchema] = useState<string | null>(null);
 
   // Environment variables for URLs
   const baseUrl = import.meta.env.VITE_PUBLIC_SITE_URL || "https://example.com";
@@ -100,6 +101,13 @@ export const MediaSEOSection: React.FC<MediaSEOSectionProps> = ({
     const smartTitle = currentValues?.title || `${baseName} - Hình ảnh chuyên nghiệp chất lượng cao`;
     const smartDescription = currentValues?.meta_description || `Khám phá hình ảnh ${baseName} chất lượng cao, được tối ưu cho website và marketing.`;
 
+    // Get existing meta keywords for consistency
+    const existingMetaKeywords = currentValues?.meta_keywords || [];
+
+    // Use WebP version if available, otherwise fallback to original
+    const imageUrl = currentValues?.webp_version_url || fileUrl || `${imagesBaseUrl}${fileName}`;
+    const thumbnailUrl = currentValues?.webp_version_url || fileUrl || `${imagesBaseUrl}${fileName}`;
+
     // Generate different types of schema markup for images
     const schemaOptions = [
       {
@@ -109,14 +117,14 @@ export const MediaSEOSection: React.FC<MediaSEOSectionProps> = ({
           "@type": "ImageObject",
           "name": smartTitle,
           "description": smartDescription,
-          "url": fileUrl || `${imagesBaseUrl}${fileName}.jpg`,
-          "contentUrl": fileUrl || `${imagesBaseUrl}${fileName}.jpg`,
+          "url": imageUrl,
+          "contentUrl": imageUrl,
           "license": `${baseUrl}/license`,
           "acquireLicensePage": `${baseUrl}/license`,
-          "creditText": import.meta.env.VITE_PUBLIC_SITE_NAME || "Website Media",
+          "creditText": import.meta.env.VITE_PUBLIC_SITE_NAME || "Website Blog",
           "creator": {
             "@type": "Organization",
-            "name": import.meta.env.VITE_PUBLIC_SITE_NAME || "Website Media"
+            "name": import.meta.env.VITE_PUBLIC_SITE_NAME || "Website Blog"
           },
           "datePublished": new Date().toISOString(),
           "dateModified": new Date().toISOString()
@@ -129,19 +137,19 @@ export const MediaSEOSection: React.FC<MediaSEOSectionProps> = ({
           "@type": "ImageObject",
           "name": smartTitle,
           "description": smartDescription,
-          "url": fileUrl || `${imagesBaseUrl}${fileName}.jpg`,
-          "contentUrl": fileUrl || `${imagesBaseUrl}${fileName}.jpg`,
+          "url": imageUrl,
+          "contentUrl": imageUrl,
           "license": `${baseUrl}/license`,
           "acquireLicensePage": `${baseUrl}/license`,
-          "creditText": import.meta.env.VITE_PUBLIC_SITE_NAME || "Website Media",
+          "creditText": import.meta.env.VITE_PUBLIC_SITE_NAME || "Website Blog",
           "creator": {
             "@type": "Organization",
-            "name": import.meta.env.VITE_PUBLIC_SITE_NAME || "Website Media",
+            "name": import.meta.env.VITE_PUBLIC_SITE_NAME || "Website Blog",
             "url": baseUrl
           },
           "publisher": {
             "@type": "Organization",
-            "name": import.meta.env.VITE_PUBLIC_SITE_NAME || "Website Media",
+            "name": import.meta.env.VITE_PUBLIC_SITE_NAME || "Website Blog",
             "logo": {
               "@type": "ImageObject",
               "url": `${imagesBaseUrl}logo.png`,
@@ -156,10 +164,10 @@ export const MediaSEOSection: React.FC<MediaSEOSectionProps> = ({
             "@type": "Place",
             "name": "Việt Nam"
           },
-          "keywords": currentValues?.meta_keywords || [baseName.toLowerCase(), "hình ảnh", "media"],
+          "keywords": existingMetaKeywords.length > 0 ? existingMetaKeywords.join(", ") : [baseName.toLowerCase(), "hình ảnh", "media"].join(", "),
           "thumbnail": {
             "@type": "ImageObject",
-            "url": fileUrl || `${imagesBaseUrl}${fileName}_thumb.jpg`,
+            "url": thumbnailUrl,
             "width": 300,
             "height": 200
           },
@@ -174,11 +182,11 @@ export const MediaSEOSection: React.FC<MediaSEOSectionProps> = ({
           "@type": "Photograph",
           "name": smartTitle,
           "description": smartDescription,
-          "url": fileUrl || `${imagesBaseUrl}${fileName}.jpg`,
-          "contentUrl": fileUrl || `${imagesBaseUrl}${fileName}.jpg`,
+          "url": imageUrl,
+          "contentUrl": imageUrl,
           "license": `${baseUrl}/license`,
           "acquireLicensePage": `${baseUrl}/license`,
-          "creditText": import.meta.env.VITE_PUBLIC_SITE_NAME || "Website Media",
+          "creditText": import.meta.env.VITE_PUBLIC_SITE_NAME || "Website Blog",
           "creator": {
             "@type": "Person",
             "name": "Photographer Name"
@@ -197,19 +205,19 @@ export const MediaSEOSection: React.FC<MediaSEOSectionProps> = ({
           "@type": "ImageObject",
           "name": smartTitle,
           "description": smartDescription,
-          "url": fileUrl || `${imagesBaseUrl}${fileName}.jpg`,
-          "contentUrl": fileUrl || `${imagesBaseUrl}${fileName}.jpg`,
+          "url": imageUrl,
+          "contentUrl": imageUrl,
           "license": `${baseUrl}/license`,
           "acquireLicensePage": `${baseUrl}/license`,
-          "creditText": import.meta.env.VITE_PUBLIC_SITE_NAME || "Website Media",
+          "creditText": import.meta.env.VITE_PUBLIC_SITE_NAME || "Website Blog",
           "about": {
             "@type": "Product",
             "name": baseName,
             "description": smartDescription,
-            "image": fileUrl || `${imagesBaseUrl}${fileName}.jpg`,
+            "image": imageUrl,
             "brand": {
               "@type": "Brand",
-              "name": import.meta.env.VITE_PUBLIC_SITE_NAME || "Website Media"
+              "name": import.meta.env.VITE_PUBLIC_SITE_NAME || "Website Blog"
             }
           },
           "datePublished": new Date().toISOString(),
@@ -220,6 +228,9 @@ export const MediaSEOSection: React.FC<MediaSEOSectionProps> = ({
 
     // Randomly select one of the schema options
     const selectedSchema = schemaOptions[Math.floor(Math.random() * schemaOptions.length)];
+
+    // Store the generated schema type
+    setLastGeneratedSchema(selectedSchema.name);
 
     // Update form with generated schema
     form.setFieldsValue({
@@ -246,64 +257,53 @@ export const MediaSEOSection: React.FC<MediaSEOSectionProps> = ({
       // Create mode - use uploaded file
       const selectedFile = uploadedFiles[selectedFileIndex];
       fileName = selectedFile?.uploadedFileName ||
-                 selectedFile?.file?.name?.replace(/\.[^/.]+$/, "") ||
-                 "sample-image";
+                  selectedFile?.file?.name?.replace(/\.[^/.]+$/, "") ||
+                  "sample-image";
       fileUrl = selectedFile?.url || "";
     } else {
       // Edit mode - use existing form data
       fileName = currentValues?.file_name?.replace(/\.[^/.]+$/, "") ||
-                 currentValues?.alt_text?.replace(/[^a-zA-Z0-9]/g, "-") ||
-                 "existing-image";
+                  currentValues?.alt_text?.replace(/[^a-zA-Z0-9]/g, "-") ||
+                  "existing-image";
       fileUrl = currentValues?.file_url || "";
     }
 
-
-    // Generate smart alt text
     const baseName = fileName.replace(/[-_]/g, " ");
-    const smartAltText = `Hình ảnh ${baseName} chất lượng cao, phù hợp cho website và marketing`;
 
-    // Generate smart title
-    const smartTitle = `${baseName} - Hình ảnh chuyên nghiệp chất lượng cao`;
+    // Get existing form values for consistency
+    const existingTitle = currentValues?.title;
+    const existingMetaDescription = currentValues?.meta_description;
+    const existingMetaKeywords = currentValues?.meta_keywords || [];
 
-    // Generate smart description
-    const smartDescription = `Khám phá hình ảnh ${baseName} chất lượng cao, được tối ưu cho website và marketing. Hình ảnh này có độ phân giải cao và phù hợp cho nhiều mục đích sử dụng.`;
+    // Use WebP version if available, otherwise fallback to original
+    const imageUrl = currentValues?.webp_version_url || fileUrl || `${imagesBaseUrl}${fileName}.jpg`;
+    const thumbnailUrl = currentValues?.webp_version_url || fileUrl || `${imagesBaseUrl}${fileName}_thumb.jpg`;
 
-    // Generate smart keywords
-    const smartKeywords = [
-      "hình ảnh chất lượng cao",
-      baseName.toLowerCase(),
-      "tài liệu hình ảnh",
-      "hình ảnh chuyên nghiệp",
-      "media file",
-      "hình ảnh đẹp",
-      "tải hình ảnh"
-    ];
-
-    // Generate Open Graph data
+    // Generate Open Graph data - use existing Title and Meta Description
     const ogData = {
-      og_title: smartTitle,
-      og_description: smartDescription,
-      og_image: fileUrl || `${imagesBaseUrl}${fileName}.jpg`,
+      og_title: existingTitle || `${baseName} - Hình ảnh chất lượng cao`,
+      og_description: existingMetaDescription || `Khám phá hình ảnh ${baseName} chất lượng cao, được tối ưu cho website và marketing.`,
+      og_image: imageUrl,
       og_type: "image",
       og_site_name: import.meta.env.VITE_PUBLIC_SITE_NAME || "Website Media",
       og_locale: "vi_VN"
     };
 
-    // Generate Twitter Card data
+    // Generate Twitter Card data - use existing Title and Meta Description
     const twitterData = {
       twitter_card: "summary_large_image",
-      twitter_title: smartTitle,
-      twitter_description: smartDescription,
-      twitter_image: fileUrl || `${imagesBaseUrl}${fileName}.jpg`,
+      twitter_title: existingTitle || `${baseName} - Hình ảnh chất lượng cao`,
+      twitter_description: existingMetaDescription || `Khám phá hình ảnh ${baseName} chất lượng cao, được tối ưu cho website và marketing.`,
+      twitter_image: imageUrl,
       twitter_site: import.meta.env.VITE_PUBLIC_TWITTER_SITE || "@website",
       twitter_creator: import.meta.env.VITE_PUBLIC_TWITTER_CREATOR || "@admin"
     };
 
-    // Generate AI content
+    // Generate AI content - use existing Title, Meta Description, and Meta Keywords
     const aiData = {
-      ai_alt_text: `AI-generated: ${smartAltText}. Hình ảnh được tối ưu hóa cho công cụ tìm kiếm và trải nghiệm người dùng.`,
-      ai_description: `AI-generated description: ${smartDescription} Hình ảnh này được xử lý để đạt chất lượng cao nhất và tương thích với tất cả thiết bị.`,
-      ai_tags: ["optimized", "high-quality", "web-ready", "professional", "seo-friendly"],
+      ai_alt_text: existingTitle ? `${existingTitle}. Được tối ưu hóa cho công cụ tìm kiếm và trải nghiệm người dùng.` : `Hình ảnh ${baseName} chất lượng cao. Được tối ưu hóa cho công cụ tìm kiếm và trải nghiệm người dùng.`,
+      ai_description: existingMetaDescription ? `${existingMetaDescription} Hình ảnh được xử lý để đạt chất lượng cao nhất.` : `Hình ảnh ${baseName} được xử lý để đạt chất lượng cao nhất và tương thích với tất cả thiết bị.`,
+      ai_tags: existingMetaKeywords.length > 0 ? existingMetaKeywords.slice(0, 5) : ["optimized", "high-quality", "web-ready", "professional", "seo-friendly"],
       ai_relevance_score: Math.floor(85 + Math.random() * 10) // Random score 85-95
     };
 
@@ -315,10 +315,12 @@ export const MediaSEOSection: React.FC<MediaSEOSectionProps> = ({
       optimization_score: Math.floor(85 + Math.random() * 10) // 85-95
     };
 
-    // Generate visual/voice search data
+    // Generate visual/voice search data - use existing Meta Keywords
     const searchData = {
       visual_search_optimized: true,
-      visual_search_tags: ["image", "photo", "picture", "media", baseName.toLowerCase()],
+      visual_search_tags: existingMetaKeywords.length > 0
+        ? existingMetaKeywords.slice(0, 8).concat(["image", "photo", "picture", "media"])
+        : ["image", "photo", "picture", "media", baseName.toLowerCase()],
       voice_search_optimized: true,
       voice_search_phrases: [
         `hình ảnh ${baseName.toLowerCase()}`,
@@ -338,14 +340,14 @@ export const MediaSEOSection: React.FC<MediaSEOSectionProps> = ({
       clicks: 0
     };
 
-    // Generate comprehensive schema markup
+    // Generate comprehensive schema markup - use existing Title and Meta Description
     const schemaData = {
       "@context": "https://schema.org",
       "@type": "ImageObject",
-      "name": smartTitle,
-      "description": smartDescription,
-      "url": fileUrl || `${imagesBaseUrl}${fileName}.jpg`,
-      "contentUrl": fileUrl || `${imagesBaseUrl}${fileName}.jpg`,
+      "name": existingTitle,
+      "description": existingMetaDescription,
+      "url": imageUrl,
+      "contentUrl": imageUrl,
       "license": `${baseUrl}/license`,
       "acquireLicensePage": `${baseUrl}/license`,
       "creditText": import.meta.env.VITE_PUBLIC_SITE_NAME || "Website Media",
@@ -370,19 +372,15 @@ export const MediaSEOSection: React.FC<MediaSEOSectionProps> = ({
         "@type": "Place",
         "name": "Việt Nam"
       },
-      "keywords": smartKeywords.join(", "),
+      "keywords": existingMetaKeywords.length > 0 ? existingMetaKeywords.join(", ") : ["hình ảnh chất lượng cao", baseName.toLowerCase(), "tài liệu hình ảnh", "hình ảnh chuyên nghiệp"].join(", "),
       "thumbnail": {
         "@type": "ImageObject",
-        "url": fileUrl || `${imagesBaseUrl}${fileName}_thumb.jpg`
+        "url": thumbnailUrl
       }
     };
 
-    // Combine all data
+    // Combine all data (excluding alt_text, title, meta_description, meta_keywords)
     const smartSEOData = {
-      alt_text: smartAltText,
-      title: smartTitle,
-      meta_description: smartDescription,
-      meta_keywords: smartKeywords,
       seo_score: Math.floor(80 + Math.random() * 15), // 80-95
       accessibility_score: Math.floor(85 + Math.random() * 10), // 85-95
       performance_score: Math.floor(80 + Math.random() * 15), // 80-95
@@ -401,7 +399,7 @@ export const MediaSEOSection: React.FC<MediaSEOSectionProps> = ({
     // Update form with generated data
     form.setFieldsValue(smartSEOData);
 
-    message.success(`🎉 Đã tạo thông tin SEO thông minh cho "${baseName}" với đầy đủ dữ liệu MXH, AI và Schema!`);
+    message.success(`🎉 Đã tạo thông tin SEO thông minh cho "${baseName}" với đầy đủ dữ liệu MXH, AI, Technical và Schema (đồng bộ với Title, Meta Description, Meta Keywords hiện có)!`);
   };
 
   const copyJsonToClipboard = async () => {
@@ -460,7 +458,7 @@ export const MediaSEOSection: React.FC<MediaSEOSectionProps> = ({
           )}
         </Space>
         <Text type="secondary" style={{ display: "block", textAlign: "center", marginTop: "8px", fontSize: "12px" }}>
-          Tự động tạo đầy đủ thông tin SEO, Open Graph, Twitter Card, Schema Markup và các chỉ số performance
+          Tự động tạo thông tin SEO nâng cao: Open Graph, Twitter Card, AI data, Technical SEO, Visual Search, Schema Markup và các chỉ số performance
         </Text>
       </div>
 
@@ -672,7 +670,7 @@ export const MediaSEOSection: React.FC<MediaSEOSectionProps> = ({
               name="og_description"
               extra={<Text type="secondary" style={{ fontSize: '11px' }}>💡 Tối ưu: 200 ký tự. Mô tả hấp dẫn, kêu gọi hành động</Text>}
             >
-              <TextArea rows={2} placeholder="Mô tả cho Open Graph" maxLength={300} showCount />
+              <TextArea rows={4} placeholder="Mô tả cho Open Graph" maxLength={300} showCount style={{ height: '100px' }} />
             </Form.Item>
 
             <Form.Item
@@ -751,7 +749,7 @@ export const MediaSEOSection: React.FC<MediaSEOSectionProps> = ({
               name="twitter_description"
               extra={<Text type="secondary" style={{ fontSize: '11px' }}>💡 Tối ưu: 200 ký tự. Mô tả hấp dẫn, chứa từ khóa</Text>}
             >
-              <TextArea rows={2} placeholder="Mô tả cho Twitter" maxLength={200} showCount />
+              <TextArea rows={4} placeholder="Mô tả cho Twitter" maxLength={200} showCount style={{ height: '100px' }} />
             </Form.Item>
 
             <Form.Item
@@ -835,7 +833,7 @@ export const MediaSEOSection: React.FC<MediaSEOSectionProps> = ({
               }
               name="ai_description"
             >
-              <TextArea rows={3} placeholder="Mô tả được tạo bởi AI" />
+              <TextArea rows={4} placeholder="Mô tả được tạo bởi AI" style={{ height: '100px' }} />
             </Form.Item>
 
             <Form.Item
@@ -906,15 +904,33 @@ export const MediaSEOSection: React.FC<MediaSEOSectionProps> = ({
 
           <Title level={5} style={{ margin: "16px 0 8px 0", color: "#52c41a" }}>📄 Schema Markup</Title>
           <div style={{ marginBottom: "12px" }}>
-            <Button
-              size="small"
-              type="dashed"
-              onClick={generateSchemaMarkup}
-              title="Tạo Schema Markup phù hợp cho hình ảnh"
-              style={{ marginBottom: "8px" }}
-            >
-              🎯 Tạo Schema Markup
-            </Button>
+            <Space align="start">
+              <Button
+                size="small"
+                type="dashed"
+                onClick={generateSchemaMarkup}
+                title="Tạo Schema Markup phù hợp cho hình ảnh"
+                style={{ marginBottom: "8px" }}
+              >
+                🎯 Tạo Schema Markup
+              </Button>
+              {lastGeneratedSchema && (
+                <div style={{
+                  padding: "4px 8px",
+                  backgroundColor: "#f6ffed",
+                  border: "1px solid #b7eb8f",
+                  borderRadius: "4px",
+                  fontSize: "11px",
+                  color: "#52c41a",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px"
+                }}>
+                  <span>✅</span>
+                  <span>{lastGeneratedSchema}</span>
+                </div>
+              )}
+            </Space>
             <Text type="secondary" style={{ fontSize: '11px', display: 'block' }}>
               Tự động tạo Schema.org markup phù hợp với loại hình ảnh
             </Text>
@@ -979,7 +995,7 @@ export const MediaSEOSection: React.FC<MediaSEOSectionProps> = ({
               </Space>
             }
           >
-            <JsonField height={jsonCollapsed ? 300 : 400} />
+            <JsonField height={jsonCollapsed ? 450 : 600} />
           </Form.Item>
         </div>
       </Panel>

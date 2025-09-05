@@ -206,7 +206,7 @@ export const MediaFormFields: React.FC<MediaFormFieldsProps> = ({
         name="meta_description"
         extra={<Text type="secondary" style={{ fontSize: '11px' }}>💡 Tối ưu: 160 ký tự. Chứa từ khóa, kêu gọi hành động</Text>}
       >
-        <TextArea rows={2} placeholder="Mô tả chi tiết cho SEO" showCount maxLength={160} />
+        <TextArea rows={4} placeholder="Mô tả chi tiết cho SEO" showCount maxLength={160} style={{ height: '100px' }} />
       </Form.Item>
 
       <Form.Item name="meta_keywords">
