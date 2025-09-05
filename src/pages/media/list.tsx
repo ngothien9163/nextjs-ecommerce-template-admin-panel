@@ -362,7 +362,7 @@ export const MediaList: React.FC = () => {
               <Button
                 icon={<GlobalOutlined />}
                 onClick={() => {
-                  const imagesUrl = "http://localhost:4322/images";
+                  const imagesUrl = "http://localhost:4321/images";
                   console.log('🌐 Opening images URL:', imagesUrl);
                   window.open(imagesUrl, "_blank");
                   message.info("Đã mở thư mục images trong tab mới!");
@@ -508,7 +508,7 @@ export const MediaList: React.FC = () => {
                       onClick={(e) => {
                         e.stopPropagation();
                         // Use public images URL instead of Supabase storage URL
-                        const publicImageUrl = `http://localhost:4322/images/${item.file_name}`;
+                        const publicImageUrl = `http://localhost:4321/images/${item.file_name}`;
                         console.log('Image view clicked:', publicImageUrl);
                         window.open(publicImageUrl, "_blank");
                         message.info("Đã mở hình ảnh qua public URL!");

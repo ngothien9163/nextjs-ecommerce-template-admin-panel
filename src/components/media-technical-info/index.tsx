@@ -246,7 +246,7 @@ export const MediaTechnicalInfo: React.FC<MediaTechnicalInfoProps> = ({
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
             <Typography.Text code style={{ flex: 1, wordBreak: 'break-all', fontSize: '12px' }}>
               {(() => {
-                const imagesBaseUrl = import.meta.env.VITE_PUBLIC_SITE_URL_IMAGES || "http://localhost:4322/images/";
+                const imagesBaseUrl = import.meta.env.VITE_PUBLIC_SITE_URL_IMAGES || "http://localhost:4321/images/";
                 let fileName = "";
 
                 if (mode === 'create' && uploadedFiles.length > 0 && selectedFileIndex >= 0) {
@@ -270,7 +270,7 @@ export const MediaTechnicalInfo: React.FC<MediaTechnicalInfoProps> = ({
               size="small"
               icon={<CopyOutlined />}
               onClick={() => {
-                const imagesBaseUrl = import.meta.env.VITE_PUBLIC_SITE_URL_IMAGES || "http://localhost:4322/images/";
+                const imagesBaseUrl = import.meta.env.VITE_PUBLIC_SITE_URL_IMAGES || "http://localhost:4321/images/";
                 let fileName = "";
 
                 if (mode === 'create' && uploadedFiles.length > 0 && selectedFileIndex >= 0) {
@@ -292,7 +292,7 @@ export const MediaTechnicalInfo: React.FC<MediaTechnicalInfoProps> = ({
               size="small"
               icon={<LinkOutlined />}
               onClick={() => {
-                const imagesBaseUrl = import.meta.env.VITE_PUBLIC_SITE_URL_IMAGES || "http://localhost:4322/images/";
+                const imagesBaseUrl = import.meta.env.VITE_PUBLIC_SITE_URL_IMAGES || "http://localhost:4321/images/";
                 let fileName = "";
 
                 if (mode === 'create' && uploadedFiles.length > 0 && selectedFileIndex >= 0) {

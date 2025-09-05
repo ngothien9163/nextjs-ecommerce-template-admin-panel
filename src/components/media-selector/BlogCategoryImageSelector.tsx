@@ -124,7 +124,7 @@ export const BlogCategoryImageSelector: React.FC<BlogCategoryImageSelectorProps>
 
   const handleViewPublicUrl = () => {
     if (selectedMedia) {
-      const publicSiteUrl = import.meta.env.VITE_PUBLIC_SITE_URL || 'http://localhost:4322';
+      const publicSiteUrl = import.meta.env.VITE_PUBLIC_SITE_URL || 'http://localhost:4321';
       const publicUrl = `${publicSiteUrl}/images/${selectedMedia.file_name}`;
       window.open(publicUrl, '_blank');
     }
@@ -335,7 +335,7 @@ export const BlogCategoryImageSelector: React.FC<BlogCategoryImageSelectorProps>
                     }} />,
                     <LinkOutlined key="public" title="Xem ảnh trên site công khai" onClick={(e) => {
                       e.stopPropagation();
-                      const publicSiteUrl = import.meta.env.VITE_PUBLIC_SITE_URL || 'http://localhost:4322';
+                      const publicSiteUrl = import.meta.env.VITE_PUBLIC_SITE_URL || 'http://localhost:4321';
                       const publicUrl = `${publicSiteUrl}/images/${mediaItem.file_name}`;
                       window.open(publicUrl, '_blank');
                     }} />

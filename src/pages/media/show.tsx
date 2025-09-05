@@ -278,7 +278,7 @@ export const MediaShow: React.FC = () => {
                       {(() => {
                         const imagesBaseUrl =
                           import.meta.env.VITE_PUBLIC_SITE_URL_IMAGES ||
-                          "http://localhost:4322/images/";
+                          "http://localhost:4321/images/";
                         const fileName = record?.file_name || "ten-file-hinh-anh";
                         return `${imagesBaseUrl}${fileName}`;
                       })()}
@@ -290,7 +290,7 @@ export const MediaShow: React.FC = () => {
                         onClick={() => {
                           const imagesBaseUrl =
                             import.meta.env.VITE_PUBLIC_SITE_URL_IMAGES ||
-                            "http://localhost:4322/images/";
+                            "http://localhost:4321/images/";
                           const fileName = record?.file_name || "ten-file-hinh-anh";
                           const publicLinkUrl = `${imagesBaseUrl}${fileName}`;
                           copyToClipboard(publicLinkUrl);
@@ -304,7 +304,7 @@ export const MediaShow: React.FC = () => {
                         onClick={() => {
                           const imagesBaseUrl =
                             import.meta.env.VITE_PUBLIC_SITE_URL_IMAGES ||
-                            "http://localhost:4322/images/";
+                            "http://localhost:4321/images/";
                           const fileName = record?.file_name || "ten-file-hinh-anh";
                           const publicLinkUrl = `${imagesBaseUrl}${fileName}`;
                           window.open(publicLinkUrl, "_blank");
@@ -400,7 +400,7 @@ export const MediaShow: React.FC = () => {
                       {(() => {
                         const imagesBaseUrl =
                           import.meta.env.VITE_PUBLIC_SITE_URL_IMAGES ||
-                          "http://localhost:4322/images/";
+                          "http://localhost:4321/images/";
                         const fileName = record?.file_name || "ten-file-hinh-anh";
                         return `${imagesBaseUrl}${fileName}`;
                       })()}
@@ -412,7 +412,7 @@ export const MediaShow: React.FC = () => {
                         onClick={() => {
                           const imagesBaseUrl =
                             import.meta.env.VITE_PUBLIC_SITE_URL_IMAGES ||
-                            "http://localhost:4322/images/";
+                            "http://localhost:4321/images/";
                           const fileName = record?.file_name || "ten-file-hinh-anh";
                           const publicLinkUrl = `${imagesBaseUrl}${fileName}`;
                           copyToClipboard(publicLinkUrl);
@@ -426,7 +426,7 @@ export const MediaShow: React.FC = () => {
                         onClick={() => {
                           const imagesBaseUrl =
                             import.meta.env.VITE_PUBLIC_SITE_URL_IMAGES ||
-                            "http://localhost:4322/images/";
+                            "http://localhost:4321/images/";
                           const fileName = record?.file_name || "ten-file-hinh-anh";
                           const publicLinkUrl = `${imagesBaseUrl}${fileName}`;
                           window.open(publicLinkUrl, "_blank");

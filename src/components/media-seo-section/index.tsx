@@ -54,6 +54,8 @@ export const MediaSEOSection: React.FC<MediaSEOSectionProps> = ({
 }) => {
   const [jsonCollapsed, setJsonCollapsed] = useState(false);
   const [lastGeneratedSchema, setLastGeneratedSchema] = useState<string | null>(null);
+  const [extractedUrls, setExtractedUrls] = useState<Array<{url: string, status: 'pending' | 'valid' | 'invalid', error?: string, statusCode?: number}>>([]);
+  const [isValidatingUrls, setIsValidatingUrls] = useState(false);
 
   // Environment variables for URLs
   const baseUrl = import.meta.env.VITE_PUBLIC_SITE_URL || "https://example.com";
@@ -403,7 +405,12 @@ export const MediaSEOSection: React.FC<MediaSEOSectionProps> = ({
   };
 
   const copyJsonToClipboard = async () => {
-    const schemaData = {}; // Get from form
+    if (!form) {
+      message.error("Form không khả dụng!");
+      return;
+    }
+
+    const schemaData = form.getFieldValue('schema_markup');
     if (schemaData) {
       try {
         await navigator.clipboard.writeText(JSON.stringify(schemaData, null, 2));
@@ -417,19 +424,192 @@ export const MediaSEOSection: React.FC<MediaSEOSectionProps> = ({
   };
 
   const formatJson = () => {
-    message.success("Đã format JSON!");
+    if (!form) {
+      message.error("Form không khả dụng!");
+      return;
+    }
+
+    const schemaData = form.getFieldValue('schema_markup');
+    if (schemaData) {
+      try {
+        // Format the JSON by setting it back to the form
+        form.setFieldsValue({
+          schema_markup: schemaData
+        });
+        message.success("Đã format JSON!");
+      } catch (error) {
+        message.error("Không thể format JSON!");
+      }
+    } else {
+      message.warning("Không có dữ liệu JSON để format!");
+    }
   };
 
   const clearJsonField = () => {
+    if (!form) {
+      message.error("Form không khả dụng!");
+      return;
+    }
+
+    form.setFieldsValue({
+      schema_markup: null
+    });
     message.success("Đã xóa JSON field!");
   };
 
   const getJsonCharacterCount = () => {
-    return 0; // Calculate from form data
+    if (!form) return 0;
+
+    const schemaData = form.getFieldValue('schema_markup');
+    if (schemaData) {
+      return JSON.stringify(schemaData).length;
+    }
+    return 0;
   };
 
   const validateJson = () => {
-    return true; // Validate JSON from form
+    if (!form) return false;
+
+    const schemaData = form.getFieldValue('schema_markup');
+    if (!schemaData) return false;
+
+    try {
+      // Check if it's valid JSON by trying to stringify/parse
+      JSON.stringify(schemaData);
+      return true;
+    } catch (error) {
+      return false;
+    }
+  };
+
+  // Extract URLs from JSON-LD
+  const extractUrlsFromJsonLd = (jsonLd: any): string[] => {
+    const urls: string[] = [];
+    const extractUrls = (obj: any) => {
+      if (typeof obj === 'string' && (obj.startsWith('http://') || obj.startsWith('https://'))) {
+        urls.push(obj);
+      } else if (typeof obj === 'object' && obj !== null) {
+        Object.values(obj).forEach(extractUrls);
+      }
+    };
+    extractUrls(jsonLd);
+    return [...new Set(urls)]; // Remove duplicates
+  };
+
+  // Validate URL by checking if it's reachable and content status
+  const validateUrl = async (url: string): Promise<{status: 'valid' | 'invalid', error?: string, statusCode?: number}> => {
+    try {
+      // First try HEAD request to check if URL exists
+      const headResponse = await fetch(url, {
+        method: 'HEAD',
+        mode: 'cors',
+        headers: {
+          'Accept': '*/*',
+        }
+      });
+
+      // Check status codes
+      if (headResponse.ok) {
+        return { status: 'valid', statusCode: headResponse.status };
+      } else if (headResponse.status === 404) {
+        return { status: 'invalid', error: 'URL không tồn tại (404 Not Found)', statusCode: 404 };
+      } else if (headResponse.status === 403) {
+        return { status: 'invalid', error: 'Truy cập bị từ chối (403 Forbidden)', statusCode: 403 };
+      } else if (headResponse.status === 500) {
+        return { status: 'invalid', error: 'Lỗi máy chủ (500 Internal Server Error)', statusCode: 500 };
+      } else {
+        return { status: 'invalid', error: `Lỗi HTTP ${headResponse.status}`, statusCode: headResponse.status };
+      }
+    } catch (error) {
+      // If HEAD fails due to CORS, try GET request
+      try {
+        const getResponse = await fetch(url, {
+          method: 'GET',
+          mode: 'cors',
+          headers: {
+            'Accept': '*/*',
+          }
+        });
+
+        if (getResponse.ok) {
+          return { status: 'valid', statusCode: getResponse.status };
+        } else if (getResponse.status === 404) {
+          return { status: 'invalid', error: 'URL không tồn tại (404 Not Found)', statusCode: 404 };
+        } else if (getResponse.status === 403) {
+          return { status: 'invalid', error: 'Truy cập bị từ chối (403 Forbidden)', statusCode: 403 };
+        } else if (getResponse.status === 500) {
+          return { status: 'invalid', error: 'Lỗi máy chủ (500 Internal Server Error)', statusCode: 500 };
+        } else {
+          return { status: 'invalid', error: `Lỗi HTTP ${getResponse.status}`, statusCode: getResponse.status };
+        }
+      } catch (corsError) {
+        // If CORS blocks the request, try with no-cors mode (limited info)
+        try {
+          await fetch(url, {
+            method: 'HEAD',
+            mode: 'no-cors'
+          });
+          // If no-cors succeeds, we can't read status but URL is reachable
+          return { status: 'valid', error: 'URL có thể truy cập (CORS giới hạn thông tin)' };
+        } catch (noCorsError) {
+          return { status: 'invalid', error: 'URL không thể truy cập hoặc bị chặn CORS' };
+        }
+      }
+    }
+  };
+
+  // Extract and validate URLs from Schema Markup
+  const extractAndValidateUrls = async () => {
+    if (!form) {
+      message.error("Form không khả dụng!");
+      return;
+    }
+
+    const schemaData = form.getFieldValue('schema_markup');
+    if (!schemaData) {
+      message.warning("Không có dữ liệu Schema Markup để kiểm tra!");
+      return;
+    }
+
+    setIsValidatingUrls(true);
+    setExtractedUrls([]); // Clear old URL list first
+
+    try {
+      const urls = extractUrlsFromJsonLd(schemaData);
+      if (urls.length === 0) {
+        message.info("Không tìm thấy URL nào trong Schema Markup!");
+        setIsValidatingUrls(false);
+        return;
+      }
+
+      // Initialize with pending status
+      const initialUrls = urls.map(url => ({ url, status: 'pending' as const }));
+      setExtractedUrls(initialUrls);
+
+      // Validate each URL
+      const validatedUrls = await Promise.all(
+        urls.map(async (url) => {
+          const result = await validateUrl(url);
+          return { url, ...result };
+        })
+      );
+
+      setExtractedUrls(validatedUrls);
+
+      const invalidCount = validatedUrls.filter(u => u.status === 'invalid').length;
+      const validCount = validatedUrls.filter(u => u.status === 'valid').length;
+
+      if (invalidCount > 0) {
+        message.warning(`⚠️ Tìm thấy ${invalidCount} URL không hợp lệ, ${validCount} URL hợp lệ trong Schema Markup!`);
+      } else {
+        message.success(`✅ Tất cả ${urls.length} URL đều hợp lệ và có thể truy cập!`);
+      }
+    } catch (error) {
+      console.error('Error extracting and validating URLs:', error);
+      message.error("Có lỗi xảy ra khi kiểm tra URL!");
+    } finally {
+      setIsValidatingUrls(false);
+    }
   };
 
   return (
@@ -997,6 +1177,85 @@ export const MediaSEOSection: React.FC<MediaSEOSectionProps> = ({
           >
             <JsonField height={jsonCollapsed ? 450 : 600} />
           </Form.Item>
+
+          {/* URL Validation Section */}
+          <div style={{ marginTop: "16px", padding: "12px", background: "#f9f9f9", borderRadius: "8px" }}>
+            <Space align="center" style={{ marginBottom: "12px" }}>
+              <Button
+                size="small"
+                type="primary"
+                onClick={extractAndValidateUrls}
+                loading={isValidatingUrls}
+                disabled={isValidatingUrls}
+                icon={<GlobalOutlined />}
+              >
+                {isValidatingUrls ? "Đang kiểm tra..." : "Kiểm tra URL trong Schema"}
+              </Button>
+              <Text type="secondary" style={{ fontSize: '11px' }}>
+                Tự động trích xuất và kiểm tra tất cả URL trong Schema Markup
+              </Text>
+            </Space>
+
+            {extractedUrls.length > 0 && (
+              <div>
+                <Title level={5} style={{ marginBottom: "8px", color: "#1890ff" }}>
+                  📋 Danh sách URL ({extractedUrls.length})
+                </Title>
+                <Space direction="vertical" style={{ width: "100%" }}>
+                  {extractedUrls.map((urlItem, index) => (
+                    <div
+                      key={index}
+                      style={{
+                        padding: "8px",
+                        border: "1px solid #d9d9d9",
+                        borderRadius: "4px",
+                        background: urlItem.status === 'valid' ? '#f6ffed' :
+                                   urlItem.status === 'invalid' ? '#fff2f0' : '#fffbe6'
+                      }}
+                    >
+                      <Space align="start">
+                        <span style={{
+                          color: urlItem.status === 'valid' ? '#52c41a' :
+                                 urlItem.status === 'invalid' ? '#ff4d4f' : '#faad14',
+                          fontSize: '16px'
+                        }}>
+                          {urlItem.status === 'valid' ? '✅' :
+                           urlItem.status === 'invalid' ? '❌' : '⏳'}
+                        </span>
+                        <div style={{ flex: 1 }}>
+                          <Text
+                            style={{
+                              wordBreak: 'break-all',
+                              fontSize: '12px',
+                              color: urlItem.status === 'invalid' ? '#ff4d4f' : '#1890ff'
+                            }}
+                          >
+                            {urlItem.url}
+                          </Text>
+                          {urlItem.status === 'valid' && urlItem.statusCode && (
+                            <Text type="success" style={{ fontSize: '11px', display: 'block', marginTop: '4px' }}>
+                              ✅ HTTP {urlItem.statusCode} - URL hợp lệ
+                            </Text>
+                          )}
+                          {urlItem.status === 'invalid' && urlItem.error && (
+                            <Text type="danger" style={{ fontSize: '11px', display: 'block', marginTop: '4px' }}>
+                              ❌ {urlItem.error}
+                              {urlItem.statusCode && ` (HTTP ${urlItem.statusCode})`}
+                            </Text>
+                          )}
+                          {urlItem.status === 'pending' && (
+                            <Text type="secondary" style={{ fontSize: '11px', display: 'block', marginTop: '4px' }}>
+                              ⏳ Đang kiểm tra...
+                            </Text>
+                          )}
+                        </div>
+                      </Space>
+                    </div>
+                  ))}
+                </Space>
+              </div>
+            )}
+          </div>
         </div>
       </Panel>
 
