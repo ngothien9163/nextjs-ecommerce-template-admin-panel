@@ -1,5 +1,6 @@
-// Client-side EXIF manipulation utilities for JPEG files
-// This allows us to embed metadata into JPEG images for Google Images SEO
+// EXIF metadata utilities using Sharp API
+// This allows us to embed metadata into images using the Sharp server-side processing
+// for Google Images SEO optimization
 
 export interface ExifMetadata {
   title?: string;
@@ -13,34 +14,53 @@ export interface ExifMetadata {
 }
 
 /**
- * Embed EXIF metadata into a JPEG file
- * Uses browser-compatible EXIF manipulation
+ * Embed EXIF metadata into an image file using Sharp API
+ * Uses the existing /api/convert-webp endpoint with metadata embedding
  */
 export async function embedExifMetadata(
   file: File,
   metadata: ExifMetadata
 ): Promise<File> {
   return new Promise((resolve, reject) => {
-    console.log('📷 Embedding EXIF metadata into JPEG:', metadata);
+    console.log('📷 Embedding EXIF metadata using Sharp API:', metadata);
 
-    // For client-side EXIF manipulation, we need to use external libraries
-    // Since we can't add external dependencies easily, we'll use a simplified approach
-    // In production, you'd use libraries like exif-js, piexifjs, or similar
+    // Use the existing Sharp API endpoint to embed metadata
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('metadata', JSON.stringify(metadata));
+    formData.append('metadataOnly', 'true'); // Only embed metadata, don't change format/size
+    formData.append('preserveSize', 'true'); // Keep original size
 
-    // For now, we'll create a new file with metadata information
-    // This is a placeholder - in a real implementation you'd use proper EXIF manipulation
+    fetch('http://localhost:3001/api/convert-webp', {
+      method: 'POST',
+      body: formData,
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`Sharp API error: ${response.status}`);
+      }
+      return response.blob();
+    })
+    .then(blob => {
+      // Create new File with processed data
+      const processedFile = new File([blob], file.name, {
+        type: file.type,
+        lastModified: Date.now(),
+      });
 
-    // Option 1: Use the file as-is but ensure metadata is saved to database
-    // Option 2: Add metadata to file properties (limited browser support)
-    // Option 3: Use external EXIF library
+      console.log('✅ Metadata embedded successfully using Sharp API');
+      console.log('📊 Metadata fields processed:', Object.keys(metadata));
+      console.log('🎯 File ready for upload with embedded metadata');
 
-    console.log('✅ Metadata prepared for EXIF embedding (database fallback)');
-    console.log('📊 Metadata fields:', Object.keys(metadata));
-    console.log('🎯 Google Images will use database metadata for SEO');
+      resolve(processedFile);
+    })
+    .catch(error => {
+      console.error('❌ Sharp API metadata embedding failed:', error);
+      console.log('⚠️ Falling back to original file without embedded metadata');
 
-    // For now, return the file as-is
-    // In production, implement proper EXIF manipulation
-    resolve(file);
+      // Fallback: return original file if Sharp API fails
+      resolve(file);
+    });
   });
 }
 

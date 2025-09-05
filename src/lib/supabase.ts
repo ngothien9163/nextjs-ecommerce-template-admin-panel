@@ -303,17 +303,8 @@ export interface ProductImage {
 const processEnvUrl = import.meta.env.VITE_SUPABASE_URL;
 const processEnvKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-console.log('🔗 Supabase URL (import.meta.env):', supabaseUrl);
-console.log('🔑 Supabase Key (import.meta.env):', supabaseKey ? '✅ Set' : '❌ Not set');
-console.log('🔗 Supabase URL (process.env):', processEnvUrl || '❌ Undefined - không hoạt động trong Vite');
-console.log('🔑 Supabase Key (process.env):', processEnvKey || '❌ Undefined - không hoạt động trong Vite');
-
 // Test function để so sánh cả hai cách
 export const testEnvironmentVariables = () => {
-  console.log('🧪 Testing Environment Variables...');
-  console.log('📋 import.meta.env.VITE_SUPABASE_URL:', import.meta.env.VITE_SUPABASE_URL);
-  console.log('📋 import.meta.env.VITE_SUPABASE_ANON_KEY:', import.meta.env.VITE_SUPABASE_ANON_KEY ? '✅ Set' : '❌ Not set');
-
   return {
     importMetaEnv: {
       url: import.meta.env.VITE_SUPABASE_URL,

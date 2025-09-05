@@ -120,8 +120,10 @@ export const checkFileMetadata = async (
     // Thử sử dụng browser Image API để lấy dimensions
     try {
       const imageDimensions = await getImageDimensions(fileBlob);
-      result.technicalInfo.width = imageDimensions.width;
-      result.technicalInfo.height = imageDimensions.height;
+      if (result.technicalInfo) {
+        result.technicalInfo.width = imageDimensions.width;
+        result.technicalInfo.height = imageDimensions.height;
+      }
     } catch (err) {
       console.warn('⚠️ Could not get image dimensions:', err);
     }
@@ -258,54 +260,115 @@ async function checkWebPMetadata(bytes: Uint8Array) {
 }
 
 /**
- * Parse EXIF data từ bytes
+ * Parse EXIF data từ bytes - Enhanced for Sharp-generated EXIF
  */
 function parseEXIFData(exifBytes: Uint8Array) {
   const result: any = {};
-  
+
   try {
-    // Simplified EXIF parsing - tìm text data
-    const textData = new TextDecoder('utf-8', { ignoreBOM: true }).decode(exifBytes);
-    
-    // Tìm các fields phổ biến trong EXIF
+    // Log raw EXIF data for debugging
+    console.log('🔍 Raw EXIF bytes length:', exifBytes.length);
+    console.log('🔍 First 100 bytes:', Array.from(exifBytes.slice(0, 100)).map(b => b.toString(16).padStart(2, '0')).join(' '));
+
+    // Try multiple decoding approaches
+    let textData = '';
+    try {
+      textData = new TextDecoder('utf-8', { ignoreBOM: true }).decode(exifBytes);
+    } catch (e) {
+      console.warn('⚠️ UTF-8 decode failed, trying latin1');
+      textData = new TextDecoder('latin1').decode(exifBytes);
+    }
+
+    console.log('🔍 EXIF text data (first 500 chars):', textData.substring(0, 500));
+
+    // Enhanced patterns for Sharp-generated EXIF
     const patterns = {
-      copyright: /Copyright[\s\x00]*([^\x00\n\r]{1,200})/i,
-      artist: /Artist[\s\x00]*([^\x00\n\r]{1,100})/i,
-      software: /Software[\s\x00]*([^\x00\n\r]{1,100})/i,
-      description: /ImageDescription[\s\x00]*([^\x00\n\r]{1,200})/i,
-      userComment: /UserComment[\s\x00]*([^\x00\n\r]{1,200})/i,
-      make: /Make[\s\x00]*([^\x00\n\r]{1,50})/i,
-      model: /Model[\s\x00]*([^\x00\n\r]{1,50})/i
+      copyright: /(?:Copyright|©|Rights)[\s\x00:]*([^\x00\n\r]{1,200})/i,
+      artist: /(?:Artist|Creator|Author)[\s\x00:]*([^\x00\n\r]{1,100})/i,
+      software: /(?:Software|ProcessingSoftware)[\s\x00:]*([^\x00\n\r]{1,100})/i,
+      description: /(?:ImageDescription|Description|Title)[\s\x00:]*([^\x00\n\r]{1,200})/i,
+      userComment: /(?:UserComment|Comment)[\s\x00:]*([^\x00\n\r]{1,200})/i,
+      make: /Make[\s\x00:]*([^\x00\n\r]{1,50})/i,
+      model: /Model[\s\x00:]*([^\x00\n\r]{1,50})/i,
+      // Additional patterns for Sharp metadata
+      credit: /Credit[\s\x00:]*([^\x00\n\r]{1,100})/i,
+      source: /Source[\s\x00:]*([^\x00\n\r]{1,100})/i
     };
-    
-    // Extract data
-    const copyrightMatch = textData.match(patterns.copyright);
-    if (copyrightMatch) result.copyright = copyrightMatch[1].trim();
-    
-    const artistMatch = textData.match(patterns.artist);
-    if (artistMatch) result.creator_artist = artistMatch[1].trim();
-    
-    const softwareMatch = textData.match(patterns.software);
-    if (softwareMatch) result.software = softwareMatch[1].trim();
-    
-    const descMatch = textData.match(patterns.description);
-    if (descMatch) result.description = descMatch[1].trim();
-    
-    const commentMatch = textData.match(patterns.userComment);
-    if (commentMatch) result.userComment = commentMatch[1].trim();
-    
-    const makeMatch = textData.match(patterns.make);
-    if (makeMatch) result.cameraMake = makeMatch[1].trim();
-    
-    const modelMatch = textData.match(patterns.model);
-    if (modelMatch) result.cameraModel = modelMatch[1].trim();
-    
-    console.log('🔍 Parsed EXIF data:', result);
-    
+
+    // Extract data with enhanced patterns
+    for (const [key, pattern] of Object.entries(patterns)) {
+      const match = textData.match(pattern);
+      if (match) {
+        let value = match[1].trim();
+        // Clean up common artifacts
+        value = value.replace(/[\x00-\x1F\x7F-\x9F]/g, '').trim();
+
+        switch (key) {
+          case 'copyright':
+            result.copyright = value;
+            break;
+          case 'artist':
+            result.creator_artist = value;
+            break;
+          case 'software':
+            result.software = value;
+            break;
+          case 'description':
+            result.description = value;
+            break;
+          case 'userComment':
+            result.userComment = value;
+            break;
+          case 'make':
+            result.cameraMake = value;
+            break;
+          case 'model':
+            result.cameraModel = value;
+            break;
+          case 'credit':
+            result.credit = value;
+            break;
+          case 'source':
+            if (!result.credit) result.credit = value;
+            break;
+        }
+
+        console.log(`✅ Found ${key}:`, value);
+      }
+    }
+
+    // Try to extract from JSON-like structures in EXIF
+    try {
+      // Look for JSON-like metadata in EXIF
+      const jsonMatches = textData.match(/\{[^}]*\}/g);
+      if (jsonMatches) {
+        for (const jsonStr of jsonMatches) {
+          try {
+            const jsonData = JSON.parse(jsonStr);
+            console.log('🔍 Found JSON metadata in EXIF:', jsonData);
+
+            // Extract fields from JSON
+            if (jsonData.Copyright && !result.copyright) result.copyright = jsonData.Copyright;
+            if (jsonData.Artist && !result.creator_artist) result.creator_artist = jsonData.Artist;
+            if (jsonData.Software && !result.software) result.software = jsonData.Software;
+            if (jsonData.Description && !result.description) result.description = jsonData.Description;
+            if (jsonData.Credit && !result.credit) result.credit = jsonData.Credit;
+          } catch (e) {
+            // Not valid JSON, continue
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('⚠️ Error parsing JSON in EXIF:', e);
+    }
+
+    console.log('🔍 Final parsed EXIF data:', result);
+    console.log('🔍 EXIF parsing completed with', Object.keys(result).length, 'fields found');
+
   } catch (error) {
     console.warn('⚠️ Error parsing EXIF data:', error);
   }
-  
+
   return result;
 }
 

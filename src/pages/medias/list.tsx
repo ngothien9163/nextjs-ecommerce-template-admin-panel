@@ -74,8 +74,6 @@ export const MediaList: React.FC = () => {
   const currentPage = parseInt(searchParams.get('current') || '1');
   const pageSize = parseInt(searchParams.get('pageSize') || '20');
 
-  console.log('🔄 MediaList component rendered with URL params:', { currentPage, pageSize });
-
   // Use only useList for complete control over data fetching
   const { data, isLoading, refetch } = useList({
     resource: "medias",
@@ -99,41 +97,14 @@ export const MediaList: React.FC = () => {
     },
   };
 
-  // Debug: Log all important values
-  console.log('🔍 Current debugging info:', {
-    currentPage,
-    pageSize,
-    'data?.data length': data?.data?.length,
-    'data?.total': data?.total,
-    'isLoading': isLoading,
-    'URL searchParams': searchParams.toString(),
-  });
-
   // Force refresh when URL params change
   useEffect(() => {
-    console.log('🔄 URL params changed, refetching data:', { currentPage, pageSize });
     refetch();
   }, [currentPage, pageSize, refetch]);
 
   // Generate grid layout
   React.useEffect(() => {
-    console.log("🔍 Table props:", tableProps);
-    console.log("🔍 Data source length:", tableProps.dataSource?.length);
-    console.log("🔍 Table props pagination:", tableProps.pagination);
-
     if (tableProps.dataSource) {
-      console.log("Media data:", tableProps.dataSource);
-
-      // Debug: Log URL của từng item
-      tableProps.dataSource.forEach((item: any, index: number) => {
-        console.log(`Item ${index}:`, {
-          id: item.id,
-          file_name: item.file_name,
-          file_url: item.file_url,
-          file_path: item.file_path,
-        });
-      });
-
       const newLayout = tableProps.dataSource.map(
         (item: any, index: number) => ({
           i: item.id,
@@ -153,15 +124,9 @@ export const MediaList: React.FC = () => {
   // Upload functionality with WebP conversion
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     try {
-      console.log(
-        "Starting upload for files:",
-        acceptedFiles.map((f) => f.name)
-      );
-
       // Convert images to WebP first
       const conversionPromises = acceptedFiles.map(async (file) => {
         if (file.type.startsWith('image/')) {
-          console.log(`🔄 Converting ${file.name} to WebP...`);
           const result = await convertToWebP(file, 85); // 85% quality
           return result;
         } else {
@@ -178,31 +143,9 @@ export const MediaList: React.FC = () => {
 
       const conversionResults = await Promise.all(conversionPromises);
 
-      // Log conversion results
-      conversionResults.forEach((result, index) => {
-        const originalFile = acceptedFiles[index];
-        if (result.success && result.compressionRatio > 0) {
-          console.log(`✅ ${originalFile.name} → ${result.file.name}`);
-          console.log(`📊 Compression: ${result.originalSize} → ${result.webpSize} bytes (${result.compressionRatio}% saved)`);
-        } else if (result.success && result.compressionRatio === 0) {
-          console.log(`⚠️ ${originalFile.name} → No compression (likely non-image or conversion failed)`);
-        } else {
-          console.log(`❌ ${originalFile.name} → Conversion failed: ${result.error}`);
-        }
-      });
-
       const uploadPromises = conversionResults.map(async (result, index) => {
         const originalFile = acceptedFiles[index];
         const fileToUpload = result.file;
-
-        console.log(
-          "Processing file:",
-          fileToUpload.name,
-          "Size:",
-          fileToUpload.size,
-          "Type:",
-          fileToUpload.type
-        );
 
         // Use the WebP filename directly (already lowercase with .webp extension)
         let fileName = fileToUpload.name;
@@ -221,37 +164,23 @@ export const MediaList: React.FC = () => {
             const randomSuffix = Math.random().toString(36).substring(2, 8);
             fileName = `${nameWithoutExt}_${randomSuffix}.webp`;
             filePath = `medias/${fileName}`;
-            console.log(`🔄 Renamed duplicate file: ${fileToUpload.name} → ${fileName}`);
           }
         } catch (error) {
-          console.warn("Could not check for duplicate files:", error);
+          // Could not check for duplicate files
         }
-
-        console.log("File path:", filePath);
-        console.log("File being uploaded:", {
-          name: fileToUpload.name,
-          type: fileToUpload.type,
-          size: fileToUpload.size,
-          isWebP: fileToUpload.name.toLowerCase().endsWith('.webp')
-        });
 
         // Upload to Supabase Storage using regular client
         const { data: uploadData, error: uploadError } =
           await supabase.storage.from("medias").upload(filePath, fileToUpload);
 
         if (uploadError) {
-          console.error("Supabase upload error:", uploadError);
           throw uploadError;
         }
-
-        console.log("Upload successful:", uploadData);
 
         // Get public URL
         const { data: urlData } = supabase.storage
           .from("medias")
           .getPublicUrl(filePath);
-
-        console.log("Public URL:", urlData.publicUrl);
 
         // Create media record with original file info but WebP file data
         const { data: mediaData, error: mediaError } = await supabase
@@ -269,11 +198,9 @@ export const MediaList: React.FC = () => {
           .single();
 
         if (mediaError) {
-          console.error("Database insert error:", mediaError);
           throw mediaError;
         }
 
-        console.log("Media record created:", mediaData);
         return { ...mediaData, conversionResult: result };
       });
 
@@ -297,7 +224,6 @@ export const MediaList: React.FC = () => {
       // Refresh the page to show new data
       window.location.reload();
     } catch (error: any) {
-      console.error("Upload error details:", error);
       message.error(
         `❌ Có lỗi xảy ra khi upload file: ${error?.message || error}`
       );
@@ -423,8 +349,6 @@ export const MediaList: React.FC = () => {
               <Button
                 icon={<ReloadOutlined />}
                 onClick={() => {
-                  console.log('🔄 Manual refresh clicked');
-                  console.log('🔄 Calling refetch manually');
                   refetch();
                 }}
                 title="Refresh data"
@@ -437,7 +361,6 @@ export const MediaList: React.FC = () => {
                 icon={<GlobalOutlined />}
                 onClick={() => {
                   const imagesUrl = "http://localhost:4321/images";
-                  console.log('🌐 Opening images URL:', imagesUrl);
                   window.open(imagesUrl, "_blank");
                   message.info("Đã mở thư mục images trong tab mới!");
                 }}
@@ -467,10 +390,6 @@ export const MediaList: React.FC = () => {
                 </span>
               )}
             </Text>
-            <br />
-            <Text type="secondary" style={{ fontSize: '12px' }}>
-              URL: {window.location.href} | Loading: {isLoading ? 'Yes' : 'No'} | Items: {mediaItems.length}
-            </Text>
           </div>
 
           {/* Top Pagination - Same as bottom */}
@@ -482,9 +401,6 @@ export const MediaList: React.FC = () => {
               borderBottom: '1px solid #f0f0f0',
               backgroundColor: '#fafafa'
             }}>
-              <Text strong style={{ marginBottom: '12px', display: 'block', color: '#1890ff' }}>
-                🔊 Pagination - Top
-              </Text>
               <Pagination
                 current={currentPage}
                 total={tableProps.pagination.total}
@@ -496,13 +412,10 @@ export const MediaList: React.FC = () => {
                 }
                 pageSizeOptions={['20', '40', '60', '80', '100', '200']}
                 onChange={(page: number, pageSize?: number) => {
-                  console.log('🟢 Top Pagination onChange:', { page, pageSize });
                   const newSearchParams = new URLSearchParams(searchParams);
                   newSearchParams.set('current', page.toString());
                   newSearchParams.set('pageSize', (pageSize || 20).toString());
 
-                  console.log('🔍 New URL will be:', `/medias?${newSearchParams.toString()}`);
-
                   go({
                     to: `/medias?${newSearchParams.toString()}`,
                     type: "replace",
@@ -510,17 +423,13 @@ export const MediaList: React.FC = () => {
 
                   // Force immediate data refresh
                   setTimeout(() => {
-                    console.log('🔄 Top Pagination: Force refetching after URL change');
                     refetch();
                   }, 100);
                 }}
                 onShowSizeChange={(current: number, size: number) => {
-                  console.log('🟢 Top Pagination onShowSizeChange:', { current, size });
                   const newSearchParams = new URLSearchParams(searchParams);
                   newSearchParams.set('current', '1'); // Reset to first page
                   newSearchParams.set('pageSize', size.toString());
-
-                  console.log('🔍 New URL will be:', `/medias?${newSearchParams.toString()}`);
 
                   go({
                     to: `/medias?${newSearchParams.toString()}`,
@@ -529,7 +438,6 @@ export const MediaList: React.FC = () => {
 
                   // Force immediate data refresh
                   setTimeout(() => {
-                    console.log('🔄 Top Pagination: Force refetching after page size change');
                     refetch();
                   }, 100);
                 }}
@@ -561,7 +469,6 @@ export const MediaList: React.FC = () => {
                       key="view"
                       onClick={(e) => {
                         e.stopPropagation();
-                        console.log('View clicked:', item.id);
                         handleView(item.id);
                       }}
                       style={{ color: "#1890ff" }}
@@ -571,7 +478,6 @@ export const MediaList: React.FC = () => {
                       key="edit"
                       onClick={(e) => {
                         e.stopPropagation();
-                        console.log('Edit clicked:', item.id);
                         handleEdit(item.id);
                       }}
                       style={{ color: "#52c41a" }}
@@ -583,7 +489,6 @@ export const MediaList: React.FC = () => {
                         e.stopPropagation();
                         // Use public images URL instead of Supabase storage URL
                         const publicImageUrl = `http://localhost:4321/images/${item.file_name}`;
-                        console.log('Image view clicked:', publicImageUrl);
                         window.open(publicImageUrl, "_blank");
                         message.info("Đã mở hình ảnh qua public URL!");
                       }}
@@ -594,7 +499,6 @@ export const MediaList: React.FC = () => {
                       key="link"
                       onClick={(e) => {
                         e.stopPropagation();
-                        console.log('Link clicked:', item.file_url);
                         openImageUrl(item.file_url);
                       }}
                       style={{ color: "#722ed1" }}
@@ -604,7 +508,6 @@ export const MediaList: React.FC = () => {
                       key="copy"
                       onClick={(e) => {
                         e.stopPropagation();
-                        console.log('Copy clicked:', item.file_url);
                         copyToClipboard(item.file_url);
                       }}
                       style={{ color: "#fa8c16" }}
@@ -614,7 +517,6 @@ export const MediaList: React.FC = () => {
                       key="info"
                       onClick={(e) => {
                         e.stopPropagation();
-                        console.log('Info clicked:', item.id);
                         showImageInfo(item);
                       }}
                       style={{ color: "#13c2c2" }}
@@ -626,7 +528,6 @@ export const MediaList: React.FC = () => {
                     <div
                       style={{ position: "relative", cursor: "pointer" }}
                       onClick={(e) => {
-                        console.log('Image clicked:', item.id);
                         openLightbox(index);
                       }}
                     >
@@ -672,9 +573,6 @@ export const MediaList: React.FC = () => {
               borderTop: '1px solid #f0f0f0',
               backgroundColor: '#fafafa'
             }}>
-              <Text strong style={{ marginBottom: '12px', display: 'block', color: '#52c41a' }}>
-                🔋 Pagination - Bottom
-              </Text>
               <Pagination
                 current={currentPage}
                 total={tableProps.pagination.total}
@@ -686,12 +584,9 @@ export const MediaList: React.FC = () => {
                 }
                 pageSizeOptions={['20', '40', '60', '80', '100', '200']}
                 onChange={(page: number, pageSize?: number) => {
-                  console.log('🟢 Bottom Pagination onChange:', { page, pageSize });
                   const newSearchParams = new URLSearchParams(searchParams);
                   newSearchParams.set('current', page.toString());
                   newSearchParams.set('pageSize', (pageSize || 10).toString());
-
-                  console.log('🔍 New URL will be:', `/medias?${newSearchParams.toString()}`);
 
                   go({
                     to: `/medias?${newSearchParams.toString()}`,
@@ -700,17 +595,13 @@ export const MediaList: React.FC = () => {
 
                   // Force immediate data refresh
                   setTimeout(() => {
-                    console.log('🔄 Bottom Pagination: Force refetching after URL change');
                     refetch();
                   }, 100);
                 }}
                 onShowSizeChange={(current: number, size: number) => {
-                  console.log('🟢 Bottom Pagination onShowSizeChange:', { current, size });
                   const newSearchParams = new URLSearchParams(searchParams);
                   newSearchParams.set('current', '1'); // Reset to first page
                   newSearchParams.set('pageSize', size.toString());
-
-                  console.log('🔍 New URL will be:', `/medias?${newSearchParams.toString()}`);
 
                   go({
                    to: `/medias?${newSearchParams.toString()}`,
@@ -719,7 +610,6 @@ export const MediaList: React.FC = () => {
 
                  // Force immediate data refresh
                  setTimeout(() => {
-                   console.log('🔄 Bottom Pagination: Force refetching after page size change');
                    refetch();
                  }, 100);
                }}
@@ -829,7 +719,7 @@ export const MediaList: React.FC = () => {
              mediaItems[currentImageIndex]?.file_name
            }
            style={{ maxWidth: "100%", maxHeight: "70vh" }}
-           fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RnG4W+FgYxN"
+           fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RnG4W+FgYxN"
          />
        </div>
      </Modal>

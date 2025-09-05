@@ -96,7 +96,6 @@ export const MediaCreate: React.FC = () => {
   const autoFillSEOScores = useCallback(
     (showMessage = false) => {
       if (!formProps.form) {
-        console.log("❌ Form not available for auto-fill SEO scores");
         return;
       }
 
@@ -120,8 +119,6 @@ export const MediaCreate: React.FC = () => {
         usage_count: usageCount,
         version: version,
       };
-
-      console.log("🔧 Auto-filling SEO scores:", seoValues);
 
       formProps.form.setFieldsValue({
         ...currentValues,
@@ -147,8 +144,6 @@ export const MediaCreate: React.FC = () => {
           try {
             // For Vite projects, we use browser APIs for metadata extraction
             // This is a simplified version - in production you might want more robust EXIF parsing
-            console.log(`📋 Metadata extraction not available in Vite (would need Sharp/Node.js)`);
-            console.log(`💡 Metadata will be entered manually or from form defaults`);
           } catch (metadataError) {
             console.warn(`⚠️ Error in metadata setup for ${file.name}:`, metadataError);
           }
@@ -213,8 +208,6 @@ export const MediaCreate: React.FC = () => {
             priority_loading: false,
           });
 
-          console.log('🔧 Auto-filled form with basic info (Vite limitation - no metadata extraction)');
-
           // Tự động điền thông số SEO nâng cao khi chọn file đầu tiên
           setTimeout(() => {
             autoFillSEOScores();
@@ -253,7 +246,6 @@ export const MediaCreate: React.FC = () => {
     let fileName = `${baseName}.webp`;
 
     // Thử tên file gốc (với .webp extension) trước
-    console.log(`🔍 Checking if ${fileName} exists...`);
     
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       // Kiểm tra xem file đã tồn tại chưa
@@ -272,20 +264,17 @@ export const MediaCreate: React.FC = () => {
 
       // Nếu không tìm thấy file trùng tên
       if (!existingFiles || existingFiles.length === 0) {
-        console.log(`✅ File name ${fileName} is available`);
         return fileName;
       }
 
       // Nếu file đã tồn tại, tạo tên mới với random suffix
       const randomSuffix = generateRandomString();
       fileName = `${baseName}_${randomSuffix}.webp`;
-      console.log(`🔄 File exists, trying: ${fileName} (attempt ${attempt + 1}/${maxRetries})`);
     }
 
     // Nếu sau maxRetries vẫn trùng, thêm timestamp
     const timestamp = Date.now();
     const finalFileName = `${baseName}_${timestamp}.webp`;
-    console.log(`⚠️ Max retries reached, using timestamp: ${finalFileName}`);
     return finalFileName;
   };
 
@@ -363,33 +352,46 @@ export const MediaCreate: React.FC = () => {
 
           // Convert to WebP if not already processed
           if (fileToUpload === file) {
-            const result = await convertToWebP(file, 85, {
-              metadataOnly: true,
-              preserveSize: true,
-              customMetadata: imageMetadata
-            });
-
-            if (result.success) {
-              fileToUpload = result.file;
-              finalFileName = result.file.name;
+            // Sử dụng server-side processing để nhúng metadata
+            try {
+              console.log(`🔄 Sending image to server for WebP conversion with metadata...`);
+              fileToUpload = await uploadToServerForProcessing(file, imageMetadata);
+              finalFileName = fileToUpload.name;
               conversionInfo = {
                 wasConverted: true,
-                originalSize: result.originalSize,
-                webpSize: result.webpSize,
-                compressionRatio: result.compressionRatio
+                originalSize: file.size,
+                webpSize: fileToUpload.size,
+                compressionRatio: ((file.size - fileToUpload.size) / file.size) * 100
               };
-              console.log(`✅ Converted ${file.name} → ${finalFileName} (WebP with metadata)`);
-            } else {
-              console.error(`❌ WebP conversion failed for ${file.name}:`, result.error);
-              console.log(`⚠️ Falling back to original file: ${file.name}`);
+              console.log(`✅ Server-side conversion completed with metadata embedded`);
+            } catch (serverError) {
+              console.error(`❌ Server-side conversion failed:`, serverError);
+              // Fallback to client-side conversion
+              const result = await convertToWebP(file, 85, {
+                metadataOnly: true,
+                preserveSize: true,
+                customMetadata: imageMetadata
+              });
+
+              if (result.success) {
+                fileToUpload = result.file;
+                finalFileName = result.file.name;
+                conversionInfo = {
+                  wasConverted: true,
+                  originalSize: result.originalSize,
+                  webpSize: result.webpSize,
+                  compressionRatio: result.compressionRatio
+                };
+                console.log(`✅ Fallback to client-side conversion: ${file.name} → ${finalFileName} (WebP without embedded metadata)`);
+              } else {
+                console.error(`❌ WebP conversion failed for ${file.name}:`, result.error);
+              }
             }
           } else {
             // File was processed with EXIF, just update filename
             finalFileName = file.name;
             console.log(`📁 Using EXIF-processed file: ${finalFileName}`);
           }
-        } else {
-          console.log(`ℹ️ File ${file.name} is not an image, skipping processing`);
         }
 
         // Tạo tên file unique với logic retry mạnh hơn
@@ -442,11 +444,6 @@ export const MediaCreate: React.FC = () => {
           // Cập nhật form ngay lập tức với thông tin file đã upload
           formProps.form.setFieldsValue({
             ...currentValues,
-            file_path: uploadedFile.uploadedFilePath,
-            file_url: uploadedFile.url,
-          });
-
-          console.log("🔧 Updated form with uploaded file info:", {
             file_path: uploadedFile.uploadedFilePath,
             file_url: uploadedFile.url,
           });
@@ -541,10 +538,6 @@ export const MediaCreate: React.FC = () => {
           lazy_loading: true,
           priority_loading: false,
         });
-
-        console.log("🔧 Auto-filled form with file info (no existing data)");
-      } else {
-        console.log("🔧 Form already has data, keeping user's changes");
       }
 
       // Cập nhật file_path và file_url nếu file đã upload
@@ -553,11 +546,6 @@ export const MediaCreate: React.FC = () => {
         uploadedFiles[index]?.uploadedFilePath
       ) {
         formProps.form.setFieldsValue({
-          file_path: uploadedFiles[index].uploadedFilePath,
-          file_url: uploadedFiles[index].url,
-        });
-
-        console.log("🔧 Updated form with selected uploaded file info:", {
           file_path: uploadedFiles[index].uploadedFilePath,
           file_url: uploadedFiles[index].url,
         });
@@ -658,25 +646,40 @@ export const MediaCreate: React.FC = () => {
 
               // Convert to WebP if not already processed
               if (fileToUpload === file) {
-                const result = await convertToWebP(file, 85, {
-                  metadataOnly: true,
-                  preserveSize: true,
-                  customMetadata: imageMetadata
-                });
-
-                if (result.success) {
-                  fileToUpload = result.file;
-                  finalFileName = result.file.name;
+                // Sử dụng server-side processing để nhúng metadata
+                try {
+                  console.log(`🔄 Sending image to server for WebP conversion with metadata (handleFormSubmit)...`);
+                  fileToUpload = await uploadToServerForProcessing(file, imageMetadata);
+                  finalFileName = fileToUpload.name;
                   conversionInfo = {
                     wasConverted: true,
-                    originalSize: result.originalSize,
-                    webpSize: result.webpSize,
-                    compressionRatio: result.compressionRatio
+                    originalSize: file.size,
+                    webpSize: fileToUpload.size,
+                    compressionRatio: ((file.size - fileToUpload.size) / file.size) * 100
                   };
-                  console.log(`✅ Converted ${file.name} → ${finalFileName} (WebP with metadata)`);
-                } else {
-                  console.error(`❌ WebP conversion failed for ${file.name}:`, result.error);
-                  console.log(`⚠️ Falling back to original file: ${file.name}`);
+                  console.log(`✅ Server-side conversion completed with metadata embedded (handleFormSubmit)`);
+                } catch (serverError) {
+                  console.error(`❌ Server-side conversion failed (handleFormSubmit):`, serverError);
+                  // Fallback to client-side conversion
+                  const result = await convertToWebP(file, 85, {
+                    metadataOnly: true,
+                    preserveSize: true,
+                    customMetadata: imageMetadata
+                  });
+
+                  if (result.success) {
+                    fileToUpload = result.file;
+                    finalFileName = result.file.name;
+                    conversionInfo = {
+                      wasConverted: true,
+                      originalSize: result.originalSize,
+                      webpSize: result.webpSize,
+                      compressionRatio: result.compressionRatio
+                    };
+                    console.log(`✅ Fallback to client-side conversion: ${file.name} → ${finalFileName} (WebP without embedded metadata)`);
+                  } else {
+                    console.error(`❌ WebP conversion failed for ${file.name}:`, result.error);
+                  }
                 }
               } else {
                 // File was processed with EXIF, just update filename
@@ -718,11 +721,6 @@ export const MediaCreate: React.FC = () => {
               uploadedFilePath: filePath,
               conversionInfo, // Lưu thông tin conversion
             };
-
-            console.log(
-              `✅ Uploaded file ${i + 1}/${filesToUpload.length
-              }: ${uniqueFileName}`
-            );
           }
         }
 
@@ -736,23 +734,6 @@ export const MediaCreate: React.FC = () => {
         // Nếu không có file nào cần upload, sử dụng uploadedFiles hiện tại
         finalUploadedFiles = uploadedFiles.filter((file) => file.uploaded);
       }
-
-      console.log("🔍 Debug - Files status:", {
-        totalFiles: finalUploadedFiles.length,
-        uploadedFiles: finalUploadedFiles.length,
-        filesStatus: finalUploadedFiles.map((f: any) => ({
-          name: f.file.name,
-          uploaded: f.uploaded,
-          url: f.url
-        })),
-        rawFiles: finalUploadedFiles.map((f: any) => ({
-          name: f.file.name,
-          uploaded: f.uploaded,
-          url: f.url,
-          uploadedFileName: f.uploadedFileName,
-          uploadedFilePath: f.uploadedFilePath
-        }))
-      });
 
       if (finalUploadedFiles.length === 0) {
         message.error("Không có file nào được upload thành công!");
@@ -841,18 +822,6 @@ export const MediaCreate: React.FC = () => {
           cleanValues.image_dimensions = `${fileData.dimensions.width}x${fileData.dimensions.height}`;
         }
 
-        console.log(
-          `Creating media record for: ${fileData.uploadedFileName || fileData.file.name} (${i === selectedFileIndex ? 'selected' : 'auto-generated'})`,
-          i === selectedFileIndex ? 'Form values:' : 'Auto-generated values:',
-          i === selectedFileIndex ? cleanValues : {
-            alt_text: cleanValues.alt_text,
-            title: cleanValues.title,
-            caption: cleanValues.caption,
-            meta_description: cleanValues.meta_description,
-            seo_score: cleanValues.seo_score
-          }
-        );
-
         // Tách SEO data từ cleanValues
         const {
           og_title,
@@ -900,14 +869,11 @@ export const MediaCreate: React.FC = () => {
           variables: mediaData,
         });
 
-        console.log('✅ Media record created:', mediaResult.data);
-
         // Lưu SEO data vào bảng seo_medias nếu có media_id
         if (mediaResult.data?.id) {
           try {
             const seoData = SEOMediaService.convertFormDataToSEOMedia(cleanValues, String(mediaResult.data.id));
             await SEOMediaService.saveSEOMediaData(seoData);
-            console.log('✅ SEO data saved to seo_medias table');
           } catch (seoError) {
             console.error('❌ Error saving SEO data:', seoError);
             // Không throw error để không làm fail toàn bộ process
@@ -927,6 +893,40 @@ export const MediaCreate: React.FC = () => {
           error instanceof Error ? error.message : String(error)
         }`
       );
+    }
+  };
+
+  // Hàm upload ảnh lên server để xử lý metadata
+  const uploadToServerForProcessing = async (
+    file: File,
+    metadata: any
+  ): Promise<File> => {
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('metadata', JSON.stringify(metadata));
+    formData.append('metadataOnly', 'true');
+    formData.append('preserveSize', 'true');
+
+    try {
+      const response = await fetch('/api/convert-webp', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const processedFile = new File([blob], file.name.replace(/\.[^/.]+$/, '') + '.webp', {
+        type: 'image/webp',
+        lastModified: Date.now(),
+      });
+
+      return processedFile;
+    } catch (error) {
+      console.error('Error processing image on server:', error);
+      throw error;
     }
   };
 

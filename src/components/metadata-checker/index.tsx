@@ -15,26 +15,31 @@ export const MetadataChecker: React.FC = () => {
   // Handle file drop
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;
-    
+
     const file = acceptedFiles[0];
     setLoading(true);
-    
+
     // Set image preview
     const previewUrl = URL.createObjectURL(file);
     setImagePreview(previewUrl);
-    
+
     try {
       console.log('🔍 Checking metadata for uploaded file:', file.name);
+      console.log('📊 File size:', file.size, 'bytes');
+      console.log('📁 File type:', file.type);
+
       const result = await checkFileMetadata(file);
+      console.log('📋 Metadata check result:', result);
+
       setCheckResult(result);
-      
+
       if (result.hasMetadata) {
         message.success(`File "${file.name}" có chứa metadata!`);
       } else {
         message.warning(`File "${file.name}" không có metadata hoặc metadata đã bị mất!`);
       }
     } catch (error) {
-      console.error('Error checking metadata:', error);
+      console.error('❌ Error checking metadata:', error);
       message.error('Có lỗi khi kiểm tra metadata');
     } finally {
       setLoading(false);
@@ -51,19 +56,23 @@ export const MetadataChecker: React.FC = () => {
     setLoading(true);
     // Set preview for URL
     setImagePreview(testUrl);
-    
+
     try {
       console.log('🔍 Testing metadata for URL:', testUrl);
+      console.log('🌐 Fetching file from URL...');
+
       const result = await testFileMetadata(testUrl);
+      console.log('📋 URL test result:', result);
+
       setCheckResult(result);
-      
+
       if (result.hasMetadata) {
         message.success('File từ URL có chứa metadata!');
       } else {
         message.warning('File từ URL không có metadata hoặc metadata đã bị mất!');
       }
     } catch (error) {
-      console.error('Error testing URL:', error);
+      console.error('❌ Error testing URL:', error);
       message.error('Có lỗi khi test URL. Kiểm tra console để xem chi tiết.');
     } finally {
       setLoading(false);
@@ -139,7 +148,7 @@ export const MetadataChecker: React.FC = () => {
             </Card>
           )}
 
-          {/* Parsed Metadata - New Section */}
+          {/* Parsed Metadata - Enhanced Display */}
           {checkResult.parsedMetadata && Object.keys(checkResult.parsedMetadata).length > 0 && (
             <Card size="small" title="🏷️ Thông tin Metadata chi tiết" style={{ marginBottom: 16 }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
@@ -150,7 +159,7 @@ export const MetadataChecker: React.FC = () => {
                     <Text style={{ fontSize: 13, fontFamily: 'monospace' }}>{checkResult.parsedMetadata.copyright}</Text>
                   </div>
                 )}
-                
+
                 {checkResult.parsedMetadata.creator_artist && (
                   <div style={{ padding: 12, background: '#f6ffed', borderRadius: 6, border: '1px solid #d9d9d9' }}>
                     <Text strong style={{ color: '#52c41a' }}>🎨 Creator/Artist:</Text>
@@ -158,7 +167,7 @@ export const MetadataChecker: React.FC = () => {
                     <Text style={{ fontSize: 13, fontFamily: 'monospace' }}>{checkResult.parsedMetadata.creator_artist}</Text>
                   </div>
                 )}
-                
+
                 {checkResult.parsedMetadata.software && (
                   <div style={{ padding: 12, background: '#fff2e8', borderRadius: 6, border: '1px solid #d9d9d9' }}>
                     <Text strong style={{ color: '#fa8c16' }}>🛠️ Software:</Text>
@@ -166,7 +175,7 @@ export const MetadataChecker: React.FC = () => {
                     <Text style={{ fontSize: 13, fontFamily: 'monospace' }}>{checkResult.parsedMetadata.software}</Text>
                   </div>
                 )}
-                
+
                 {checkResult.parsedMetadata.caption_description && (
                   <div style={{ padding: 12, background: '#f9f0ff', borderRadius: 6, border: '1px solid #d9d9d9' }}>
                     <Text strong style={{ color: '#722ed1' }}>📝 Description:</Text>
@@ -174,7 +183,7 @@ export const MetadataChecker: React.FC = () => {
                     <Text style={{ fontSize: 13, fontFamily: 'monospace' }}>{checkResult.parsedMetadata.caption_description}</Text>
                   </div>
                 )}
-                
+
                 {checkResult.parsedMetadata.user_comment && (
                   <div style={{ padding: 12, background: '#fff1f0', borderRadius: 6, border: '1px solid #d9d9d9' }}>
                     <Text strong style={{ color: '#f5222d' }}>💬 User Comment:</Text>
@@ -182,7 +191,7 @@ export const MetadataChecker: React.FC = () => {
                     <Text style={{ fontSize: 13, fontFamily: 'monospace' }}>{checkResult.parsedMetadata.user_comment}</Text>
                   </div>
                 )}
-                
+
                 {checkResult.parsedMetadata.credit && (
                   <div style={{ padding: 12, background: '#f0f5ff', borderRadius: 6, border: '1px solid #d9d9d9' }}>
                     <Text strong style={{ color: '#2f54eb' }}>🏆 Credit:</Text>
@@ -190,7 +199,7 @@ export const MetadataChecker: React.FC = () => {
                     <Text style={{ fontSize: 13, fontFamily: 'monospace' }}>{checkResult.parsedMetadata.credit}</Text>
                   </div>
                 )}
-                
+
                 {checkResult.parsedMetadata.keywords && checkResult.parsedMetadata.keywords.length > 0 && (
                   <div style={{ padding: 12, background: '#fcffe6', borderRadius: 6, border: '1px solid #d9d9d9' }}>
                     <Text strong style={{ color: '#a0d911' }}>🏷️ Keywords:</Text>
@@ -204,7 +213,7 @@ export const MetadataChecker: React.FC = () => {
                     </Space>
                   </div>
                 )}
-                
+
                 {checkResult.parsedMetadata.contact_info && (
                   <div style={{ padding: 12, background: '#e6fffb', borderRadius: 6, border: '1px solid #d9d9d9' }}>
                     <Text strong style={{ color: '#13c2c2' }}>📧 Contact Info:</Text>
@@ -212,8 +221,28 @@ export const MetadataChecker: React.FC = () => {
                     <Text style={{ fontSize: 13, fontFamily: 'monospace' }}>{checkResult.parsedMetadata.contact_info}</Text>
                   </div>
                 )}
+
+                {/* Debug info */}
+                <div style={{ padding: 12, background: '#f5f5f5', borderRadius: 6, border: '1px solid #d9d9d9', gridColumn: '1 / -1' }}>
+                  <Text strong style={{ color: '#666', fontSize: 12 }}>🔍 Debug Info:</Text>
+                  <br />
+                  <Text style={{ fontSize: 11, fontFamily: 'monospace', color: '#666' }}>
+                    Parsed fields: {Object.keys(checkResult.parsedMetadata).join(', ')}
+                  </Text>
+                </div>
               </div>
             </Card>
+          )}
+
+          {/* Show message if no parsed metadata */}
+          {checkResult && checkResult.hasMetadata && (!checkResult.parsedMetadata || Object.keys(checkResult.parsedMetadata).length === 0) && (
+            <Alert
+              message="⚠️ Metadata detected but parsing failed"
+              description="File có chứa metadata nhưng không thể parse được thông tin chi tiết. Kiểm tra console để xem debug info."
+              type="warning"
+              showIcon
+              style={{ marginBottom: 16 }}
+            />
           )}
 
           {/* EXIF Data - Enhanced Display */}
@@ -567,6 +596,94 @@ export const MetadataChecker: React.FC = () => {
             Kiểm tra URL
           </Button>
         </Space.Compact>
+
+        {/* Test URLs for debugging */}
+        <div style={{ marginTop: 12 }}>
+          <Text strong style={{ fontSize: 12, color: '#666' }}>Test URLs:</Text>
+          <div style={{ display: 'flex', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
+            <Button
+              size="small"
+              onClick={() => setTestUrl('http://localhost:3001/api/health')}
+              style={{ fontSize: 11 }}
+            >
+              Test API Health
+            </Button>
+            <Button
+              size="small"
+              onClick={() => {
+                console.log('🔍 Current checkResult:', checkResult);
+                console.log('🔍 Parsed metadata:', checkResult?.parsedMetadata);
+                console.log('🔍 EXIF data:', checkResult?.exifData);
+                console.log('🔍 XMP data:', checkResult?.xmpData);
+                message.info('Check console for debug info');
+              }}
+              style={{ fontSize: 11 }}
+            >
+              Debug Result
+            </Button>
+            <Button
+              size="small"
+              onClick={async () => {
+                try {
+                  const response = await fetch('http://localhost:3001/api/health');
+                  const data = await response.json();
+                  message.success(`API Status: ${data.message}`);
+                } catch (error) {
+                  message.error('API not reachable');
+                }
+              }}
+              style={{ fontSize: 11 }}
+            >
+              Check API Status
+            </Button>
+            <Button
+              size="small"
+              onClick={async () => {
+                // Create a test image with metadata
+                const testImageBlob = new Blob(['test image data'], { type: 'image/jpeg' });
+                const testFile = new File([testImageBlob], 'test-image.jpg', { type: 'image/jpeg' });
+
+                const formData = new FormData();
+                formData.append('image', testFile);
+                formData.append('metadata', JSON.stringify({
+                  title: 'Test Image',
+                  description: 'Test metadata embedding',
+                  copyright: '© 2024 Test Company',
+                  creator: 'Test Creator',
+                  credit: 'Test Credit',
+                  keywords: ['test', 'metadata']
+                }));
+                formData.append('metadataOnly', 'true');
+
+                try {
+                  const response = await fetch('http://localhost:3001/api/convert-webp', {
+                    method: 'POST',
+                    body: formData
+                  });
+
+                  if (response.ok) {
+                    const processedBlob = await response.blob();
+                    const processedFile = new File([processedBlob], 'test-processed.webp', { type: 'image/webp' });
+
+                    // Now test the processed file
+                    const result = await checkFileMetadata(processedFile);
+                    setCheckResult(result);
+                    setImagePreview(URL.createObjectURL(processedBlob));
+
+                    message.success('Test file processed and checked!');
+                  } else {
+                    message.error('Failed to process test file');
+                  }
+                } catch (error) {
+                  message.error('Error processing test file');
+                }
+              }}
+              style={{ fontSize: 11 }}
+            >
+              Test Metadata Processing
+            </Button>
+          </div>
+        </div>
         
         <div style={{ marginTop: 12, fontSize: 12, color: '#666' }}>
           <strong>💡 Mẹo:</strong> Copy URL từ Supabase Storage hoặc từ admin panel để kiểm tra
