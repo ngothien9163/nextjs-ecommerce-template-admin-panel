@@ -44,7 +44,7 @@ export const BlogPostImageSelector: React.FC<BlogPostImageSelectorProps> = ({
   const [sortBy, setSortBy] = useState<string>('created_at');
 
   const { tableProps, tableQuery } = useTable({
-    resource: 'media',
+    resource: 'medias',
     filters: {
       permanent: [
         {

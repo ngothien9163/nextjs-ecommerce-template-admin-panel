@@ -44,7 +44,7 @@ export const BlogCategoryImageSelector: React.FC<BlogCategoryImageSelectorProps>
   const [sortBy, setSortBy] = useState<string>('created_at');
 
   const { tableProps, tableQuery } = useTable({
-    resource: 'media',
+    resource: 'medias',
     filters: {
       permanent: [
         {

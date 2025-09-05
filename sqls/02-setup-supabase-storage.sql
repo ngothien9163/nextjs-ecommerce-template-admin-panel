@@ -12,7 +12,7 @@
 -- =====================================================
 -- 1. Vào Supabase Dashboard > Storage
 -- 2. Click "New Bucket"
--- 3. Name: "media"
+-- 3. Name: "medias"
 -- 4. Public: true
 -- 5. File size limit: 50MB
 -- 6. Allowed MIME types: image/*, video/*, application/pdf
@@ -30,26 +30,26 @@ DROP POLICY IF EXISTS "Service role full access" ON storage.objects;
 
 -- Policy 1: Cho phép public đọc files từ bucket 'media'
 CREATE POLICY "Public Access" ON storage.objects 
-FOR SELECT USING (bucket_id = 'media');
+FOR SELECT USING (bucket_id = 'medias');
 
 -- Policy 2: Cho phép authenticated users upload vào bucket 'media'
 CREATE POLICY "Authenticated users can upload" ON storage.objects 
 FOR INSERT WITH CHECK (
-  bucket_id = 'media' 
+  bucket_id = 'medias' 
   AND auth.role() = 'authenticated'
 );
 
 -- Policy 3: Cho phép authenticated users update files trong bucket 'media'
 CREATE POLICY "Authenticated users can update" ON storage.objects 
 FOR UPDATE USING (
-  bucket_id = 'media' 
+  bucket_id = 'medias' 
   AND auth.role() = 'authenticated'
 );
 
 -- Policy 4: Cho phép authenticated users delete files trong bucket 'media'
 CREATE POLICY "Authenticated users can delete" ON storage.objects 
 FOR DELETE USING (
-  bucket_id = 'media' 
+  bucket_id = 'medias' 
   AND auth.role() = 'authenticated'
 );
 
@@ -88,8 +88,8 @@ SELECT
   public,
   file_size_limit,
   allowed_mime_types
-FROM storage.buckets 
-WHERE id = 'media';
+FROM storage.buckets
+WHERE id = 'medias';
 
 -- Kiểm tra RLS status
 SELECT 
@@ -109,7 +109,7 @@ AND schemaname = 'storage';
 -- Lưu ý: Chạy các lệnh này trong Supabase SQL Editor để test
 
 -- Test public read access
--- SELECT * FROM storage.objects WHERE bucket_id = 'media' LIMIT 1;
+-- SELECT * FROM storage.objects WHERE bucket_id = 'medias' LIMIT 1;
 
 -- Test authenticated upload (cần đăng nhập)
 -- INSERT INTO storage.objects (bucket_id, name, owner, metadata) 
@@ -143,10 +143,10 @@ SELECT
 -- =====================================================
 -- HƯỚNG DẪN SỬ DỤNG
 -- =====================================================
--- 1. Tạo bucket 'media' trong Supabase Dashboard
+-- 1. Tạo bucket 'medias' trong Supabase Dashboard
 -- 2. Cấu hình CORS cho frontend domain
 -- 3. Sử dụng Supabase Storage API để upload/download files
--- 4. Files sẽ được lưu trong bucket 'media' với policies đã tạo
+-- 4. Files sẽ được lưu trong bucket 'medias' với policies đã tạo
 
 -- =====================================================
 -- TROUBLESHOOTING
@@ -158,7 +158,7 @@ SELECT
 -- 3. Kiểm tra user có quyền authenticated không
 
 -- Nếu gặp lỗi "bucket not found":
--- 1. Tạo bucket 'media' trong Supabase Dashboard
+-- 1. Tạo bucket 'medias' trong Supabase Dashboard
 -- 2. Đảm bảo bucket public
 -- 3. Kiểm tra file size limit
 

@@ -493,8 +493,7 @@ export const MediaCreate: React.FC = () => {
             };
 
             console.log(
-              `✅ Uploaded file ${i + 1}/${
-                filesToUpload.length
+              `✅ Uploaded file ${i + 1}/${filesToUpload.length
               }: ${uniqueFileName}`
             );
           }
@@ -536,7 +535,7 @@ export const MediaCreate: React.FC = () => {
       // Tạo record cho từng file
       for (let i = 0; i < finalUploadedFiles.length; i++) {
         const fileData = finalUploadedFiles[i];
-        
+
         // Lấy thông tin form cho file này (nếu là file đang được chọn)
         let cleanValues: MediaFormValues;
         if (i === selectedFileIndex) {
@@ -552,7 +551,7 @@ export const MediaCreate: React.FC = () => {
 
           cleanValues.alt_text = baseName;
           cleanValues.title = baseName;
-          
+
           // Sử dụng SEO scores từ form nếu có, không thì tự động tạo
           if (values.seo_score) {
             cleanValues.seo_score = values.seo_score;
@@ -566,14 +565,14 @@ export const MediaCreate: React.FC = () => {
             const accessibilityScores = [90, 85, 88, 92, 86, 89, 84, 91, 87, 93];
             const performanceScores = [88, 92, 85, 94, 89, 91, 83, 95, 86, 90];
             const randomIndex = Math.floor(Math.random() * 10);
-            
+
             cleanValues.seo_score = seoScores[randomIndex];
             cleanValues.accessibility_score = accessibilityScores[randomIndex];
             cleanValues.performance_score = performanceScores[randomIndex];
             cleanValues.usage_count = 1;
             cleanValues.version = 1;
           }
-          
+
           // Thêm các trường cần thiết khác cho file không được chọn
           cleanValues.lazy_loading = values.lazy_loading || true;
           cleanValues.priority_loading = values.priority_loading || false;

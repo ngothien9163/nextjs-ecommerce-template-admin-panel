@@ -99,8 +99,8 @@ export const dataProvider: DataProvider = {
 
     let query;
 
-    // Use admin client for categories, media, and blog_categories to bypass RLS issues
-    const client = (resource === 'categories' || resource === 'media' || resource === 'blog_categories') ? supabaseAdmin : supabase;
+    // Use admin client for categories, medias, and blog_categories to bypass RLS issues
+    const client = (resource === 'categories' || resource === 'medias' || resource === 'blog_categories') ? supabaseAdmin : supabase;
     
     // Special handling for products to include category information
     if (resource === 'products') {
@@ -190,9 +190,9 @@ export const dataProvider: DataProvider = {
     // Use admin client for media to bypass RLS issues
     const client = supabase;
     
-    // Xử lý array fields cho media resource
+    // Xử lý array fields cho medias resource
     let processedVariables = variables;
-    if (resource === 'media') {
+    if (resource === 'medias') {
       const arrayFields = ['meta_keywords', 'backup_urls', 'ai_tags', 'visual_search_tags', 'voice_search_phrases'];
       processedVariables = Object.keys(variables).reduce((acc, key) => {
         const value = variables[key];
@@ -271,12 +271,12 @@ export const dataProvider: DataProvider = {
       }
     }
     
-    // Use admin client for categories, media, and blog_categories to bypass RLS issues
-    const client = (resource === 'categories' || resource === 'media' || resource === 'blog_categories') ? supabaseAdmin : supabase;
+    // Use admin client for categories, medias, and blog_categories to bypass RLS issues
+    const client = (resource === 'categories' || resource === 'medias' || resource === 'blog_categories') ? supabaseAdmin : supabase;
     
-    // Xử lý array fields cho media resource
+    // Xử lý array fields cho medias resource
     let processedVariables = variables;
-    if (resource === 'media') {
+    if (resource === 'medias') {
       const arrayFields = ['meta_keywords', 'backup_urls', 'ai_tags', 'visual_search_tags', 'voice_search_phrases'];
       processedVariables = Object.keys(variables).reduce((acc, key) => {
         const value = variables[key];
@@ -346,15 +346,15 @@ export const dataProvider: DataProvider = {
   deleteOne: async ({ resource, id }) => {
     console.log('🔍 deleteOne called for resource:', resource, 'with ID:', id);
 
-    // Use admin client for categories, media, and blog_categories to bypass RLS issues
-    const client = (resource === 'categories' || resource === 'media' || resource === 'blog_categories') ? supabaseAdmin : supabase;
+    // Use admin client for categories, medias, and blog_categories to bypass RLS issues
+    const client = (resource === 'categories' || resource === 'medias' || resource === 'blog_categories') ? supabaseAdmin : supabase;
     
-    // Special handling for media resource - delete file from bucket first
-    if (resource === 'media') {
+    // Special handling for medias resource - delete file from bucket first
+    if (resource === 'medias') {
       try {
-        // Get media record to get file path
+        // Get medias record to get file path
         const { data: mediaData, error: getError } = await client
-          .from('media')
+          .from('medias')
           .select('file_path, file_name')
           .eq('id', id)
           .single();
@@ -366,7 +366,7 @@ export const dataProvider: DataProvider = {
           
           // Delete file from Supabase Storage
           const { error: storageError } = await client.storage
-            .from('media')
+            .from('medias')
             .remove([mediaData.file_path]);
           
           if (storageError) {
@@ -460,12 +460,12 @@ export const dataProvider: DataProvider = {
     // Use admin client for media to bypass RLS issues
     const client = supabase;
     
-    // Special handling for media resource - delete files from bucket first
-    if (resource === 'media') {
+    // Special handling for medias resource - delete files from bucket first
+    if (resource === 'medias') {
       try {
-        // Get media records to get file paths
+        // Get medias records to get file paths
         const { data: mediaData, error: getError } = await client
-          .from('media')
+          .from('medias')
           .select('file_path, file_name')
           .in('id', ids);
         
@@ -481,7 +481,7 @@ export const dataProvider: DataProvider = {
             
             // Delete files from Supabase Storage
             const { error: storageError } = await client.storage
-              .from('media')
+              .from('medias')
               .remove(filePaths);
             
             if (storageError) {

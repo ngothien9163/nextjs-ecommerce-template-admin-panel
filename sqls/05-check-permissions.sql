@@ -17,8 +17,8 @@ SELECT
     rowsecurity as rls_enabled
 FROM pg_tables 
 WHERE schemaname = 'public'
-  AND tablename IN ('media', 'categories', 'products', 'blog_posts', 'blog_categories', 'tags', 'profiles', 'orders', 'product_variants')
-ORDER BY tablename;
+   AND tablename IN ('medias', 'categories', 'products', 'blog_posts', 'blog_categories', 'tags', 'profiles', 'orders', 'product_variants')
+   ORDER BY tablename;
 
 -- =====================================================
 -- BƯỚC 2: KIỂM TRA TẤT CẢ POLICIES HIỆN TẠI
@@ -59,8 +59,8 @@ SELECT
         WHEN cmd = 'DELETE' THEN 'Delete'
         ELSE 'Other'
     END as permission_type
-FROM pg_policies 
-WHERE tablename = 'media'
+FROM pg_policies
+WHERE tablename = 'medias'
 ORDER BY cmd;
 
 -- =====================================================
@@ -70,12 +70,12 @@ ORDER BY cmd;
 SELECT 
     '=== TESTING MEDIA TABLE ACCESS ===' as test_info;
 
--- Đếm số records trong media table
-SELECT 
+-- Đếm số records trong medias table
+SELECT
     COUNT(*) as total_media_records,
     COUNT(CASE WHEN is_active = true THEN 1 END) as active_records,
     COUNT(CASE WHEN file_url IS NOT NULL THEN 1 END) as records_with_url
-FROM media;
+FROM medias;
 
 -- Hiển thị một vài record mẫu
 SELECT 
@@ -86,8 +86,8 @@ SELECT
     file_size_kb,
     is_active,
     created_at
-FROM media 
-ORDER BY created_at DESC 
+FROM medias
+ORDER BY created_at DESC
 LIMIT 5;
 
 -- =====================================================
@@ -103,9 +103,9 @@ SELECT
     is_nullable,
     column_default
 FROM information_schema.columns 
-WHERE table_schema = 'public' 
-  AND table_name = 'media'
-ORDER BY ordinal_position;
+WHERE table_schema = 'public'
+   AND table_name = 'medias'
+   ORDER BY ordinal_position;
 
 -- =====================================================
 -- BƯỚC 6: KIỂM TRA CONSTRAINTS
@@ -119,8 +119,8 @@ SELECT
     constraint_type,
     table_name
 FROM information_schema.table_constraints 
-WHERE table_schema = 'public' 
-  AND table_name = 'media';
+WHERE table_schema = 'public'
+   AND table_name = 'medias';
 
 -- =====================================================
 -- BƯỚC 7: TEST TRUY CẬP CÁC TABLES KHÁC
@@ -159,9 +159,9 @@ FROM orders;
 
 SELECT 
     '=== PERMISSION CHECK SUMMARY ===' as summary,
-    (SELECT COUNT(*) FROM pg_policies WHERE tablename = 'media') as media_policies_count,
-    (SELECT rowsecurity FROM pg_tables WHERE tablename = 'media' AND schemaname = 'public') as media_rls_enabled,
-    (SELECT COUNT(*) FROM media) as total_media_records,
+    (SELECT COUNT(*) FROM pg_policies WHERE tablename = 'medias') as media_policies_count,
+    (SELECT rowsecurity FROM pg_tables WHERE tablename = 'medias' AND schemaname = 'public') as media_rls_enabled,
+    (SELECT COUNT(*) FROM medias) as total_media_records,
     (SELECT COUNT(*) FROM categories) as total_categories_records,
     (SELECT COUNT(*) FROM products) as total_products_records;
 
@@ -194,7 +194,7 @@ SELECT
     '=== HOÀN THÀNH CHECK PERMISSIONS ===' as info,
     '✅ Đã kiểm tra RLS status cho tất cả tables' as step1,
     '✅ Đã kiểm tra policies cho tất cả tables' as step2,
-    '✅ Đã test truy cập media table' as step3,
+    '✅ Đã test truy cập medias table' as step3,
     '✅ Đã kiểm tra structure và constraints' as step4,
     '✅ Đã tạo summary report' as step5;
 

@@ -61,10 +61,10 @@ import { ProductVariantCreate } from "./pages/product-variants/create";
 import { ProductVariantEdit } from "./pages/product-variants/edit";
 import { ProductVariantShow } from "./pages/product-variants/show";
 
-import { MediaList } from "./pages/media";
-import { MediaCreate } from "./pages/media/create";
-import { MediaEdit } from "./pages/media/edit";
-import { MediaShow } from "./pages/media/show";
+import { MediaList } from "./pages/medias";
+import { MediaCreate } from "./pages/medias/create";
+import { MediaEdit } from "./pages/medias/edit";
+import { MediaShow } from "./pages/medias/show";
 
 import { MediaGallerySelectorDemo } from "./pages/media-gallery-demo";
 
@@ -171,14 +171,14 @@ function App() {
                 },
               },
               {
-                name: "media",
-                list: "/media",
-                create: "/media/create",
-                edit: "/media/edit/:id",
-                show: "/media/show/:id",
+                name: "medias",
+                list: "/medias",
+                create: "/medias/create",
+                edit: "/medias/edit/:id",
+                show: "/medias/show/:id",
                 meta: {
                   canDelete: true,
-                  label: "Media",
+                  label: "Thư Viện Media",
                 },
               },
               {
@@ -254,7 +254,7 @@ function App() {
                   <Route path="edit/:id" element={<ProductVariantEdit />} />
                   <Route path="show/:id" element={<ProductVariantShow />} />
                 </Route>
-                <Route path="/media">
+                <Route path="/medias">
                   <Route index element={<MediaList />} />
                   <Route path="create" element={<MediaCreate />} />
                   <Route path="edit/:id" element={<MediaEdit />} />

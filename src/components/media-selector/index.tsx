@@ -43,7 +43,7 @@ export const MediaSelector: React.FC<MediaSelectorProps> = ({
   const [searchText, setSearchText] = useState("");
 
   const { tableProps } = useTable({
-    resource: "media",
+    resource: "medias",
     filters: {
       permanent: [
         {

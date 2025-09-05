@@ -41,13 +41,13 @@ export const DebugConnection: React.FC = () => {
     try {
       // Test regular client first
       const { data: regularData, error: regularError } = await supabase
-        .from('media')
+        .from('medias')
         .select('count')
         .limit(1);
 
       // Test admin client
       const { data: adminData, error: adminError } = await supabaseAdmin
-        .from('media')
+        .from('medias')
         .select('count')
         .limit(1);
 

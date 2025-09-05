@@ -13,7 +13,7 @@ export const CategoryShow: React.FC = () => {
 
   // Fetch media data if featured_image_id exists
   const { data: mediaData, isLoading: mediaLoading } = useOne({
-    resource: 'media',
+    resource: 'medias',
     id: record?.featured_image_id,
     queryOptions: {
       enabled: !!record?.featured_image_id,

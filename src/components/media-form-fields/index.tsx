@@ -190,6 +190,9 @@ export const MediaFormFields: React.FC<MediaFormFieldsProps> = ({
           onMetaKeywordsSuggest={(keywords) => {
             form.setFieldsValue({ meta_keywords: keywords });
           }}
+          onCaptionSuggest={(suggestion) => {
+            form.setFieldsValue({ caption: suggestion });
+          }}
         />
       )}
 
@@ -204,9 +207,9 @@ export const MediaFormFields: React.FC<MediaFormFieldsProps> = ({
           </Space>
         }
         name="meta_description"
-        extra={<Text type="secondary" style={{ fontSize: '11px' }}>💡 Tối ưu: 160 ký tự. Chứa từ khóa, kêu gọi hành động</Text>}
+        extra={<Text type="secondary" style={{ fontSize: '11px' }}>💡 Tối ưu: 150-160 ký tự. Chứa từ khóa, kêu gọi hành động. Giữ nguyên nội dung AI-generated</Text>}
       >
-        <TextArea rows={4} placeholder="Mô tả chi tiết cho SEO" showCount maxLength={160} style={{ height: '100px' }} />
+        <TextArea rows={4} placeholder="Mô tả chi tiết cho SEO" showCount maxLength={300} style={{ height: '100px' }} />
       </Form.Item>
 
       <Form.Item name="meta_keywords">

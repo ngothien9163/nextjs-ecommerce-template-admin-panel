@@ -93,10 +93,8 @@ class RuleBasedAI {
     description +=
       ". Chất lượng cao, tối ưu cho SEO và trải nghiệm người dùng.";
 
-    // Ensure description is within optimal length (120-160 characters)
-    if (description.length > 160) {
-      description = description.substring(0, 157) + "...";
-    }
+    // Keep full description length - no truncation for better AI content
+    // The form field will handle length limits if needed
 
     return description;
   }
@@ -213,11 +211,11 @@ function generateSEOContentPrompt(request: AISuggestionRequest): string {
  - Caption: ${request.caption || "Không có"}
 
  Yêu cầu NGHIÊM NGẶT:
-  1. Meta Description: TỐI ĐA 160 ký tự, TỐI THIỂU 120 ký tự, tối ưu SEO, hấp dẫn.
+  1. Meta Description: Tối ưu SEO, hấp dẫn, chất lượng cao (không giới hạn ký tự).
   2. Keywords: 5-7 từ khóa, mỗi keyword 2-4 từ trở lên, phân cách bằng dấu phẩy.
      Ví dụ: "laptop gaming asus", "thiết kế chuyên nghiệp", "tối ưu SEO"
 
-  QUAN TRỌNG: Meta Description PHẢI dưới 160 ký tự! Nếu vượt quá sẽ bị cắt ngắn.
+  QUAN TRỌNG: Tạo Meta Description chất lượng cao, không giới hạn độ dài.
 
   Trả về CHỈ JSON format, không có text khác:
   {
@@ -269,30 +267,8 @@ class OpenAI {
       // Parse JSON response
       const parsed = JSON.parse(jsonString.trim());
 
-      // Validate and truncate Meta Description to optimal SEO length (150-160 characters)
-      let metaDescription = parsed.metaDescription || "";
-      if (metaDescription.length > 160) {
-        // Find the last complete sentence within 150 characters
-        const truncated = metaDescription.substring(0, 150);
-        const lastSentenceEnd = Math.max(
-          truncated.lastIndexOf("。"),
-          truncated.lastIndexOf(". "),
-          truncated.lastIndexOf("! "),
-          truncated.lastIndexOf("? ")
-        );
-
-        if (lastSentenceEnd > 100) {
-          // Only truncate at sentence if we have at least 100 chars
-          metaDescription = metaDescription.substring(0, lastSentenceEnd + 1);
-        } else {
-          // Fallback: truncate at word boundary
-          const lastSpace = truncated.lastIndexOf(" ");
-          metaDescription =
-            lastSpace > 100
-              ? metaDescription.substring(0, lastSpace) + "..."
-              : metaDescription.substring(0, 150) + "...";
-        }
-      }
+      // Keep full Meta Description from AI - no truncation for better content
+      const metaDescription = parsed.metaDescription || "";
 
       // Validate and limit keywords (max 12 keywords, each max 50 chars)
       let keywords = Array.isArray(parsed.keywords) ? parsed.keywords : [];
@@ -362,30 +338,8 @@ class Gemini {
       // Parse JSON response
       const parsed = JSON.parse(jsonString.trim());
 
-      // Validate and truncate Meta Description to optimal SEO length (150-160 characters)
-      let metaDescription = parsed.metaDescription || "";
-      if (metaDescription.length > 160) {
-        // Find the last complete sentence within 150 characters
-        const truncated = metaDescription.substring(0, 150);
-        const lastSentenceEnd = Math.max(
-          truncated.lastIndexOf("。"),
-          truncated.lastIndexOf(". "),
-          truncated.lastIndexOf("! "),
-          truncated.lastIndexOf("? ")
-        );
-
-        if (lastSentenceEnd > 100) {
-          // Only truncate at sentence if we have at least 100 chars
-          metaDescription = metaDescription.substring(0, lastSentenceEnd + 1);
-        } else {
-          // Fallback: truncate at word boundary
-          const lastSpace = truncated.lastIndexOf(" ");
-          metaDescription =
-            lastSpace > 100
-              ? metaDescription.substring(0, lastSpace) + "..."
-              : metaDescription.substring(0, 150) + "...";
-        }
-      }
+      // Keep full Meta Description from AI - no truncation for better content
+      const metaDescription = parsed.metaDescription || "";
 
       // Validate and limit keywords (max 12 keywords, each max 50 chars)
       let keywords = Array.isArray(parsed.keywords) ? parsed.keywords : [];

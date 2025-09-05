@@ -42,7 +42,7 @@ export const ConnectionDebugger: React.FC = () => {
       // Test 3: Admin Client Connection
       console.log('🔑 Testing Admin Client Connection...');
       try {
-        const { data, error } = await supabaseAdmin.from('media').select('count').limit(1);
+        const { data, error } = await supabaseAdmin.from('medias').select('count').limit(1);
         results.adminConnection = {
           success: !error,
           error: error?.message,
@@ -58,7 +58,7 @@ export const ConnectionDebugger: React.FC = () => {
       // Test 4: Media Table Access
       console.log('📸 Testing Media Table Access...');
       try {
-        const { data, error } = await supabaseAdmin.from('media').select('*').limit(5);
+        const { data, error } = await supabaseAdmin.from('medias').select('*').limit(5);
         results.mediaAccess = {
           success: !error,
           error: error?.message,

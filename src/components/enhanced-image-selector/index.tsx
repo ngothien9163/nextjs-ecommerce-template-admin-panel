@@ -60,7 +60,7 @@ export const EnhancedImageSelector: React.FC<EnhancedImageSelectorProps> = ({
       const offset = (currentPage - 1) * pageSize;
 
       let query = supabase
-        .from('media')
+        .from('medias')
         .select('*')
         .eq('is_active', true)
         .order(sortBy, { ascending: false })
@@ -190,7 +190,7 @@ export const EnhancedImageSelector: React.FC<EnhancedImageSelectorProps> = ({
                             <Image src={imageUrl} alt={image.alt_text || image.file_name} />
                             <div style={{ marginTop: 16 }}>
                               <p><strong>Kích thước:</strong> {image.width} x {image.height}px</p>
-                              <p><strong>Dung lượng:</strong> {formatFileSize(image.file_size_kb * 1024)}</p>
+                              <p><strong>Dung lượng:</strong> {formatFileSize((image.file_size_kb || 0) * 1024)}</p>
                               <p><strong>Định dạng:</strong> {image.image_format}</p>
                               {image.alt_text && <p><strong>Alt text:</strong> {image.alt_text}</p>}
                             </div>
@@ -218,7 +218,7 @@ export const EnhancedImageSelector: React.FC<EnhancedImageSelectorProps> = ({
                 <Space size={4} wrap>
                   <Tag color="blue">{image.image_format}</Tag>
                   <Tag color="green">{image.width}x{image.height}</Tag>
-                  <Tag color="orange">{formatFileSize(image.file_size_kb * 1024)}</Tag>
+                  <Tag color="orange">{formatFileSize((image.file_size_kb || 0) * 1024)}</Tag>
                 </Space>
                 {image.seo_score && (
                   <div className="seo-score">

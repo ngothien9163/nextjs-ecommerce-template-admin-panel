@@ -29,6 +29,7 @@ interface AISuggestionsProps {
   caption?: string;
   onMetaDescriptionSuggest: (suggestion: string) => void;
   onMetaKeywordsSuggest: (keywords: string[]) => void;
+  onCaptionSuggest?: (suggestion: string) => void;
 }
 
 export const AISuggestions: React.FC<AISuggestionsProps> = ({
@@ -38,6 +39,7 @@ export const AISuggestions: React.FC<AISuggestionsProps> = ({
   caption,
   onMetaDescriptionSuggest,
   onMetaKeywordsSuggest,
+  onCaptionSuggest,
 }) => {
   const [loadingDescription, setLoadingDescription] = useState(false);
   const [loadingKeywords, setLoadingKeywords] = useState(false);
@@ -63,8 +65,13 @@ export const AISuggestions: React.FC<AISuggestionsProps> = ({
       const response = await aiService.generateSuggestions(request);
       onMetaDescriptionSuggest(response.metaDescription);
 
+      // Also fill Caption with the same content as Meta Description
+      if (onCaptionSuggest) {
+        onCaptionSuggest(response.metaDescription);
+      }
+
       message.success(
-        `Đã tạo Meta Description (${response.metaDescription.length} ký tự) bằng ${
+        `Đã tạo Meta Description (${response.metaDescription.length} ký tự) và điền Caption bằng ${
           response.source === "rule-based"
             ? "AI thông minh (miễn phí)"
             : `${response.source.toUpperCase()} API`
@@ -130,8 +137,13 @@ export const AISuggestions: React.FC<AISuggestionsProps> = ({
       onMetaDescriptionSuggest(response.metaDescription);
       onMetaKeywordsSuggest(response.metaKeywords);
 
+      // Also fill Caption with the same content as Meta Description
+      if (onCaptionSuggest) {
+        onCaptionSuggest(response.metaDescription);
+      }
+
       message.success(
-        `Đã tạo tất cả bằng ${
+        `Đã tạo tất cả và điền Caption bằng ${
           response.source === "rule-based"
             ? "AI thông minh (miễn phí)"
             : `${response.source.toUpperCase()} API`

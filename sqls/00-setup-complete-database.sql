@@ -50,7 +50,7 @@ UNION ALL
 SELECT 
     'Media' as table_name,
     COUNT(*) as record_count
-FROM media
+FROM medias
 UNION ALL
 SELECT 
     'SEO Medias' as table_name,

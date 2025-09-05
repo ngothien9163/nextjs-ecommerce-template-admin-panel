@@ -12,7 +12,7 @@
 ALTER TABLE IF EXISTS profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS categories ENABLE ROW LEVEL SECURITY;  
 ALTER TABLE IF EXISTS products ENABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS media ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS medias ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS blog_posts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS blog_categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS tags ENABLE ROW LEVEL SECURITY;
@@ -23,25 +23,25 @@ ALTER TABLE IF EXISTS product_variants ENABLE ROW LEVEL SECURITY;
 -- BƯỚC 2: MEDIA TABLE POLICIES (QUAN TRỌNG NHẤT)
 -- =====================================================
 
--- Xóa tất cả policies cũ cho media
-DROP POLICY IF EXISTS "Enable read access for media" ON media;
-DROP POLICY IF EXISTS "Enable insert for authenticated users on media" ON media;
-DROP POLICY IF EXISTS "Enable update for authenticated users on media" ON media;
-DROP POLICY IF EXISTS "Enable delete for authenticated users on media" ON media;
-DROP POLICY IF EXISTS "Allow read access to media" ON media;
-DROP POLICY IF EXISTS "Allow insert media for authenticated users" ON media;
-DROP POLICY IF EXISTS "Allow update media for authenticated users" ON media;
-DROP POLICY IF EXISTS "Allow delete media for authenticated users" ON media;
-DROP POLICY IF EXISTS "media_select_policy" ON media;
-DROP POLICY IF EXISTS "media_insert_policy" ON media;
-DROP POLICY IF EXISTS "media_update_policy" ON media;
-DROP POLICY IF EXISTS "media_delete_policy" ON media;
+-- Xóa tất cả policies cũ cho medias
+DROP POLICY IF EXISTS "Enable read access for medias" ON medias;
+DROP POLICY IF EXISTS "Enable insert for authenticated users on medias" ON medias;
+DROP POLICY IF EXISTS "Enable update for authenticated users on medias" ON medias;
+DROP POLICY IF EXISTS "Enable delete for authenticated users on medias" ON medias;
+DROP POLICY IF EXISTS "Allow read access to medias" ON medias;
+DROP POLICY IF EXISTS "Allow insert medias for authenticated users" ON medias;
+DROP POLICY IF EXISTS "Allow update medias for authenticated users" ON medias;
+DROP POLICY IF EXISTS "Allow delete medias for authenticated users" ON medias;
+DROP POLICY IF EXISTS "medias_select_policy" ON medias;
+DROP POLICY IF EXISTS "medias_insert_policy" ON medias;
+DROP POLICY IF EXISTS "medias_update_policy" ON medias;
+DROP POLICY IF EXISTS "medias_delete_policy" ON medias;
 
--- Tạo policies mới cho media (cho phép tất cả để tránh lỗi)
-CREATE POLICY "media_select_policy" ON media FOR SELECT USING (true);
-CREATE POLICY "media_insert_policy" ON media FOR INSERT WITH CHECK (true);
-CREATE POLICY "media_update_policy" ON media FOR UPDATE USING (true);
-CREATE POLICY "media_delete_policy" ON media FOR DELETE USING (true);
+-- Tạo policies mới cho medias (cho phép tất cả để tránh lỗi)
+CREATE POLICY "medias_select_policy" ON medias FOR SELECT USING (true);
+CREATE POLICY "medias_insert_policy" ON medias FOR INSERT WITH CHECK (true);
+CREATE POLICY "medias_update_policy" ON medias FOR UPDATE USING (true);
+CREATE POLICY "medias_delete_policy" ON medias FOR DELETE USING (true);
 
 -- =====================================================
 -- BƯỚC 3: CATEGORIES TABLE POLICIES
@@ -163,8 +163,8 @@ SELECT
     rowsecurity as rls_enabled
 FROM pg_tables 
 WHERE schemaname = 'public'
-  AND tablename IN ('media', 'categories', 'products', 'blog_posts', 'blog_categories', 'tags', 'profiles', 'orders', 'product_variants')
-ORDER BY tablename;
+   AND tablename IN ('medias', 'categories', 'products', 'blog_posts', 'blog_categories', 'tags', 'profiles', 'orders', 'product_variants')
+   ORDER BY tablename;
 
 -- Kiểm tra số lượng policies
 SELECT 
@@ -182,7 +182,7 @@ ORDER BY tablename;
 SELECT 
     '=== TESTING MEDIA ACCESS ===' as info;
 
-SELECT COUNT(*) as media_count FROM media;
+SELECT COUNT(*) as media_count FROM medias;
 
 -- =====================================================
 -- THÔNG BÁO HOÀN THÀNH

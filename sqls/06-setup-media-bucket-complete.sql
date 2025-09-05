@@ -11,8 +11,8 @@
 -- Insert bucket record directly into storage.buckets
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES (
-  'media',
-  'media', 
+  'medias',
+  'medias',
   true,
   52428800, -- 50MB
   ARRAY['image/*']
@@ -32,8 +32,8 @@ SELECT
   file_size_limit, 
   allowed_mime_types,
   created_at
-FROM storage.buckets 
-WHERE id = 'media';
+FROM storage.buckets
+WHERE id = 'medias';
 
 -- =====================================================
 -- BƯỚC 2: FIX RLS POLICIES CHO STORAGE.BUCKETS
@@ -82,19 +82,19 @@ DROP POLICY IF EXISTS "Allow anonymous delete" ON storage.objects;
 
 -- Policy 1: Public read access
 CREATE POLICY "Public read access" ON storage.objects
-  FOR SELECT USING (bucket_id = 'media');
+  FOR SELECT USING (bucket_id = 'medias');
 
 -- Policy 2: Allow anonymous upload (less secure)
 CREATE POLICY "Allow anonymous upload" ON storage.objects
-  FOR INSERT WITH CHECK (bucket_id = 'media');
+  FOR INSERT WITH CHECK (bucket_id = 'medias');
 
 -- Policy 3: Allow anonymous update (less secure)
 CREATE POLICY "Allow anonymous update" ON storage.objects
-  FOR UPDATE USING (bucket_id = 'media');
+  FOR UPDATE USING (bucket_id = 'medias');
 
 -- Policy 4: Allow anonymous delete (less secure)
 CREATE POLICY "Allow anonymous delete" ON storage.objects
-  FOR DELETE USING (bucket_id = 'media');
+  FOR DELETE USING (bucket_id = 'medias');
 
 -- Verify policies for storage.objects
 SELECT 
@@ -133,7 +133,7 @@ WHERE schemaname = 'storage' AND tablename IN ('buckets', 'objects');
 
 SELECT 
   '=== HOÀN THÀNH SETUP MEDIA BUCKET ===' as info,
-  '✅ Đã tạo bucket media' as step1,
+  '✅ Đã tạo bucket medias' as step1,
   '✅ Đã fix RLS policies cho storage.buckets' as step2,
   '✅ Đã fix RLS policies cho storage.objects' as step3,
   '✅ Cho phép anonymous upload' as step4,

@@ -15,7 +15,7 @@ interface KeywordsInputProps {
 }
 
 export const KeywordsInput: React.FC<KeywordsInputProps> = ({
-  value = [],
+  value,
   onChange,
   placeholder = "Nhập từ khóa, phân cách bằng dấu phẩy",
   tooltip = "Nhập từ khóa SEO, phân cách bằng dấu phẩy. Ví dụ: Laptop Asus ExpertBook B1, Gaming, Computer",
@@ -25,6 +25,8 @@ export const KeywordsInput: React.FC<KeywordsInputProps> = ({
   maxTags = 20,
   allowDuplicates = false,
 }) => {
+  // Ensure value is always an array
+  const safeValue = Array.isArray(value) ? value : [];
   const handleChange = (newValue: string[]) => {
     if (!onChange) return;
     
@@ -46,7 +48,7 @@ export const KeywordsInput: React.FC<KeywordsInputProps> = ({
   };
 
   const handleTagClose = (removedTag: string) => {
-    const newValue = value.filter(tag => tag !== removedTag);
+    const newValue = safeValue.filter(tag => tag !== removedTag);
     handleChange(newValue);
   };
 
@@ -74,7 +76,7 @@ export const KeywordsInput: React.FC<KeywordsInputProps> = ({
          open={false}
          dropdownStyle={{ display: 'none' }}
          disabled={disabled}
-         value={value}
+         value={safeValue}
          onChange={handleChange}
          tagRender={(props) => {
            const { label: tagLabel, closable, onClose } = props;
@@ -91,7 +93,7 @@ export const KeywordsInput: React.FC<KeywordsInputProps> = ({
                  textOverflow: 'ellipsis',
                  whiteSpace: 'nowrap'
                }}
-               title={tagLabel}
+               title={typeof tagLabel === 'string' ? tagLabel : undefined}
              >
                {tagLabel}
              </Tag>
@@ -101,7 +103,7 @@ export const KeywordsInput: React.FC<KeywordsInputProps> = ({
          maxTagTextLength={50}
        />
       
-      {maxTags && value.length >= maxTags && (
+      {maxTags && safeValue.length >= maxTags && (
         <div style={{ 
           fontSize: '12px', 
           color: '#999', 

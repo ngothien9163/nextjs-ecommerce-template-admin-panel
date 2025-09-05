@@ -69,11 +69,11 @@ export const MediaList: React.FC = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [layout, setLayout] = useState<any[]>([]);
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
-  
+
   // Get current pagination from URL
   const currentPage = parseInt(searchParams.get('current') || '1');
   const pageSize = parseInt(searchParams.get('pageSize') || '20');
-  
+
   console.log('🔄 MediaList component rendered with URL params:', { currentPage, pageSize });
 
   // Use only useList for complete control over data fetching
@@ -120,7 +120,7 @@ export const MediaList: React.FC = () => {
     console.log("🔍 Table props:", tableProps);
     console.log("🔍 Data source length:", tableProps.dataSource?.length);
     console.log("🔍 Table props pagination:", tableProps.pagination);
-    
+
     if (tableProps.dataSource) {
       console.log("Media data:", tableProps.dataSource);
 
@@ -407,7 +407,7 @@ export const MediaList: React.FC = () => {
       <List
         headerButtons={
           <Space>
-            <Tooltip 
+            <Tooltip
               title="Upload hình ảnh/media files vào hệ thống. Hỗ trợ: JPG, PNG, GIF, WEBP, SVG. Có thể kéo thả nhiều files cùng lúc."
               placement="bottom"
             >
@@ -452,12 +452,12 @@ export const MediaList: React.FC = () => {
       >
         <div style={{ padding: "20px" }}>
           {/* Media count info with debug */}
-          <div style={{ 
-            marginBottom: '16px', 
-            padding: '12px', 
-            backgroundColor: isLoading ? '#fff7e6' : '#f6ffed', 
-            border: `1px solid ${isLoading ? '#ffd591' : '#b7eb8f'}`, 
-            borderRadius: '6px' 
+          <div style={{
+            marginBottom: '16px',
+            padding: '12px',
+            backgroundColor: isLoading ? '#fff7e6' : '#f6ffed',
+            border: `1px solid ${isLoading ? '#ffd591' : '#b7eb8f'}`,
+            borderRadius: '6px'
           }}>
             <Text strong style={{ color: isLoading ? '#fa8c16' : '#52c41a' }}>
               {isLoading ? '🔄 Đang tải...' : '📊'} Hiển thị {mediaItems.length} / {tableProps.pagination.total || 'Loading...'} media files
@@ -475,8 +475,8 @@ export const MediaList: React.FC = () => {
 
           {/* Top Pagination - Same as bottom */}
           {!isLoading && mediaItems.length > 0 && (
-            <div style={{ 
-              marginBottom: '24px', 
+            <div style={{
+              marginBottom: '24px',
               textAlign: 'center',
               padding: '16px 0',
               borderBottom: '1px solid #f0f0f0',
@@ -491,7 +491,7 @@ export const MediaList: React.FC = () => {
                 pageSize={pageSize}
                 showSizeChanger
                 showQuickJumper
-                showTotal={(total, range) => 
+                showTotal={(total, range) =>
                   `Hiển thị ${range[0]}-${range[1]} của ${total} media files`
                 }
                 pageSizeOptions={['20', '40', '60', '80', '100', '200']}
@@ -500,7 +500,7 @@ export const MediaList: React.FC = () => {
                   const newSearchParams = new URLSearchParams(searchParams);
                   newSearchParams.set('current', page.toString());
                   newSearchParams.set('pageSize', (pageSize || 20).toString());
-                  
+
                   console.log('🔍 New URL will be:', `/medias?${newSearchParams.toString()}`);
 
                   go({
@@ -519,14 +519,14 @@ export const MediaList: React.FC = () => {
                   const newSearchParams = new URLSearchParams(searchParams);
                   newSearchParams.set('current', '1'); // Reset to first page
                   newSearchParams.set('pageSize', size.toString());
-                  
+
                   console.log('🔍 New URL will be:', `/medias?${newSearchParams.toString()}`);
 
                   go({
                     to: `/medias?${newSearchParams.toString()}`,
                     type: "replace",
                   });
-                  
+
                   // Force immediate data refresh
                   setTimeout(() => {
                     console.log('🔄 Top Pagination: Force refetching after page size change');
@@ -537,7 +537,7 @@ export const MediaList: React.FC = () => {
               />
             </div>
           )}
-          
+
           {/* Simple Grid Layout without react-grid-layout for debugging */}
           {isLoading ? (
             <div style={{ textAlign: 'center', padding: '50px' }}>
@@ -552,9 +552,9 @@ export const MediaList: React.FC = () => {
           }}>
             {mediaItems.map((item, index) => (
               <div key={item.id} className="media-item">
-                <Card 
-                  hoverable 
-                  size="small" 
+                <Card
+                  hoverable
+                  size="small"
                   style={{ height: "100%" }}
                   actions={[
                     <EyeOutlined
@@ -638,7 +638,7 @@ export const MediaList: React.FC = () => {
                           height: "150px",
                           objectFit: "cover",
                         }}
-                        fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RnG4W+FgYxN"
+                        fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RnG4W+FgYxN"
                       />
                     </div>
                     <div style={{ marginTop: "8px" }}>
@@ -662,11 +662,11 @@ export const MediaList: React.FC = () => {
             ))}
           </div>
           )}
-          
+
           {/* Bottom Pagination - Same as top */}
           {!isLoading && mediaItems.length > 0 && (
-            <div style={{ 
-              marginTop: '24px', 
+            <div style={{
+              marginTop: '24px',
               textAlign: 'center',
               padding: '16px 0',
               borderTop: '1px solid #f0f0f0',
@@ -681,7 +681,7 @@ export const MediaList: React.FC = () => {
                 pageSize={pageSize}
                 showSizeChanger
                 showQuickJumper
-                showTotal={(total, range) => 
+                showTotal={(total, range) =>
                   `Hiển thị ${range[0]}-${range[1]} của ${total} media files`
                 }
                 pageSizeOptions={['20', '40', '60', '80', '100', '200']}
@@ -690,14 +690,14 @@ export const MediaList: React.FC = () => {
                   const newSearchParams = new URLSearchParams(searchParams);
                   newSearchParams.set('current', page.toString());
                   newSearchParams.set('pageSize', (pageSize || 10).toString());
-                  
+
                   console.log('🔍 New URL will be:', `/medias?${newSearchParams.toString()}`);
 
                   go({
                     to: `/medias?${newSearchParams.toString()}`,
                     type: "replace",
                   });
-                  
+
                   // Force immediate data refresh
                   setTimeout(() => {
                     console.log('🔄 Bottom Pagination: Force refetching after URL change');
@@ -724,115 +724,115 @@ export const MediaList: React.FC = () => {
                  }, 100);
                }}
                style={{ marginTop: '16px' }}
-              />
-            </div>
-          )}
-        </div>
-      </List>
+             />
+           </div>
+         )}
+       </div>
+     </List>
 
-      {/* Upload Modal */}
-      <Modal
-        title={
-          <div>
-            <UploadOutlined style={{ color: '#1890ff', marginRight: '8px' }} />
-            Upload Media Files
-          </div>
-        }
-        open={isUploadModalVisible}
-        onCancel={() => setIsUploadModalVisible(false)}
-        footer={[
-          <Button key="cancel" onClick={() => setIsUploadModalVisible(false)}>
-            Hủy
-          </Button>,
-          <Button key="info" type="link" onClick={() => {
-            Modal.info({
-              title: '📚 Hướng dẫn Upload Media',
-              width: 600,
-              content: (
-                <div>
-                  <h4>📁 Các định dạng hỗ trợ:</h4>
-                  <ul>
-                    <li>🖼️ <strong>Hình ảnh:</strong> JPG, JPEG, PNG, GIF, WEBP, SVG</li>
-                    <li>📹 <strong>Video:</strong> MP4, WEBM, OGV (sắp có)</li>
-                    <li>📄 <strong>Tài liệu:</strong> PDF, DOC, DOCX (sắp có)</li>
-                  </ul>
-                  <h4>🚀 Cách sử dụng:</h4>
-                  <ol>
-                    <li>Kéo thả files vào vùng upload hoặc click để chọn</li>
-                    <li>Có thể chọn nhiều files cùng lúc</li>
-                    <li>🖼️ <strong>Tự động chuyển WebP:</strong> Hình ảnh sẽ được chuyển sang định dạng WebP để tối ưu</li>
-                    <li>Hệ thống sẽ tự động upload và tạo metadata</li>
-                    <li>Files sẽ được lưu trữ trong Supabase Storage</li>
-                  </ol>
-                  <h4>⚠️ Lưu ý:</h4>
-                  <ul>
-                    <li>Kích thước file tối đa: 10MB mỗi file</li>
-                    <li>🖼️ <strong>WebP tối ưu:</strong> Hình ảnh sẽ được nén WebP (tiết kiệm ~60-70% dung lượng)</li>
-                    <li>Tên file sẽ được tự động đổi tên để tránh trùng lặp</li>
-                    <li>Metadata (alt text, title) sẽ được tạo tự động</li>
-                  </ul>
-                </div>
-              )
-            });
-          }}>
-            📚 Hướng dẫn
-          </Button>
-        ]}
-        width={700}
-      >
-        <div
-          {...getRootProps()}
-          style={{
-            border: "2px dashed #d9d9d9",
-            borderRadius: "6px",
-            padding: "40px",
-            textAlign: "center",
-            cursor: "pointer",
-            backgroundColor: isDragActive ? "#f0f8ff" : "#fafafa",
-          }}
-        >
-          <input {...getInputProps()} />
-          <UploadOutlined
-            style={{ fontSize: "48px", color: "#1890ff", marginBottom: "16px" }}
-          />
-          <p style={{ fontSize: "16px", marginBottom: "8px" }}>
-            {isDragActive
-              ? "Thả files vào đây..."
-              : "Kéo thả files hoặc click để chọn"}
-          </p>
-          <p style={{ fontSize: "14px", color: "#666" }}>
-            Hỗ trợ: JPG, PNG, GIF, WEBP, SVG
-          </p>
-          <p style={{ fontSize: "12px", color: "#52c41a", marginTop: "8px" }}>
-            🖼️ Hình ảnh sẽ được tự động chuyển sang WebP để tối ưu
-          </p>
-        </div>
-      </Modal>
+     {/* Upload Modal */}
+     <Modal
+       title={
+         <div>
+           <UploadOutlined style={{ color: '#1890ff', marginRight: '8px' }} />
+           Upload Media Files
+         </div>
+       }
+       open={isUploadModalVisible}
+       onCancel={() => setIsUploadModalVisible(false)}
+       footer={[
+         <Button key="cancel" onClick={() => setIsUploadModalVisible(false)}>
+           Hủy
+         </Button>,
+         <Button key="info" type="link" onClick={() => {
+           Modal.info({
+             title: '📚 Hướng dẫn Upload Media',
+             width: 600,
+             content: (
+               <div>
+                 <h4>📁 Các định dạng hỗ trợ:</h4>
+                 <ul>
+                   <li>🖼️ <strong>Hình ảnh:</strong> JPG, JPEG, PNG, GIF, WEBP, SVG</li>
+                   <li>📹 <strong>Video:</strong> MP4, WEBM, OGV (sắp có)</li>
+                   <li>📄 <strong>Tài liệu:</strong> PDF, DOC, DOCX (sắp có)</li>
+                 </ul>
+                 <h4>🚀 Cách sử dụng:</h4>
+                 <ol>
+                   <li>Kéo thả files vào vùng upload hoặc click để chọn</li>
+                   <li>Có thể chọn nhiều files cùng lúc</li>
+                   <li>🖼️ <strong>Tự động chuyển WebP:</strong> Hình ảnh sẽ được chuyển sang định dạng WebP để tối ưu</li>
+                   <li>Hệ thống sẽ tự động upload và tạo metadata</li>
+                   <li>Files sẽ được lưu trữ trong Supabase Storage</li>
+                 </ol>
+                 <h4>⚠️ Lưu ý:</h4>
+                 <ul>
+                   <li>Kích thước file tối đa: 10MB mỗi file</li>
+                   <li>🖼️ <strong>WebP tối ưu:</strong> Hình ảnh sẽ được nén WebP (tiết kiệm ~60-70% dung lượng)</li>
+                   <li>Tên file sẽ được tự động đổi tên để tránh trùng lặp</li>
+                   <li>Metadata (alt text, title) sẽ được tạo tự động</li>
+                 </ul>
+               </div>
+             )
+           });
+         }}>
+           📚 Hướng dẫn
+         </Button>
+       ]}
+       width={700}
+     >
+       <div
+         {...getRootProps()}
+         style={{
+           border: "2px dashed #d9d9d9",
+           borderRadius: "6px",
+           padding: "40px",
+           textAlign: "center",
+           cursor: "pointer",
+           backgroundColor: isDragActive ? "#f0f8ff" : "#fafafa",
+         }}
+       >
+         <input {...getInputProps()} />
+         <UploadOutlined
+           style={{ fontSize: "48px", color: "#1890ff", marginBottom: "16px" }}
+         />
+         <p style={{ fontSize: "16px", marginBottom: "8px" }}>
+           {isDragActive
+             ? "Thả files vào đây..."
+             : "Kéo thả files hoặc click để chọn"}
+         </p>
+         <p style={{ fontSize: "14px", color: "#666" }}>
+           Hỗ trợ: JPG, PNG, GIF, WEBP, SVG
+         </p>
+         <p style={{ fontSize: "12px", color: "#52c41a", marginTop: "8px" }}>
+           🖼️ Hình ảnh sẽ được tự động chuyển sang WebP để tối ưu
+         </p>
+       </div>
+     </Modal>
 
-      {/* Image Lightbox Modal */}
-      <Modal
-        title={
-          mediaItems[currentImageIndex]?.title ||
-          mediaItems[currentImageIndex]?.file_name
-        }
-        open={isLightboxOpen}
-        onCancel={closeLightbox}
-        footer={null}
-        width="80%"
-        style={{ top: 20 }}
-      >
-        <div style={{ textAlign: "center" }}>
-          <Image
-            src={mediaItems[currentImageIndex]?.file_url}
-            alt={
-              mediaItems[currentImageIndex]?.alt_text ||
-              mediaItems[currentImageIndex]?.file_name
-            }
-            style={{ maxWidth: "100%", maxHeight: "70vh" }}
-            fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RnG4W+FgYxN"
-          />
-        </div>
-      </Modal>
-    </>
-  );
+     {/* Image Lightbox Modal */}
+     <Modal
+       title={
+         mediaItems[currentImageIndex]?.title ||
+         mediaItems[currentImageIndex]?.file_name
+       }
+       open={isLightboxOpen}
+       onCancel={closeLightbox}
+       footer={null}
+       width="80%"
+       style={{ top: 20 }}
+     >
+       <div style={{ textAlign: "center" }}>
+         <Image
+           src={mediaItems[currentImageIndex]?.file_url}
+           alt={
+             mediaItems[currentImageIndex]?.alt_text ||
+             mediaItems[currentImageIndex]?.file_name
+           }
+           style={{ maxWidth: "100%", maxHeight: "70vh" }}
+           fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RnG4W+FgYxN"
+         />
+       </div>
+     </Modal>
+   </>
+ );
 };

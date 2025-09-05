@@ -94,7 +94,7 @@ export const blogPostService = {
       if (cleanBlogPostData.featured_image_id) {
         console.log('🔍 [updateBlogPost] Checking if media record exists...');
         const { data: mediaRecord, error: mediaError } = await supabase
-          .from('media')
+          .from('medias')
           .select('id, file_name')
           .eq('id', cleanBlogPostData.featured_image_id)
           .maybeSingle();

@@ -56,7 +56,7 @@ export const MediaGallerySelector: React.FC<MediaGallerySelectorProps> = ({
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const { tableProps } = useTable({
-    resource: 'media',
+    resource: 'medias',
     filters: {
       permanent: [
         {
