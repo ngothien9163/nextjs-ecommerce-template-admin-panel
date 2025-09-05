@@ -206,13 +206,13 @@ export const MediaList: React.FC = () => {
 
         // Use the WebP filename directly (already lowercase with .webp extension)
         let fileName = fileToUpload.name;
-        let filePath = `media/${fileName}`;
+        let filePath = `medias/${fileName}`;
 
         // Check if file already exists and generate unique name if needed
         try {
           const { data: existingFiles } = await supabase.storage
-            .from("media")
-            .list("media", {
+            .from("medias")
+            .list("medias", {
               search: fileName,
             });
 
@@ -220,7 +220,7 @@ export const MediaList: React.FC = () => {
             const nameWithoutExt = fileName.replace(/\.[^/.]+$/, '');
             const randomSuffix = Math.random().toString(36).substring(2, 8);
             fileName = `${nameWithoutExt}_${randomSuffix}.webp`;
-            filePath = `media/${fileName}`;
+            filePath = `medias/${fileName}`;
             console.log(`🔄 Renamed duplicate file: ${fileToUpload.name} → ${fileName}`);
           }
         } catch (error) {
@@ -237,7 +237,7 @@ export const MediaList: React.FC = () => {
 
         // Upload to Supabase Storage using regular client
         const { data: uploadData, error: uploadError } =
-          await supabase.storage.from("media").upload(filePath, fileToUpload);
+          await supabase.storage.from("medias").upload(filePath, fileToUpload);
 
         if (uploadError) {
           console.error("Supabase upload error:", uploadError);
@@ -248,7 +248,7 @@ export const MediaList: React.FC = () => {
 
         // Get public URL
         const { data: urlData } = supabase.storage
-          .from("media")
+          .from("medias")
           .getPublicUrl(filePath);
 
         console.log("Public URL:", urlData.publicUrl);

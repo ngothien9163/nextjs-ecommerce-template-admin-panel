@@ -44,6 +44,12 @@ export const MediaCreate: React.FC = () => {
       imageFormat?: string;
       uploadedFileName?: string; // Tên file đã upload (có thể khác tên gốc)
       uploadedFilePath?: string; // Đường dẫn file đã upload
+      conversionInfo?: { // Thông tin về WebP conversion
+        wasConverted: boolean;
+        originalSize: number;
+        webpSize: number;
+        compressionRatio: number;
+      };
     }>
   >([]);
   const [selectedFileIndex, setSelectedFileIndex] = useState<number>(0);
@@ -205,31 +211,60 @@ export const MediaCreate: React.FC = () => {
     multiple: true,
   });
 
-  // Hàm tạo tên file unique (giữ tên gốc + thêm suffix nếu trùng)
+  // Hàm tạo random string 5 ký tự (chữ và số)
+  const generateRandomString = (length: number = 5): string => {
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = '';
+    for (let i = 0; i < length; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+  };
+
+  // Hàm tạo tên file unique với logic retry
   const generateUniqueFileName = async (
-    originalFileName: string
+    originalFileName: string,
+    maxRetries: number = 10
   ): Promise<string> => {
-    const fileExt = originalFileName.split(".").pop();
+    // Chuyển đổi extension thành .webp
     const baseName = originalFileName.replace(/\.[^/.]+$/, "");
+    let fileName = `${baseName}.webp`;
 
-    // Thử tên file gốc trước
-    let fileName = originalFileName;
+    // Thử tên file gốc (với .webp extension) trước
+    console.log(`🔍 Checking if ${fileName} exists...`);
+    
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      // Kiểm tra xem file đã tồn tại chưa
+      const { data: existingFiles, error } = await supabase.storage
+        .from("medias")
+        .list("medias", {
+          search: fileName,
+        });
 
-    // Kiểm tra xem file đã tồn tại chưa
-    const { data: existingFile } = await supabase.storage
-      .from("media")
-      .list("media", {
-        search: fileName,
-      });
+      if (error) {
+        console.error("Error checking file existence:", error);
+        // Nếu có lỗi, thêm random string để tránh conflict
+        const randomSuffix = generateRandomString();
+        return `${baseName}_${randomSuffix}.webp`;
+      }
 
-    // Nếu file đã tồn tại, thêm suffix random
-    if (existingFile && existingFile.length > 0) {
-      const randomSuffix = Math.random().toString(36).substring(2, 8);
-      fileName = `${baseName}_${randomSuffix}.${fileExt}`;
-      console.log(`🔄 Renamed duplicate file: ${originalFileName} → ${fileName}`);
+      // Nếu không tìm thấy file trùng tên
+      if (!existingFiles || existingFiles.length === 0) {
+        console.log(`✅ File name ${fileName} is available`);
+        return fileName;
+      }
+
+      // Nếu file đã tồn tại, tạo tên mới với random suffix
+      const randomSuffix = generateRandomString();
+      fileName = `${baseName}_${randomSuffix}.webp`;
+      console.log(`🔄 File exists, trying: ${fileName} (attempt ${attempt + 1}/${maxRetries})`);
     }
 
-    return fileName;
+    // Nếu sau maxRetries vẫn trùng, thêm timestamp
+    const timestamp = Date.now();
+    const finalFileName = `${baseName}_${timestamp}.webp`;
+    console.log(`⚠️ Max retries reached, using timestamp: ${finalFileName}`);
+    return finalFileName;
   };
 
 
@@ -245,9 +280,15 @@ export const MediaCreate: React.FC = () => {
 
         const file = fileData.file;
 
-        // Convert to WebP first if it's an image
+        // 🎆 ALWAYS convert to WebP for all images
         let fileToUpload = file;
         let finalFileName = file.name;
+        let conversionInfo = {
+          wasConverted: false,
+          originalSize: file.size,
+          webpSize: file.size,
+          compressionRatio: 0
+        };
 
         if (file.type.startsWith('image/')) {
           console.log(`🔄 Converting ${file.name} to WebP...`);
@@ -256,29 +297,45 @@ export const MediaCreate: React.FC = () => {
           if (result.success) {
             fileToUpload = result.file;
             finalFileName = result.file.name;
+            conversionInfo = {
+              wasConverted: true,
+              originalSize: result.originalSize,
+              webpSize: result.webpSize,
+              compressionRatio: result.compressionRatio
+            };
             console.log(`✅ Converted ${file.name} → ${finalFileName}`);
-            console.log(`📊 Compression: ${result.originalSize} → ${result.webpSize} bytes (${result.compressionRatio}% saved)`);
+            console.log(`📈 Compression: ${result.originalSize} → ${result.webpSize} bytes (${result.compressionRatio}% saved)`);
           } else {
             console.error(`❌ WebP conversion failed for ${file.name}:`, result.error);
-            // Fall back to original file
+            // Mặc dù conversion thất bại, vẫn cố gắng upload file gốc
+            console.log(`⚠️ Falling back to original file: ${file.name}`);
           }
+        } else {
+          console.log(`ℹ️ File ${file.name} is not an image, skipping WebP conversion`);
         }
 
-        // Tạo tên file unique (giữ tên gốc + thêm suffix nếu trùng)
+        // Tạo tên file unique với logic retry mạnh hơn
         const uniqueFileName = await generateUniqueFileName(finalFileName);
-        const filePath = `media/${uniqueFileName}`;
+        const filePath = `medias/${uniqueFileName}`;
+
+        console.log(`🚀 Uploading ${finalFileName} as ${uniqueFileName}...`);
 
         // Upload to Supabase Storage using regular client
         const { error: uploadError } = await supabase.storage
-          .from("media")
+          .from("medias")
           .upload(filePath, fileToUpload);
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          console.error(`❌ Upload failed for ${uniqueFileName}:`, uploadError);
+          throw uploadError;
+        }
 
         // Get public URL
         const { data: urlData } = supabase.storage
-          .from("media")
+          .from("medias")
           .getPublicUrl(filePath);
+
+        console.log(`✅ Successfully uploaded: ${uniqueFileName}`);
 
         return {
           ...fileData,
@@ -286,6 +343,7 @@ export const MediaCreate: React.FC = () => {
           url: urlData.publicUrl,
           uploadedFileName: uniqueFileName, // Lưu tên file đã upload
           uploadedFilePath: filePath, // Lưu đường dẫn đã upload
+          conversionInfo, // Lưu thông tin conversion
         };
       });
 
@@ -461,14 +519,46 @@ export const MediaCreate: React.FC = () => {
           if (!fileData.uploaded) {
             const file = fileData.file;
 
-            // Tạo tên file unique (giữ tên gốc + thêm suffix nếu trùng)
-            const uniqueFileName = await generateUniqueFileName(file.name);
-            const filePath = `media/${uniqueFileName}`;
+            // 🎆 ALWAYS convert to WebP for all images (giống logic ở handleUpload)
+            let fileToUpload = file;
+            let finalFileName = file.name;
+            let conversionInfo = {
+              wasConverted: false,
+              originalSize: file.size,
+              webpSize: file.size,
+              compressionRatio: 0
+            };
+
+            if (file.type.startsWith('image/')) {
+              console.log(`🔄 Converting ${file.name} to WebP (handleFormSubmit)...`);
+              const result = await convertToWebP(file, 85); // 85% quality
+
+              if (result.success) {
+                fileToUpload = result.file;
+                finalFileName = result.file.name;
+                conversionInfo = {
+                  wasConverted: true,
+                  originalSize: result.originalSize,
+                  webpSize: result.webpSize,
+                  compressionRatio: result.compressionRatio
+                };
+                console.log(`✅ Converted ${file.name} → ${finalFileName} (handleFormSubmit)`);
+              } else {
+                console.error(`❌ WebP conversion failed for ${file.name}:`, result.error);
+                console.log(`⚠️ Falling back to original file: ${file.name}`);
+              }
+            }
+
+            // Tạo tên file unique với logic retry mạnh hơn
+            const uniqueFileName = await generateUniqueFileName(finalFileName);
+            const filePath = `medias/${uniqueFileName}`;
+
+            console.log(`🚀 Uploading ${finalFileName} as ${uniqueFileName} (handleFormSubmit)...`);
 
             // Upload to Supabase Storage using regular client
             const { error: uploadError } = await supabase.storage
-              .from("media")
-              .upload(filePath, file);
+              .from("medias")
+              .upload(filePath, fileToUpload);
 
             if (uploadError) {
               console.error("Upload error:", uploadError);
@@ -480,7 +570,7 @@ export const MediaCreate: React.FC = () => {
 
             // Get public URL
             const { data: urlData } = supabase.storage
-              .from("media")
+              .from("medias")
               .getPublicUrl(filePath);
 
             // Cập nhật updatedFiles với thông tin mới
@@ -490,6 +580,7 @@ export const MediaCreate: React.FC = () => {
               url: urlData.publicUrl,
               uploadedFileName: uniqueFileName,
               uploadedFilePath: filePath,
+              conversionInfo, // Lưu thông tin conversion
             };
 
             console.log(
@@ -583,29 +674,36 @@ export const MediaCreate: React.FC = () => {
         cleanValues.file_url = fileData.url;
         cleanValues.file_path =
           fileData.uploadedFilePath ||
-          `media/${fileData.uploadedFileName || fileData.file.name}`;
+          `medias/${fileData.uploadedFileName || fileData.file.name}`;
         cleanValues.file_name =
           fileData.uploadedFileName ||
           fileData.file.name.replace(/\.[^/.]+$/, "");
-        cleanValues.file_size = fileData.file.size;
-        cleanValues.file_size_kb =
-          fileData.fileSizeKB || Math.round(fileData.file.size / 1024);
 
-        // Set MIME type to WebP if file was converted, otherwise use original
+        // Cập nhật file size dựa trên conversion info nếu có
+        if (fileData.conversionInfo?.wasConverted) {
+          cleanValues.file_size = fileData.conversionInfo.webpSize;
+          cleanValues.file_size_kb = Math.round(fileData.conversionInfo.webpSize / 1024);
+        } else {
+          cleanValues.file_size = fileData.file.size;
+          cleanValues.file_size_kb = fileData.fileSizeKB || Math.round(fileData.file.size / 1024);
+        }
+
+        // Set MIME type và image format dựa trên file đã upload
         const isWebPFile = fileData.uploadedFileName?.toLowerCase().endsWith('.webp') || false;
-        cleanValues.mime_type = isWebPFile ? 'image/webp' : fileData.file.type;
+        
+        if (isWebPFile) {
+          cleanValues.mime_type = 'image/webp';
+          cleanValues.image_format = 'WEBP';
+        } else {
+          cleanValues.mime_type = fileData.file.type;
+          cleanValues.image_format = fileData.imageFormat || fileData.file.type.split("/")[1]?.toUpperCase() || "JPEG";
+        }
 
         // Thêm thông tin dimensions nếu có
         if (fileData.dimensions) {
           cleanValues.dimensions = JSON.stringify(fileData.dimensions);
           cleanValues.image_dimensions = `${fileData.dimensions.width}x${fileData.dimensions.height}`;
         }
-
-        // Thêm image_format
-        cleanValues.image_format =
-          fileData.imageFormat ||
-          fileData.file.type.split("/")[1]?.toUpperCase() ||
-          "JPEG";
 
         console.log(
           `Creating media record for: ${fileData.uploadedFileName || fileData.file.name} (${i === selectedFileIndex ? 'selected' : 'auto-generated'})`,
@@ -857,6 +955,20 @@ export const MediaCreate: React.FC = () => {
                         )}
                         {fileData.imageFormat && <> | {fileData.imageFormat}</>}
                       </Text>
+                      {/* Hiển thị thông tin compression nếu có */}
+                      {fileData.conversionInfo?.wasConverted && (
+                        <Text 
+                          type="success" 
+                          style={{ 
+                            fontSize: "10px", 
+                            display: "block",
+                            marginTop: "2px"
+                          }}
+                        >
+                          🎆 WebP: {(fileData.conversionInfo.webpSize / 1024).toFixed(1)} KB 
+                          (-{fileData.conversionInfo.compressionRatio.toFixed(1)}%)
+                        </Text>
+                      )}
                       <div
                         style={{
                           marginTop: "4px",

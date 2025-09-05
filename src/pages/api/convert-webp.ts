@@ -58,16 +58,32 @@ export default async function handler(
     }
 
     console.log(`🔄 Converting ${file.originalname} to WebP...`);
+    console.log(`📏 Original: ${(file.size / 1024).toFixed(1)} KB (${file.mimetype})`);
 
-    // Convert to WebP using Sharp with optimal settings
+    // Get image metadata first
+    const metadata = await sharp(file.buffer).metadata();
+    console.log(`🖼️ Image info: ${metadata.width}x${metadata.height}, format: ${metadata.format}`);
+
+    // Determine optimal quality based on file size and type
+    let quality = 75;
+    if (file.size > 5 * 1024 * 1024) { // > 5MB
+      quality = 60; // More aggressive compression for large files
+    } else if (file.size > 1 * 1024 * 1024) { // > 1MB
+      quality = 70;
+    }
+
+    console.log(`⚙️ Using quality: ${quality}%`);
+
+    // Convert to WebP using Sharp with optimal settings for maximum compression
     const webpBuffer = await sharp(file.buffer)
       .webp({
-        quality: 85,              // 85% quality for good balance
-        effort: 6,                // Maximum compression effort
-        smartSubsample: true,     // Smart subsampling
-        nearLossless: false,      // Use lossy compression
-        alphaQuality: 85,         // Alpha channel quality
+        quality: quality,         // Dynamic quality based on file size
+        effort: 6,                // Maximum compression effort (0-6)
+        smartSubsample: true,     // Smart subsampling for better quality
+        nearLossless: false,      // Use lossy compression for smaller files
+        alphaQuality: quality,    // Alpha channel quality
         force: true,              // Force WebP output
+        preset: 'photo',          // Optimize for photos
       })
       .resize({
         width: 1920,              // Max width for web
@@ -75,6 +91,7 @@ export default async function handler(
         fit: 'inside',            // Maintain aspect ratio
         withoutEnlargement: true, // Don't enlarge small images
       })
+      .sharpen()                  // Sharpen after resize
       .toBuffer();
 
     // Get original filename without extension and convert to lowercase
@@ -85,9 +102,14 @@ export default async function handler(
     const originalSize = file.size;
     const webpSize = webpBuffer.length;
     const compressionRatio = ((originalSize - webpSize) / originalSize * 100).toFixed(1);
+    const sizeSavedKB = ((originalSize - webpSize) / 1024).toFixed(1);
 
     console.log(`✅ Converted ${file.originalname} → ${webpFileName}`);
-    console.log(`📊 Compression: ${originalSize} bytes → ${webpSize} bytes (${compressionRatio}% saved)`);
+    console.log(`📊 Compression results:`);
+    console.log(`   - Original: ${(originalSize / 1024).toFixed(1)} KB`);
+    console.log(`   - WebP: ${(webpSize / 1024).toFixed(1)} KB`);
+    console.log(`   - Saved: ${sizeSavedKB} KB (${compressionRatio}%)`);
+    console.log(`   - Compression ratio: ${compressionRatio}%`);
 
     // Set response headers
     res.setHeader('Content-Type', 'image/webp');

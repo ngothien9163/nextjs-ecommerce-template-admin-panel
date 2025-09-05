@@ -19,7 +19,7 @@ export const testSupabaseAdminConnection = async () => {
     // Test storage upload
     const testFile = new File(['test'], 'test.txt', { type: 'text/plain' });
     const { data, error } = await supabaseAdmin.storage
-      .from('media')
+      .from('medias')
       .upload('test-admin.txt', testFile);
     
     if (error) {

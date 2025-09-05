@@ -292,16 +292,16 @@ export const MediaEdit: React.FC = () => {
       const fileName = `cropped-${Date.now()}-${Math.random()
         .toString(36)
         .substring(2)}.webp`;
-      const filePath = `media/${fileName}`;
+      const filePath = `medias/${fileName}`;
 
       const { data: uploadData, error: uploadError } =
-        await supabaseAdmin.storage.from("media").upload(filePath, fileToUpload);
+        await supabaseAdmin.storage.from("medias").upload(filePath, fileToUpload);
 
       if (uploadError) throw uploadError;
 
       // Get public URL
       const { data: urlData } = supabaseAdmin.storage
-        .from("media")
+        .from("medias")
         .getPublicUrl(filePath);
 
       // Update media record with all technical specifications

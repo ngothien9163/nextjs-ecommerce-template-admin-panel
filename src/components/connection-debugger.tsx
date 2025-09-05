@@ -215,7 +215,7 @@ export const ConnectionDebugger: React.FC = () => {
             <Title level={5}>If Storage bucket is missing:</Title>
             <Paragraph>
               1. Go to Supabase Dashboard → Storage<br/>
-              2. Create a new bucket named "media"<br/>
+              2. Create a new bucket named "medias"<br/>
               3. Make it public for easy access
             </Paragraph>
           </div>

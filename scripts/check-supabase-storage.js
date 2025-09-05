@@ -12,7 +12,7 @@ async function checkSupabaseStorage() {
     // 1. Kiểm tra kết nối
     console.log('📡 Testing connection...');
     const { data: testData, error: testError } = await supabase
-      .from('media')
+      .from('medias')
       .select('count')
       .limit(1);
     
@@ -31,12 +31,12 @@ async function checkSupabaseStorage() {
       return;
     }
 
-    const mediaBucket = buckets.find(bucket => bucket.name === 'media');
+    const mediaBucket = buckets.find(bucket => bucket.name === 'medias');
     
     if (!mediaBucket) {
       console.log('⚠️  Media bucket not found. Creating...');
       
-      const { data: newBucket, error: createError } = await supabase.storage.createBucket('media', {
+      const { data: newBucket, error: createError } = await supabase.storage.createBucket('medias', {
         public: true,
         fileSizeLimit: 52428800, // 50MB
         allowedMimeTypes: ['image/*', 'video/*', 'application/pdf']
@@ -57,11 +57,11 @@ async function checkSupabaseStorage() {
     // 3. Kiểm tra RLS policies
     console.log('🔒 Checking RLS policies...');
     
-    // Test upload một file nhỏ
-    const testFile = new File(['test'], 'test.txt', { type: 'text/plain' });
+    // Test upload một file hình ảnh thay vì text
+    const testFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
     const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('media')
-      .upload('test/test.txt', testFile);
+      .from('medias')
+      .upload('test/test.jpg', testFile);
     
     if (uploadError) {
       console.error('❌ Upload test failed:', uploadError);
@@ -72,21 +72,21 @@ async function checkSupabaseStorage() {
       
       // Clean up test file
       await supabase.storage
-        .from('media')
-        .remove(['test/test.txt']);
+        .from('medias')
+        .remove(['test/test.jpg']);
       console.log('🧹 Test file cleaned up');
     }
 
     // 4. Kiểm tra bảng media
     console.log('📊 Checking media table...');
-    const { data: mediaCount, error: mediaError } = await supabase
-      .from('media')
+    const { count: mediaCount, error: mediaError } = await supabase
+      .from('medias')
       .select('*', { count: 'exact', head: true });
     
     if (mediaError) {
       console.error('❌ Media table check failed:', mediaError);
     } else {
-      console.log(`✅ Media table accessible (${mediaCount.length} records)`);
+      console.log(`✅ Media table accessible (${mediaCount} records)`);
     }
 
   } catch (error) {

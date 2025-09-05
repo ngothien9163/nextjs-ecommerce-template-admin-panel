@@ -19,6 +19,7 @@ export const convertToWebP = async (
   try {
     // Skip if not an image
     if (!file.type.startsWith('image/')) {
+      console.log(`⏭️ Skipping ${file.name} - not an image`);
       return {
         file,
         originalSize: file.size,
@@ -29,22 +30,36 @@ export const convertToWebP = async (
     }
 
     console.log(`🔄 Converting ${file.name} to WebP...`);
+    console.log(`📏 Original size: ${(file.size / 1024).toFixed(1)} KB`);
+    console.log(`⚙️ Quality setting: ${quality}%`);
 
     const formData = new FormData();
     formData.append('image', file);
+
+    console.log(`📤 Sending to API: /api/convert-webp`);
 
     const response = await fetch('/api/convert-webp', {
       method: 'POST',
       body: formData,
     });
 
+    console.log(`📥 API Response status: ${response.status}`);
+
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
+      console.error(`❌ API Error:`, errorData);
       throw new Error(errorData.message || `HTTP ${response.status}`);
     }
 
     const webpBlob = await response.blob();
     const compressionRatio = parseFloat(response.headers.get('X-Compression-Ratio') || '0');
+    const originalSize = parseInt(response.headers.get('X-Original-Size') || file.size.toString());
+    const webpSize = parseInt(response.headers.get('X-WebP-Size') || webpBlob.size.toString());
+
+    console.log(`📊 Compression results:`);
+    console.log(`   - Original: ${(originalSize / 1024).toFixed(1)} KB`);
+    console.log(`   - WebP: ${(webpSize / 1024).toFixed(1)} KB`);
+    console.log(`   - Saved: ${compressionRatio}%`);
 
     // Create new File with WebP format and lowercase filename
     const originalName = file.name.replace(/\.[^/.]+$/, ''); // Remove extension
@@ -55,11 +70,11 @@ export const convertToWebP = async (
     });
 
     console.log(`✅ Converted ${file.name} → ${webpFileName}`);
-    console.log(`📊 Compression: ${file.size} → ${webpBlob.size} bytes (${compressionRatio}% saved)`);
+    console.log(`📊 Final compression: ${(originalSize / 1024).toFixed(1)} KB → ${(webpBlob.size / 1024).toFixed(1)} KB (${compressionRatio}% saved)`);
 
     return {
       file: webpFile,
-      originalSize: file.size,
+      originalSize: originalSize,
       webpSize: webpBlob.size,
       compressionRatio,
       success: true,
@@ -67,6 +82,14 @@ export const convertToWebP = async (
 
   } catch (error) {
     console.error(`❌ WebP conversion failed for ${file.name}:`, error);
+    console.log(`🔄 Falling back to client-side conversion...`);
+
+    // Fallback to client-side Canvas conversion
+    const fallbackResult = await convertWithCanvas(file, quality / 100);
+    if (fallbackResult.success && fallbackResult.compressionRatio > 0) {
+      console.log(`✅ Fallback conversion successful: ${fallbackResult.compressionRatio.toFixed(1)}% saved`);
+      return fallbackResult;
+    }
 
     return {
       file,
