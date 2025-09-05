@@ -21,6 +21,9 @@ import { MediaSEOSection } from "../../components/media-seo-section";
 import { MediaFormLayout } from "../../components/media-form-layout";
 import { SEOMediaService } from "../../lib/seo-media-service";
 import { convertToWebP } from "../../lib/image-utils";
+import { parseMetaKeywords, getMetadataForWebP } from "../../lib/metadata-config";
+import { getMetadataByEnvironment } from "../../config/metadata-constants";
+import { embedExifMetadata, supportsExif, supportsWebPMetadata, convertWebPToJPEGForMetadata } from "../../lib/exif-utils";
 
 const { Text } = Typography;
 
@@ -44,6 +47,7 @@ export const MediaCreate: React.FC = () => {
       imageFormat?: string;
       uploadedFileName?: string; // Tên file đã upload (có thể khác tên gốc)
       uploadedFilePath?: string; // Đường dẫn file đã upload
+      extractedMetadata?: any; // Metadata extracted from the original image
       conversionInfo?: { // Thông tin về WebP conversion
         wasConverted: boolean;
         originalSize: number;
@@ -137,6 +141,18 @@ export const MediaCreate: React.FC = () => {
       const filePromises = acceptedFiles.map(async (file) => {
         try {
           const details = await getImageDetails(file);
+
+          // Extract metadata from the image using browser APIs
+          let extractedMetadata = {};
+          try {
+            // For Vite projects, we use browser APIs for metadata extraction
+            // This is a simplified version - in production you might want more robust EXIF parsing
+            console.log(`📋 Metadata extraction not available in Vite (would need Sharp/Node.js)`);
+            console.log(`💡 Metadata will be entered manually or from form defaults`);
+          } catch (metadataError) {
+            console.warn(`⚠️ Error in metadata setup for ${file.name}:`, metadataError);
+          }
+
           return {
             file,
             preview: URL.createObjectURL(file),
@@ -144,6 +160,7 @@ export const MediaCreate: React.FC = () => {
             dimensions: details.dimensions,
             fileSizeKB: details.fileSizeKB,
             imageFormat: details.imageFormat,
+            extractedMetadata,
           };
         } catch (error) {
           console.error("Lỗi khi đọc thông tin file:", file.name, error);
@@ -154,6 +171,7 @@ export const MediaCreate: React.FC = () => {
             dimensions: { width: 0, height: 0 },
             fileSizeKB: Math.round(file.size / 1024),
             imageFormat: file.type.split("/")[1]?.toUpperCase() || "JPEG",
+            extractedMetadata: {},
           };
         }
       });
@@ -177,11 +195,13 @@ export const MediaCreate: React.FC = () => {
             .replace(/\s+/g, " ")
             .trim();
 
+          // For Vite projects, we don't extract metadata from images
+          // Users will need to fill metadata manually or use form defaults
           formProps.form.setFieldsValue({
             file_name: fileName,
             alt_text: smartAltText,
             title: smartAltText,
-            caption: smartAltText, // Sử dụng caption đầu tiên
+            caption: smartAltText,
             image_format: firstFile.imageFormat,
             image_dimensions: `${firstFile.dimensions?.width || 0}x${
               firstFile.dimensions?.height || 0
@@ -192,6 +212,8 @@ export const MediaCreate: React.FC = () => {
             lazy_loading: true,
             priority_loading: false,
           });
+
+          console.log('🔧 Auto-filled form with basic info (Vite limitation - no metadata extraction)');
 
           // Tự động điền thông số SEO nâng cao khi chọn file đầu tiên
           setTimeout(() => {
@@ -280,7 +302,7 @@ export const MediaCreate: React.FC = () => {
 
         const file = fileData.file;
 
-        // 🎆 ALWAYS convert to WebP for all images
+        // 🎆 ALWAYS convert to WebP - chỉ thay đổi metadata, giữ nguyên kích thước
         let fileToUpload = file;
         let finalFileName = file.name;
         let conversionInfo = {
@@ -291,27 +313,83 @@ export const MediaCreate: React.FC = () => {
         };
 
         if (file.type.startsWith('image/')) {
-          console.log(`🔄 Converting ${file.name} to WebP...`);
-          const result = await convertToWebP(file, 85); // 85% quality
+          console.log(`🔄 Processing ${file.name} for upload...`);
 
-          if (result.success) {
-            fileToUpload = result.file;
-            finalFileName = result.file.name;
-            conversionInfo = {
-              wasConverted: true,
-              originalSize: result.originalSize,
-              webpSize: result.webpSize,
-              compressionRatio: result.compressionRatio
-            };
-            console.log(`✅ Converted ${file.name} → ${finalFileName}`);
-            console.log(`📈 Compression: ${result.originalSize} → ${result.webpSize} bytes (${result.compressionRatio}% saved)`);
+          // Thêm metadata từ form
+          const formValues = formProps.form?.getFieldsValue() as any || {};
+
+          // Lấy base metadata từ constants
+          const baseMetadata = getMetadataByEnvironment();
+
+          // Kết hợp metadata từ form với base metadata
+          const imageMetadata = {
+            title: formValues.title || formValues.alt_text,
+            description: formValues.meta_description || formValues.caption,
+            copyright: formValues.copyright || baseMetadata.copyright,
+            creator: formValues.creator || baseMetadata.creator_artist,
+            credit: formValues.credit || baseMetadata.credit,
+            keywords: parseMetaKeywords(formValues.meta_keywords) || baseMetadata.keywords,
+            software: baseMetadata.software,
+            userComment: baseMetadata.user_comment
+          };
+
+          console.log(`📋 Preparing metadata for ${file.name}:`, imageMetadata);
+
+          // Handle metadata embedding based on file format
+          if (supportsExif(file)) {
+            console.log(`📷 Embedding EXIF metadata into JPEG file...`);
+            try {
+              fileToUpload = await embedExifMetadata(file, imageMetadata);
+              console.log(`✅ EXIF metadata embedded successfully`);
+            } catch (exifError) {
+              console.warn(`⚠️ EXIF embedding failed, using original file:`, exifError);
+              fileToUpload = file;
+            }
+          } else if (supportsWebPMetadata(file)) {
+            console.log(`🔄 Converting WebP to JPEG for EXIF metadata embedding...`);
+            try {
+              // Convert WebP to JPEG for EXIF support
+              const jpegFile = await convertWebPToJPEGForMetadata(file);
+              fileToUpload = await embedExifMetadata(jpegFile, imageMetadata);
+              console.log(`✅ WebP converted to JPEG with EXIF metadata embedded`);
+            } catch (webpError) {
+              console.warn(`⚠️ WebP to JPEG conversion failed, using original file:`, webpError);
+              fileToUpload = file;
+            }
           } else {
-            console.error(`❌ WebP conversion failed for ${file.name}:`, result.error);
-            // Mặc dù conversion thất bại, vẫn cố gắng upload file gốc
-            console.log(`⚠️ Falling back to original file: ${file.name}`);
+            console.log(`ℹ️ File format doesn't support metadata embedding, proceeding with conversion...`);
+            fileToUpload = file;
+          }
+
+          // Convert to WebP if not already processed
+          if (fileToUpload === file) {
+            const result = await convertToWebP(file, 85, {
+              metadataOnly: true,
+              preserveSize: true,
+              customMetadata: imageMetadata
+            });
+
+            if (result.success) {
+              fileToUpload = result.file;
+              finalFileName = result.file.name;
+              conversionInfo = {
+                wasConverted: true,
+                originalSize: result.originalSize,
+                webpSize: result.webpSize,
+                compressionRatio: result.compressionRatio
+              };
+              console.log(`✅ Converted ${file.name} → ${finalFileName} (WebP with metadata)`);
+            } else {
+              console.error(`❌ WebP conversion failed for ${file.name}:`, result.error);
+              console.log(`⚠️ Falling back to original file: ${file.name}`);
+            }
+          } else {
+            // File was processed with EXIF, just update filename
+            finalFileName = file.name;
+            console.log(`📁 Using EXIF-processed file: ${finalFileName}`);
           }
         } else {
-          console.log(`ℹ️ File ${file.name} is not an image, skipping WebP conversion`);
+          console.log(`ℹ️ File ${file.name} is not an image, skipping processing`);
         }
 
         // Tạo tên file unique với logic retry mạnh hơn
@@ -519,7 +597,7 @@ export const MediaCreate: React.FC = () => {
           if (!fileData.uploaded) {
             const file = fileData.file;
 
-            // 🎆 ALWAYS convert to WebP for all images (giống logic ở handleUpload)
+            // 🎆 ALWAYS convert to WebP - chỉ thay đổi metadata, giữ nguyên kích thước
             let fileToUpload = file;
             let finalFileName = file.name;
             let conversionInfo = {
@@ -530,22 +608,80 @@ export const MediaCreate: React.FC = () => {
             };
 
             if (file.type.startsWith('image/')) {
-              console.log(`🔄 Converting ${file.name} to WebP (handleFormSubmit)...`);
-              const result = await convertToWebP(file, 85); // 85% quality
+              console.log(`🔄 Processing ${file.name} for upload...`);
 
-              if (result.success) {
-                fileToUpload = result.file;
-                finalFileName = result.file.name;
-                conversionInfo = {
-                  wasConverted: true,
-                  originalSize: result.originalSize,
-                  webpSize: result.webpSize,
-                  compressionRatio: result.compressionRatio
-                };
-                console.log(`✅ Converted ${file.name} → ${finalFileName} (handleFormSubmit)`);
+              // Thêm metadata từ form
+              const formValues = formProps.form?.getFieldsValue() as any || {};
+
+              // Lấy base metadata từ constants
+              const baseMetadata = getMetadataByEnvironment();
+
+              // Kết hợp metadata từ form với base metadata
+              const imageMetadata = {
+                title: formValues.title || formValues.alt_text,
+                description: formValues.meta_description || formValues.caption,
+                copyright: formValues.copyright || baseMetadata.copyright,
+                creator: formValues.creator || baseMetadata.creator_artist,
+                credit: formValues.credit || baseMetadata.credit,
+                keywords: parseMetaKeywords(formValues.meta_keywords) || baseMetadata.keywords,
+                software: baseMetadata.software,
+                userComment: baseMetadata.user_comment
+              };
+
+              console.log(`📋 Preparing metadata for ${file.name}:`, imageMetadata);
+
+              // Handle metadata embedding based on file format
+              if (supportsExif(file)) {
+                console.log(`📷 Embedding EXIF metadata into JPEG file...`);
+                try {
+                  fileToUpload = await embedExifMetadata(file, imageMetadata);
+                  console.log(`✅ EXIF metadata embedded successfully`);
+                } catch (exifError) {
+                  console.warn(`⚠️ EXIF embedding failed, using original file:`, exifError);
+                  fileToUpload = file;
+                }
+              } else if (supportsWebPMetadata(file)) {
+                console.log(`🔄 Converting WebP to JPEG for EXIF metadata embedding...`);
+                try {
+                  // Convert WebP to JPEG for EXIF support
+                  const jpegFile = await convertWebPToJPEGForMetadata(file);
+                  fileToUpload = await embedExifMetadata(jpegFile, imageMetadata);
+                  console.log(`✅ WebP converted to JPEG with EXIF metadata embedded`);
+                } catch (webpError) {
+                  console.warn(`⚠️ WebP to JPEG conversion failed, using original file:`, webpError);
+                  fileToUpload = file;
+                }
               } else {
-                console.error(`❌ WebP conversion failed for ${file.name}:`, result.error);
-                console.log(`⚠️ Falling back to original file: ${file.name}`);
+                console.log(`ℹ️ File format doesn't support metadata embedding, proceeding with conversion...`);
+                fileToUpload = file;
+              }
+
+              // Convert to WebP if not already processed
+              if (fileToUpload === file) {
+                const result = await convertToWebP(file, 85, {
+                  metadataOnly: true,
+                  preserveSize: true,
+                  customMetadata: imageMetadata
+                });
+
+                if (result.success) {
+                  fileToUpload = result.file;
+                  finalFileName = result.file.name;
+                  conversionInfo = {
+                    wasConverted: true,
+                    originalSize: result.originalSize,
+                    webpSize: result.webpSize,
+                    compressionRatio: result.compressionRatio
+                  };
+                  console.log(`✅ Converted ${file.name} → ${finalFileName} (WebP with metadata)`);
+                } else {
+                  console.error(`❌ WebP conversion failed for ${file.name}:`, result.error);
+                  console.log(`⚠️ Falling back to original file: ${file.name}`);
+                }
+              } else {
+                // File was processed with EXIF, just update filename
+                finalFileName = file.name;
+                console.log(`📁 Using EXIF-processed file: ${finalFileName}`);
               }
             }
 

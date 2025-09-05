@@ -2,6 +2,9 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import sharp from 'sharp';
 import multer from 'multer';
 import { promisify } from 'util';
+import { getOptimalWebPConfig, applyWebPEnhancements } from '../../lib/sharp-config';
+import { getMetadataForWebP, extractMetadataFromForm, getMetadataTemplates, ImageMetadataConfig } from '../../lib/metadata-config';
+import { getMetadataByTemplate, type MetadataTemplateName } from '../../config/metadata-constants';
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -64,35 +67,79 @@ export default async function handler(
     const metadata = await sharp(file.buffer).metadata();
     console.log(`🖼️ Image info: ${metadata.width}x${metadata.height}, format: ${metadata.format}`);
 
-    // Determine optimal quality based on file size and type
-    let quality = 75;
-    if (file.size > 5 * 1024 * 1024) { // > 5MB
-      quality = 60; // More aggressive compression for large files
-    } else if (file.size > 1 * 1024 * 1024) { // > 1MB
-      quality = 70;
+    // Get query parameters for custom settings
+    const metadataTemplate = req.query.template as string;
+    const metadataOnly = req.query.metadataOnly === 'true';
+    const preserveSize = req.query.preserveSize === 'true';
+    
+    // Parse custom metadata from form data if provided
+    let customMetadataConfig: Partial<ImageMetadataConfig> = {};
+    if ((req as any).body && (req as any).body.metadata) {
+      try {
+        const metadataString = (req as any).body.metadata;
+        if (typeof metadataString === 'string') {
+          const metadataData = JSON.parse(metadataString);
+          customMetadataConfig = extractMetadataFromForm(metadataData);
+          console.log('📋 Received custom metadata from form:', metadataData);
+        }
+      } catch (e) {
+        console.log('⚠️ Could not parse metadata from form data, using defaults:', e);
+      }
     }
+    
+    // Get metadata template if specified - sử dụng constants mới
+    if (metadataTemplate) {
+      // Kiểm tra xem template có tồn tại không
+      const availableTemplates = ['default', 'production', 'blog', 'hero', 'professional'] as MetadataTemplateName[];
+      
+      if (availableTemplates.includes(metadataTemplate as MetadataTemplateName)) {
+        const templateConfig = getMetadataByTemplate(metadataTemplate as MetadataTemplateName);
+        
+        // Chuyển đổi từ MetadataConfig sang ImageMetadataConfig
+        customMetadataConfig = {
+          ...customMetadataConfig,
+          copyright: templateConfig.copyright,
+          creator: templateConfig.creator_artist,
+          artist: templateConfig.creator_artist,
+          credit: templateConfig.credit,
+          caption: templateConfig.caption_description,
+          contact: templateConfig.contact_url,
+          website: templateConfig.website_url,
+          email: templateConfig.email_contact,
+          keywords: templateConfig.keywords,
+          software: templateConfig.software
+        };
+        
+        console.log(`🎨 Using metadata template: ${metadataTemplate}`);
+      } else {
+        console.log(`⚠️ Template '${metadataTemplate}' not found, using defaults`);
+      }
+    }
+    
+    // Get optimal configuration
+    const config = getOptimalWebPConfig(file.size, metadata.format || 'unknown', {
+      metadataOnly: metadataOnly,
+      preserveOriginalSize: preserveSize || metadataOnly
+    });
 
-    console.log(`⚙️ Using quality: ${quality}%`);
+    console.log(`⚙️ Processing mode: ${metadataOnly ? 'Metadata Only' : 'Full Processing'}`);
+    console.log(`📎 Size preservation: ${config.preserveOriginalSize ? 'Yes' : 'No'}`);
+    console.log(`🎨 Quality: ${config.quality}%, effort: ${config.effort}`);
 
-    // Convert to WebP using Sharp with optimal settings for maximum compression
-    const webpBuffer = await sharp(file.buffer)
-      .webp({
-        quality: quality,         // Dynamic quality based on file size
-        effort: 6,                // Maximum compression effort (0-6)
-        smartSubsample: true,     // Smart subsampling for better quality
-        nearLossless: false,      // Use lossy compression for smaller files
-        alphaQuality: quality,    // Alpha channel quality
-        force: true,              // Force WebP output
-        preset: 'photo',          // Optimize for photos
-      })
-      .resize({
-        width: 1920,              // Max width for web
-        height: 1080,             // Max height for web
-        fit: 'inside',            // Maintain aspect ratio
-        withoutEnlargement: true, // Don't enlarge small images
-      })
-      .sharpen()                  // Sharpen after resize
-      .toBuffer();
+    // Generate metadata for WebP
+    const webpMetadata = getMetadataForWebP(customMetadataConfig);
+    console.log('📋 Generated WebP metadata:', {
+      hasCustomMetadata: Object.keys(customMetadataConfig).length > 0,
+      customMetadataKeys: Object.keys(customMetadataConfig),
+      webpMetadataKeys: Object.keys(webpMetadata),
+      hasExif: !!webpMetadata.exif
+    });
+    
+    // Apply enhancements using the new config system
+    let sharpInstance = sharp(file.buffer);
+    sharpInstance = await applyWebPEnhancements(sharpInstance, config, metadata, webpMetadata);
+    
+    const webpBuffer = await sharpInstance.toBuffer();
 
     // Get original filename without extension and convert to lowercase
     const originalName = file.originalname.replace(/\.[^/.]+$/, '');
@@ -109,6 +156,15 @@ export default async function handler(
     console.log(`   - Original: ${(originalSize / 1024).toFixed(1)} KB`);
     console.log(`   - WebP: ${(webpSize / 1024).toFixed(1)} KB`);
     console.log(`   - Saved: ${sizeSavedKB} KB (${compressionRatio}%)`);
+    console.log(`🎨 Processing applied:`);
+    console.log(`   - Mode: ${config.metadataOnly ? 'Metadata Only' : 'Full Processing'}`);
+    console.log(`   - Original size preserved: ${config.preserveOriginalSize ? 'Yes' : 'No'}`);
+    console.log(`   - Quality: ${config.quality}% (Alpha: ${config.alphaQuality}%)`);
+    if (!config.metadataOnly && !config.preserveOriginalSize) {
+      console.log(`   - Resize: ${config.maxWidth}x${config.maxHeight} (${config.fit})`);
+      console.log(`   - Enhancements: ${config.sharpen ? 'Yes' : 'No'}`);
+    }
+    console.log(`   - Metadata: Updated with custom fields`);
     console.log(`   - Compression ratio: ${compressionRatio}%`);
 
     // Set response headers

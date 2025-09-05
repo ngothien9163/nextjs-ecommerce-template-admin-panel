@@ -71,6 +71,7 @@ import { MediaGallerySelectorDemo } from "./pages/media-gallery-demo";
 import { Dashboard } from "./pages/dashboard";
 
 import { AISettings } from "./pages/ai-settings";
+import MetadataCheckerPage from "./pages/metadata-checker";
 
 function App() {
   return (
@@ -262,6 +263,7 @@ function App() {
                   <Route path="gallery-selector-demo" element={<MediaGallerySelectorDemo />} />
                 </Route>
                 <Route path="/ai-settings" element={<AISettings />} />
+                <Route path="/metadata-checker" element={<MetadataCheckerPage />} />
               </Route>
             </Routes>
 

@@ -47,9 +47,16 @@
   },
   "scripts": {
     "dev": "refine dev",
+    "dev:debug": "node scripts/debug-metadata.js && refine dev",
     "build": "tsc && refine build",
     "start": "refine start",
-    "refine": "refine"
+    "refine": "refine",
+    "build:production": "tsc && refine build --mode production",
+    "build:staging": "tsc && refine build --mode staging",
+    "deploy:production": "bash scripts/deploy-with-metadata.sh production",
+    "deploy:staging": "bash scripts/deploy-with-metadata.sh staging",
+    "deploy:company-a": "bash scripts/deploy-with-metadata.sh production company-a",
+    "preview:metadata": "node scripts/preview-metadata-config.js"
   },
   "browserslist": {
     "production": [

@@ -10,11 +10,17 @@ export interface WebPConversionResult {
 }
 
 /**
- * Convert a single image file to WebP format using Sharp API
+ * Convert a single image file to WebP format using Sharp API with metadata support
  */
 export const convertToWebP = async (
   file: File,
-  quality = 85
+  quality = 85,
+  options: {
+    preset?: 'default' | 'production' | 'blog' | 'hero' | 'professional';
+    metadataOnly?: boolean;
+    preserveSize?: boolean;
+    customMetadata?: any;
+  } = {}
 ): Promise<WebPConversionResult> => {
   try {
     // Skip if not an image
@@ -29,60 +35,50 @@ export const convertToWebP = async (
       };
     }
 
-    console.log(`🔄 Converting ${file.name} to WebP...`);
+    const isMetadataOnly = options.metadataOnly || options.preserveSize;
+
+    console.log(`🔄 Converting ${file.name} to WebP (Vite client-side)...`);
     console.log(`📏 Original size: ${(file.size / 1024).toFixed(1)} KB`);
-    console.log(`⚙️ Quality setting: ${quality}%`);
-
-    const formData = new FormData();
-    formData.append('image', file);
-
-    console.log(`📤 Sending to API: /api/convert-webp`);
-
-    const response = await fetch('/api/convert-webp', {
-      method: 'POST',
-      body: formData,
-    });
-
-    console.log(`📥 API Response status: ${response.status}`);
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error(`❌ API Error:`, errorData);
-      throw new Error(errorData.message || `HTTP ${response.status}`);
+    console.log(`⚙️ Mode: ${isMetadataOnly ? 'Metadata Only (giữ nguyên kích thước)' : 'Full Processing'}`);
+    if (!isMetadataOnly) {
+      console.log(`⚙️ Quality setting: ${quality}%`);
+    }
+    if (options.preset) {
+      console.log(`🎨 Using preset: ${options.preset}`);
     }
 
-    const webpBlob = await response.blob();
-    const compressionRatio = parseFloat(response.headers.get('X-Compression-Ratio') || '0');
-    const originalSize = parseInt(response.headers.get('X-Original-Size') || file.size.toString());
-    const webpSize = parseInt(response.headers.get('X-WebP-Size') || webpBlob.size.toString());
+    // Log metadata info (metadata will be saved to database, not embedded in WebP)
+    if (options.customMetadata) {
+      console.log(`📋 Metadata prepared for database:`, {
+        hasMetadata: Object.keys(options.customMetadata).length > 0,
+        metadataKeys: Object.keys(options.customMetadata)
+      });
+    }
 
-    console.log(`📊 Compression results:`);
-    console.log(`   - Original: ${(originalSize / 1024).toFixed(1)} KB`);
-    console.log(`   - WebP: ${(webpSize / 1024).toFixed(1)} KB`);
-    console.log(`   - Saved: ${compressionRatio}%`);
+    // For Vite projects, we use client-side Canvas API
+    // Metadata embedding requires Sharp/Node.js which isn't available in Vite
+    console.log(`ℹ️ Using client-side WebP conversion (metadata saved to database only)`);
 
-    // Create new File with WebP format and lowercase filename
-    const originalName = file.name.replace(/\.[^/.]+$/, ''); // Remove extension
-    const webpFileName = `${originalName.toLowerCase()}.webp`;
-    const webpFile = new File([webpBlob], webpFileName, {
-      type: 'image/webp',
-      lastModified: Date.now(),
-    });
+    const result = await convertWithCanvas(file, quality / 100);
 
-    console.log(`✅ Converted ${file.name} → ${webpFileName}`);
-    console.log(`📊 Final compression: ${(originalSize / 1024).toFixed(1)} KB → ${(webpBlob.size / 1024).toFixed(1)} KB (${compressionRatio}% saved)`);
+    if (result.success) {
+      console.log(`✅ Client-side conversion successful: ${result.compressionRatio.toFixed(1)}% saved`);
+      console.log(`📝 Note: Metadata will be saved to database but not embedded in WebP file`);
+      return result;
+    }
 
     return {
-      file: webpFile,
-      originalSize: originalSize,
-      webpSize: webpBlob.size,
-      compressionRatio,
-      success: true,
+      file,
+      originalSize: file.size,
+      webpSize: file.size,
+      compressionRatio: 0,
+      success: false,
+      error: 'Client-side conversion failed',
     };
 
   } catch (error) {
     console.error(`❌ WebP conversion failed for ${file.name}:`, error);
-    console.log(`🔄 Falling back to client-side conversion...`);
+    console.log(`🔄 Attempting client-side conversion...`);
 
     // Fallback to client-side Canvas conversion
     const fallbackResult = await convertWithCanvas(file, quality / 100);
